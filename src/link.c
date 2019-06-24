@@ -3,18 +3,25 @@
 #include "fileread.h"
 #include "parse.h"
 
-char pr[999];
-struct data { int nvars; int valsize; } lndata;
-
-/*	Proccesses a declaration using f to do the actual work. f is getdata for pass 1
- *	and varalloc for pass 2. The second argument must be 0 for linking.
+/*	Processes a declaration using (*f) to do the actual work. f is getdata for pass 1
+ *	and varalloc for pass 2.
  */
 
-void getdecldata(Type t,int zero) {
-	++ lndata.nvars;
+struct data { int nvars; int valsize; } lndata;
+
+char* _canon(char* first, char* l, char* buff) {
+        int i=0; 
+        char* f=first;
+        while(f<=l && i<VLEN-1) buff[i++]=*(f++);
+        if(f<=l)buff[i++]=*l;
+        buff[i]=0;
+        return buff;
 }
 
-int decl( void (*f)(Type,int) ) { 
+void getvardata(Type t,int zero) {
+	++ lndata.nvars;
+}
+int isdecl( void (*f)(Type,int) ) { 
 	if( lit(xchar) ) {
 		do {
 			(*f)( Char, 0 );
@@ -30,95 +37,130 @@ int decl( void (*f)(Type,int) ) {
 	return 1;
 }
 
+void getclassdata() {
+	++ lndata.nvars;
+}
+
+int isclass( void (*f)() ) {
+	int abs=0,ext=0;
+	char classname[VLEN+1];
+	char basename[VLEN+1];
+
+	if( lit(xabstract) ){
+		abs=1;
+	}
+	if( lit(xclass) ){
+		(*f)();
+		if(symname()){
+			cursor=lname+1;
+			_canon(fname,lname,classname);
+		}
+		else eset(SYMERR);
+		if( lit(xextends) ){
+			ext=1;
+			if(symname()){
+				cursor=lname+1;
+				_canon(fname,lname,basename);
+			}
+			else eset(SYMERR);  // symbol is required
+		}
+		else {
+			int x=mustfind(cursor,endapp, '[', LBRCERR);
+			if(x){
+				cursor = x+1;
+				skip('[',']');
+			}
+			else eset(LBRCERR);
+		}
+		printf("\nlink~64, class: %s: %d%d ",classname,abs,ext);
+		if(ext)ps(basename);
+		return 1;
+	}
+	else return 0;
+//dumpcurl("~66");
+}
+
+void getsymdata() {
+	++lndata.nvars;
+}
+int issym( void (*f)() ){
+	int x;
+pl("in issym: ");pft(fname,lname);
+dumpcurl("~77");				
+	if(symname()) {
+		cursor=lname+1;
+		(*f)();
+		if( (x=mustfind(cursor,endapp, '[', LBRCERR)) ) {
+			cursor=x+1;
+			skip('[',']');
+			return 1;
+		}
+		else return 0;
+	}
+}
+
 /*	scans from from to to-1 counting vartab entries, and value space size
  */
-int lngetdata(char *from, char *to){
+void lngetdata(){
+	char *lastcur;
 	char *x;
 	lndata.nvars = 0;
 	lndata.valsize = 0;
-	while(from<to && !error){
-		rem();
+	rem();
+	while(cursor<endapp && !error){
+		lastcur=cursor;
 		if(lit(xlb)) {
 			skip('[',']');
 		}
-		else if( decl( getdecldata ) ){}
-		else if(symName()) {     /* fctn decl */
-			++ lndata.nvars;
-			if( (x=mustFind(from, to, '[',LBRCERR)) ) {
-				from=x+1;
-				skip('[',']');
-			}
-		}
-		else if(*from=='#'){
-			while(++from<to) {
-				if( (*from==0x0d)||(*from=='\n') )break;
-			}
-		}
-	}
-}
-/*	scans from from to to-1 building vartab
- */
-int lndolink(char *from, char *to, struct var *vartab, int tabsize){
-	printf("%d %d\n", lndata.nvars, lndata.valsize);
-#if defined(_WIN32)
-	int cursor = from;
-	while(cursor<to && !error){
-		char* lastcur = cursor;
-		rem();
-		if(lit(xlb)) skip('[',']');
-		else if(decl()) ;
-		else if(symName()) {     /* fctn decl */
-			union stuff kursor;
-			kursor.up = cursor = lname+1;
-			newvar('E',2,1,&kursor);
-			if( (x=mustFind(cursor, endapp, '[',LBRCERR)) ) {
-				cursor=x+1;
-				skip('[',']');
-			}
-		}
+		else if( isdecl( getvardata ) ){}
+		else if( isclass( getclassdata ) ){}
+		else if( issym( getsymdata ) ) {}     /* fctn decl */
 		else if(*cursor=='#'){
-			while(++cursor<endapp) {
+			while( ++cursor < endapp ) {
 				if( (*cursor==0x0d)||(*cursor=='\n') )break;
 			}
 		}
-//printf("~985 %d %d %d %c\n",lpr-pr,apr-pr,cursor-pr,*cursor);
-		if(cursor==lastcur)eset(LINKERR);
+		if(cursor==lastcur){
+			eset(LINKERR); 
+			break;
+		}
+		rem();
 	}
-#endif
 }
+
+/*	scans from from to to-1 building vartab
+ */
+int lndolink(struct var *vartab, int tabsize){
+printf("\nlink~123: nvars,valsize %d %d", lndata.nvars, lndata.valsize);
+}
+
 /*	allocates space for vartab and values, builds vartab
  */
-void* link(int from, int to){
+void* link(char *from, char *to){
 	int size;
 	void* blob;
-
-	printf("%d %d\n",from,to);
-	lngetdata(from,to);
+	char* savedcursor=cursor;
+	char* savedendapp=endapp;
+	cursor=from;
+	endapp=to;
+printf("link~141: from,to %d %d\n",from-pr,to-pr);
+	lngetdata();
 	size = lndata.nvars*sizeof(struct var) + lndata.valsize;
 	blob = malloc(size);
-	lndolink(from,to,blob,lndata.nvars);
+	lndolink(blob,lndata.nvars);
+	cursor=savedcursor;
+	char* endapp=savedendapp;
 }
-/*	tests this mess!
+/*	test this mess!
  */
 int main(int argc, char **argv) {
 	int len;
 	len = fileRead("SamplePrograms/first.toc",pr,999);
+	lndata.nvars = 0;
+	lndata.valsize = 0;
+	cursor=pr;
 	link(pr,pr+len);
+	printf("\ndone\n");
 	return 0;
 } 
 
-#if defined(_WIN32)
-void printNumber(int nbr)  {
-    printf("%d\n", nbr);
-}
-void myFunction(void (*f)(int))  {
-    for(int i = 0; i < 5; i++) 
-    {
-        (*f)(i);
-    }
-}
-int main(void)  {
-    myFunction(printNumber);
-    return (0);
-}
-#endif

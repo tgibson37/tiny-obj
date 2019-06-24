@@ -4,13 +4,17 @@
 abstract class Player [
     int number
     char(20) name
-    printNumber[pn number]
-    printName[ps name]
+    printNumber[
+        pn number
+    ]
+    printName[
+        ps name
+    ]
 ]
 class Cannibal extends Player [
     Cannibal int n [ 
         number = n
-        strcpy name, "cannibal"]
+        strcpy name, "cannibal"
     ]
 ]
 class Nurse extends Player [
@@ -19,6 +23,10 @@ class Nurse extends Player [
         strcpy name, "nurse"
     ]
 ]
+//int NPLAYERS,i,j
+//char a,b,stuff(99)
+//char foo(0)
+
 main [
     NPLAYERS = 2
     Cannibal can = new Cannibal 1

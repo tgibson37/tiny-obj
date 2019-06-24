@@ -1,12 +1,7 @@
 #ifndef link_h
 #define link_h
 
-#define xcomma ","
-#define xsemi ";"
-#define xlb "["
-#define xrb "]"
-
-void* link(int from, int to);
+void* link(char *from, char *to);
 
 union stuff { char uc; int ui; void* up; };
 #define VLEN 16

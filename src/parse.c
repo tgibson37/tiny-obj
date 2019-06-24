@@ -7,9 +7,12 @@
    cursor beyond the literal else false and do not advance cursor
  */
 int lit(char *s){
+//printf("\nin lit %s: ",s);
+//pft(cursor,cursor+9);
 	while( *cursor == ' ' || *cursor == '\t' ) ++cursor;
 	int match = !strncmp(s,cursor, strlen(s));
 	if( match ) {
+//pftl("\nlit match: ",cursor,cursor+strlen(s));
 		cursor += strlen(s);
 		return 1;
 	}
@@ -20,12 +23,18 @@ int lit(char *s){
  *	Returns 0 on OK, else count of missing ]'s.
  */
 int skip(char l, char r) {
+printf("\nin skip %c%c: ",l,r);
+prlineno();
+//dumpcurl("27");
 	int counter = 1;
 	 while( counter>0 && cursor<endapp ) {
 		if(*cursor==l)++counter;
 		if(*cursor==r)--counter;
 		++cursor;
 	};
+ps(" to ");
+prlineno();
+//dumpcurl("35");
 	if( counter )return counter;
 	return 0;
 }
@@ -33,7 +42,8 @@ int skip(char l, char r) {
 /* Parse a symbol defining fname, lname. ret: true if symbol.
  *	Advances the cursor to but not over the symbol,
  */
-int symName() {
+int symname() {
+//dumpcurl("\nin symname: ");
 	char* temp;
 	while( *cursor == ' ' || *cursor == '\t' ) ++cursor;
 	temp=cursor;
@@ -49,16 +59,12 @@ int symName() {
 //		fprintf(stderr,"\nparsed ");
 //		dumpft(fname,lname);
 //	}
+//pftl(" match ",fname,lname);
 	return lname-fname+1;  /* good, fname and lname defined */
 }
 
 /****************** some C helper functions **************/
 
-/* return true if symname matches arg, no state change */
-int symNameIs(char* name){
-	int x = strncmp(fname, name, lname-fname+1);
-	return( !x );
-}
 /* State is not changed by find or mustFind. Returned value is
 sole purpose of find. That plus setting err for mustFind. */
 char* find( char* from, char* upto, char c) {
@@ -69,7 +75,7 @@ char* find( char* from, char* upto, char c) {
 	return x<upto ? x : 0;
 }
 /* same as find but sets err on no match */
-char* mustFind( char *from, char *upto, char c, int err ) {
+char* mustfind( char *from, char *upto, char c, int err ) {
 	char* x = find(from, upto, c);
 	if( x ) return x;
 	else { eset(err); return 0; }
@@ -95,9 +101,9 @@ void rem() {
 				||*cursor==' '
 				||*cursor=='\t'
 			  )++cursor;
-		if( !(lit(xcmnt)||lit(xcmnt2)) ) return;
+		if( !(lit(xcmnt)||lit(xcmnt2)) ) break;
 		while( *cursor != 0x0a && *cursor != 0x0d && cursor<endapp )
 			++cursor;
 	}
+	return;
 }
-
