@@ -1,5 +1,5 @@
 #include "toc.h"
-#include "link.h"
+#include "main.h"
 #include "fileread.h"
 #include "parse.h"
 
