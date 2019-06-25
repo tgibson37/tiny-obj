@@ -23,9 +23,9 @@ class Nurse extends Player [
         strcpy name, "nurse"
     ]
 ]
-//int NPLAYERS,i,j
-//char a,b,stuff(99)
-//char foo(0)
+int NPLAYERS,i,j
+char a,b,stuff(99)
+char foo(0)
 
 main [
     NPLAYERS = 2
