@@ -716,6 +716,8 @@ int _decl(struct var *vartab) {
 		do {
 			_varAlloc( Int, 0, vartab );  /* 2nd arg is vpassed */
 		} while( _lit(xcomma) );
+	} else if ( _lit(xclass)) {
+		classParse(vartab);  // 
 	} else {
 		return 0;  /* not decl */
 	}
@@ -828,31 +830,6 @@ void st(struct var *vartab) {
 	else {
 		eset(STATERR);
 	}
-}
-
-/*     Checks for balanced brackets, cursor to endapp inclusive. 
-void checkBrackets() {
-   int count;
-   while(*(cursor++) != '[' && cursor<=endapp) ;
-   if(_skip('[',']'))eset(RBRCERR);
-}
- */
-
-/*
- *	Checks for balanced brackets, cursor to stop.
- */
-int checkBrackets(char* stop) {
-	int err;
-	char* save=endapp;  /* _skip uses endapp as limit */
-	endapp=stop;
-	while(cursor<stop) {
-		while(*(cursor++) != '[' && cursor<stop) ;
-		if(cursor<stop) {
-			if( (err=_skip('[',']')) )return err;
-		}
-	}
-	endapp=save;
-	return 0;
 }
 
 /*********** a variety of dumps for debugging **********/

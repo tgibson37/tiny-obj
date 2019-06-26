@@ -245,7 +245,7 @@ char* _canon(char* first, char* l, char* buff);
 void _errToWords();
 void allocStuff();
 void _rem();
-int _decl();
+int _decl(struct var *v);
 int _lit(char*);
 void varalloc(Type type, union stuff *vpassed, struct var *vartab);
 int _symName();
