@@ -262,7 +262,7 @@ void _setArg( Type type, struct stackentry *arg, struct var *vartab ) {
 			/* ui to clear high order byte */
 	}
 //fprintf(stderr,"\n~295SA type %d passed %d", type, vpassed.ui);
-	_varAlloc( type, &vpassed, vartab);
+	varalloc( type, &vpassed, vartab);
 }
 
 /*	SITUATION: Just parsed symbol with class 'E', or special symbol MC.
@@ -710,14 +710,14 @@ int _decl(struct var *vartab) {
 	Type t;
 	if( _lit(xchar) ) {
 		do {
-			_varAlloc( Char, 0, vartab );  /* 2nd arg is vpassed */
+			varalloc( Char, 0, vartab );  /* 2nd arg is vpassed */
 		} while( _lit(xcomma) );
 	} else if( _lit(xint) ) {
 		do {
-			_varAlloc( Int, 0, vartab );  /* 2nd arg is vpassed */
+			varalloc( Int, 0, vartab );  /* 2nd arg is vpassed */
 		} while( _lit(xcomma) );
 	} else if ( _lit(xclass)) {
-		classParse(vartab);  // 
+		classlink(vartab);  // 
 	} else {
 		return 0;  /* not decl */
 	}
