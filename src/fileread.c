@@ -2,7 +2,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <libgen.h>
-#include "fileread.h"
+#include "toc.h"
 
 /*	
 #if defined(_WIN32)
