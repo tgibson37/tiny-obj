@@ -131,6 +131,8 @@ struct var {
 /* variable table */
 struct var *vartab;
 int nxtvar, vtablen;
+/* sizes needed for each vartab, values area */
+struct lndata { int nvars; int valsize; } lndata;
 
 /* most recent function entered */
 char fcnName[VLEN+1];

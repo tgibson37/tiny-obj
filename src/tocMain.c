@@ -176,12 +176,12 @@ void allocStuff() {
     }
     stack = malloc(stacklen*sizeof(struct stackentry));
 
-    vtablen=VTABLEN;
-    err = iProperty("pps/tc.prop", "VTABLEN", &vtablen, VTABLEN);
-    if(err){
-    	fprintf(stderr,"pps/tc.prop err, running var[%d]",VTABLEN);
-    }
-    vartab = malloc(vtablen*sizeof(struct var));
+//    vtablen=VTABLEN;
+//    err = iProperty("pps/tc.prop", "VTABLEN", &vtablen, VTABLEN);
+//    if(err){
+//    	fprintf(stderr,"pps/tc.prop err, running var[%d]",VTABLEN);
+//    }
+//    vartab = malloc(vtablen*sizeof(struct var));
 }
 
 int main(int argc, char *argv[]) {

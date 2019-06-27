@@ -78,6 +78,8 @@ int _allocSpace(struct var *v, int amount){
 void newvar( int class, Type type, int len, union stuff *passed, struct var *vartab ) {
 	int obsize = typeToSize(class,type);
 	if(vartab==NULL){
+		lndata.nvars += 1;
+		lndata.valsize += obsize;
 		return;
 	}
 	struct var *v = &vartab[nxtvar];

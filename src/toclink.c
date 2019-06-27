@@ -1,9 +1,5 @@
 #include "toc.h"
 
-/* sizes needed for each vartab, values area
- */
-struct lndata { int nvars; int valsize; } lndata;
-
 /*	Checks for balanced brackets, from *from to *to.
  */
 int checkBrackets(char *from, char *to) {
@@ -95,8 +91,11 @@ void* lnlink(char *from, char *to){
         char* savedendapp=endapp;
         cursor=from;
         endapp=to;
+        lndata.nvars = lndata.valsize = 0;
 printf("toclink~91: from,to %d %d\n",from-pr,to-pr);
         lnpass12(from,to,NULL);
+printf("      ~101: nvars,valsize %d %d\n",lndata.nvars,lndata.valsize);
+exit(0);
         size = lndata.nvars*sizeof(struct var) + lndata.valsize;
         blob = malloc(size);
         lnpass12(blob,lndata.nvars,blob);
