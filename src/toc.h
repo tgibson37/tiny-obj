@@ -208,7 +208,7 @@ void dumpStack();
 void dumpPopTop();
 void dumpTop();
 void dumpVar(struct var *v);
-void dumpVarTab();
+void dumpVarTab(struct var *vartab);
 void dumpHex( void* where, int len );
 void dumpState();
 void dumpName();

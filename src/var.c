@@ -1,5 +1,7 @@
 #include "toc.h"
 
+struct varhdr {char* vartab; char *val; char *endval; char *used; };
+
 /* SITUATION: Function call parsed. 
 	Open new var and value frames for the functions locals.
  */
@@ -79,9 +81,10 @@ void newvar( int class, Type type, int len, union stuff *passed, struct var *var
 	int obsize = typeToSize(class,type);
 	if(vartab==NULL){
 		lndata.nvars += 1;
-		lndata.valsize += obsize;
+		lndata.valsize += len*obsize;
 		return;
 	}
+//printf("var~85\n");
 	struct var *v = &vartab[nxtvar];
 	canon(v);    /* sets the canon'd name into v */
 	(*v).class = class;
@@ -101,6 +104,7 @@ void newvar( int class, Type type, int len, union stuff *passed, struct var *var
  */
 
 char* _canon(char* first, char* l, char* buff) {
+fprintf(stderr,"var~107 f<l %d, buff %d -->%.8s\n",l-first+1,buff,first);
 	int i=0; 
 	char* f=first;
 	while(f<=l && i<VLEN-1) buff[i++]=*(f++);
@@ -213,7 +217,7 @@ void dumpVar(struct var *v) {
 		dumpVal( (*v).type, (*v).class, &((*v).value), 0 );
 }
 
-void dumpVarTab() {
+void dumpVarTab(struct var *vartab) {
 	int pos = 0;
 	fprintf(stderr,"\nVar Table: name class type len (type)value");
 	struct var *v = vartab-1;
@@ -222,5 +226,150 @@ void dumpVarTab() {
 		dumpVar(v);
 		++pos;
 	};
-	if( !pos )fprintf(stderr," empty");
+	if( !pos )fprintf(stderr," empty\n");
+	else fprintf(stderr,"\n");
 }
+
+void dumpBlob(struct varhdr *vh){
+	fprintf(stderr,"Blob at %d vartab val endval used\n   ",vh );
+	fprintf(stderr,"           %d %d %d %d\n",vh->vartab,vh->val,vh->endval,vh->used);
+}
+
+void dumpBV(struct varhdr *vh){ 
+	dumpBlob(vh); 
+	dumpVarTab(vh->vartab);
+}
+
+/*	Checks for balanced brackets, from *from to *to.
+ */
+int checkBrackets(char *from, char *to) {
+	int err;
+	char* savedCursor=cursor;
+	char* savedEndapp=endapp;
+	cursor = from;
+	endapp = to;
+	while(cursor<endapp) {
+		while(*(cursor++) != '[' && cursor<endapp) ;
+		if(cursor<endapp) {
+			if( (err=_skip('[',']')) )return err;
+		}
+	}
+	cursor = savedCursor;
+	endapp = savedEndapp;
+	return 0;
+}
+
+/*	Pass one if vartab is NULL computes the needed sizes. Pass two does
+ *	the actual link into vartab, which also has room for all values.
+ *	The logic here mimics classical void link().
+ */
+void lnpass12(char *from, char *to, struct varhdr *varhdr) {
+	char* x;
+	char* savedEndapp=endapp;
+	char* savedCursor=cursor;
+	struct var *vartab;
+	if(varhdr==NULL)vartab=NULL;   // pass 1
+	else vartab = varhdr->vartab;  // pass 2
+
+/*	check Brackets from cursor to limit*/
+	cursor=pr;
+	if(checkBrackets(from,to))eset(RBRCERR+1000);
+	if(error)whatHappened();
+	cursor=from;
+	endapp=to;
+	newfun();
+//printf("var~280 endapp %d\n",endapp);
+	while(cursor<endapp && !error){
+//printf("%d ",cursor);
+		char* lastcur = cursor;
+		_rem();
+		if(_lit(xlb)) _skip('[',']');
+		else if( _decl(vartab) ) ;
+		else if( _lit(xendlib) ){
+			if(curfun==fun) {   /* 1st endlib, assume globals follow */
+				newfun();
+				curglbl=curfun;
+			}
+			else {        /* subsequent endlib, 
+			                 move assummed globals to frame 0 */
+				fun[0].lvar = nxtvar-1;     /* moved */
+				fun[1].fvar = nxtvar;      /* globals now empty */
+			}
+		}
+		else if(_symName()) {     /* fctn decl */
+			union stuff kursor;
+			kursor.up = cursor = lname+1;
+//printf("var~294,vartab%x ",vartab);
+			newvar('E',2,1,&kursor,vartab);
+			if( (x=_mustFind(cursor, endapp, '[',LBRCERR)) ) {
+				cursor=x+1;
+				_skip('[',']');
+			}
+		}
+		else if(*cursor=='#'){
+			while(++cursor<endapp) {
+				if( (*cursor==0x0d)||(*cursor=='\n') )break;
+			}
+		}
+//printf("~985 %d %d %d %c\n",lpr-pr,apr-pr,cursor-pr,*cursor);
+		if(cursor==lastcur)eset(LINKERR);
+	}
+	cursor = savedCursor;
+	if(verbose[VL])dumpVarTab(vartab);
+}
+
+/*	build its vartab, make entry into owner's vartab
+ */
+void classlink(struct var *vartab){
+	return;   // model for this in Resources link.c/h
+}
+
+/*	Modified version of tclink() to parse and build class tables. 
+ *	Links source text area from *from to *to in two passes. In pass one 
+ *	vartab is NULL and computes the size of memory needed for both the 
+ *	vartab and the value space. In pass two it builds the table. 
+ *	Parse, var, and other services are supplied by whole unchanged tiny-c files.
+ *	The real link toclink(char *from, char *to) uses _12link as a service.
+ */
+void* lnlink(char *from, char *to){
+        int size;
+        void* blob;
+        struct varhdr *vh;
+        char* savedcursor=cursor;
+        char* savedendapp=endapp;
+        cursor=from;
+        endapp=to;
+        lndata.nvars = lndata.valsize = 0;
+//printf("var~333: from,to %d %d\n",from-pr,to-pr);
+        lnpass12(from,to,NULL);    // PASS one
+//printf("   ~335: nvars,valsize %d %d\n",lndata.nvars,lndata.valsize);
+        size = sizeof(struct varhdr) + lndata.nvars*sizeof(struct var) + lndata.valsize;
+        vh = blob = malloc(size);
+		memset(vh, 0, size); 
+        vh->vartab = vh->used = blob + sizeof(struct varhdr);
+        vh->val = vh->vartab + lndata.nvars*sizeof(struct var);
+        vh->endval = blob + size;
+//printf("   ~338, pass 1 done, blob %x\n",blob);
+//dumpBlob(blob);
+		cursor=from;
+		vtablen=lndata.nvars;
+        lnpass12(from,to,blob);    // PASS two
+//printf("   ~340, pass 2 done\n");
+//dumpBV(blob);
+        cursor=savedcursor;
+        char* endapp=savedendapp;
+        return blob;
+}
+
+/* links the loaded program. Uses cursor and endapp globals 
+ *	which are set by the loader. Returns pointer to vartab, whose
+ *	value references point to space in the same malloc.
+ */
+void toclink() {
+	struct varhdr *vh;	
+	vh = lnlink(cursor,endapp);
+	vartab = vh->vartab;
+//printf("var~370 vartab %d",vartab);
+}
+
+

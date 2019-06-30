@@ -876,13 +876,13 @@ void dumpState() {
 		fprintf(stderr,"\nADDRESSES (hex)");
 		fprintf(stderr,"\npr:     %p",(void*)pr);
 		fprintf(stderr,"\nstack:  %p",(void*)stack);
-		fprintf(stderr,"\nvartab: %p",(void*)vartab);	
+//		fprintf(stderr,"\nvartab: %p",(void*)vartab);	
 	}
 
 	fprintf(stderr,"\n----\nSTATE %d\nparsing: ",stateCallNumber++);
 	dumpLine();
 	fprintf(stderr,"<--end of line--");
-	dumpVarTab();
+//	dumpVarTab();
 	dumpStack();
 }
 
