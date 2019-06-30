@@ -182,6 +182,7 @@ void allocStuff() {
     	fprintf(stderr,"pps/tc.prop err, running var[%d]",VTABLEN);
     }
     vartab = malloc(vtablen*sizeof(struct var));
+printf("main~185 vartab %x",vartab);
 }
 
 int main(int argc, char *argv[]) {
@@ -260,7 +261,7 @@ int main(int argc, char *argv[]) {
 	toclink();
 	cursor=pr;
 	prbegin();
-	st();   /* <<<== executes statement above, line 10 */
+	st(vartab);   /* <<<== executes statement above, line 10 */
 	prdone();
 	whatHappened();
     return 0;

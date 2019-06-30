@@ -350,7 +350,7 @@ void _enter( char* where,struct var *vartab) {
 				--nargs;
 			}
 		}
-		if(!error)st();     /*  <<-- execute fcn's body */
+		if(!error)st(vartab);     /*  <<-- execute fcn's body */
 		if(!leave)pushzero();
 		leave=0;
 		cursor=localcurs;

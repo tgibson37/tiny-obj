@@ -196,7 +196,7 @@ void newvar( int class, Type type, int len, union stuff *passed, struct var *var
 struct var* addrval();
 void canon(struct var *v);
 int quit();
-void st();
+void st(struct var *vartab);
 void machinecall();
 char* typeToWord(Type t);
 void dumpVal(Type t, int class, union stuff *val, char lval);

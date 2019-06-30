@@ -132,7 +132,7 @@ void db_dump(char* param) {
 	int kase=*param;
 	switch(kase){
 	case 'f': dumpFun(); printf("\n"); break;
-	case 'v': dumpVarTab(); printf("\n"); break;
+	case 'v': dumpVarTab(vartab); printf("\n"); break;
 	default: printf("d needs f (fcn table) or v (var table) parameter");
 	break;
 	}
