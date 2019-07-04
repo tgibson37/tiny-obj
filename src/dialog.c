@@ -117,7 +117,7 @@ void pc(char c)  {printf("%c", c);}
 void logo() {
 	if(quiet)return;
 	printf(
-"***  TINY-C VERSION 1.0,  COPYRIGHT 1977, T A GIBSON  ***\n"
+"***  TINY-C 8080 VERSION 1.0,  COPYRIGHT 1977, T A GIBSON  ***\n"
 		);
 	printf(
 "        This C version copyright 2017, T A Gibson\n"

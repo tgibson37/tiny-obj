@@ -22,7 +22,7 @@ int sizeof_line = BUF_SIZE;
 struct var* addrval_nohit(char* sym) {
 	struct var *v;
 	debug = 0;
-	v = addrval_all(sym);
+//	v = addrval_all(sym);
 	debug = 1;
 	return v;
 }

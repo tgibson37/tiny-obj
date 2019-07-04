@@ -146,15 +146,15 @@ int doIncludes(char* fname) {
 	return libCount;
 }
 
-/*	allocate four major areas
+/*	allocate five major areas
  */
-int prlen, funlen;
+int prlen, funlen, vtablen, btablen;
 void allocStuff() {
 	int err, size;
     prlen=PRLEN;
     err = iProperty("pps/tc.prop", "PRLEN", &prlen, PRLEN);
     if(err){
-    	fprintf(stderr,"pps/tc.prop err, running pr[%d]",PRLEN);
+    	fprintf(stderr,"pps/tc.prop err, allocating pr[%d]",PRLEN);
     }
     pr = malloc(prlen);
     EPR=pr+prlen;
@@ -163,7 +163,7 @@ void allocStuff() {
     err = iProperty("pps/tc.prop", "FUNLEN", &funlen, FUNLEN);
 //fprintf(stderr,"tcMain~237 funlen %d\n",funlen);
     if(err){
-    	fprintf(stderr,"pps/tc.prop err, running fun[%d]",FUNLEN);
+    	fprintf(stderr,"pps/tc.prop err, allocating fun[%d]",FUNLEN);
     }
     size = sizeof(struct funentry);
     fun = malloc(funlen*size);
@@ -172,17 +172,24 @@ void allocStuff() {
     stacklen=STACKLEN;
     err = iProperty("pps/tc.prop", "STACKLEN", &stacklen, STACKLEN);
     if(err){
-    	fprintf(stderr,"pps/tc.prop err, running stack[%d]",STACKLEN);
+    	fprintf(stderr,"pps/tc.prop err, allocating stack[%d]",STACKLEN);
     }
     stack = malloc(stacklen*sizeof(struct stackentry));
 
     vtablen=VTABLEN;
     err = iProperty("pps/tc.prop", "VTABLEN", &vtablen, VTABLEN);
     if(err){
-    	fprintf(stderr,"pps/tc.prop err, running var[%d]",VTABLEN);
+    	fprintf(stderr,"pps/tc.prop err, allocating var[%d]",VTABLEN);
     }
     vartab = malloc(vtablen*sizeof(struct var));
-printf("main~185 vartab %x",vartab);
+printf("main~185 vartab %x %d",vartab,vtablen);
+
+    btablen=BLOBTABLEN;
+    err = iProperty("pps/tc.prop", "BLOBTABLEN", &btablen, BLOBTABLEN);
+    if(err){
+    	fprintf(stderr,"pps/tc.prop err, allocating blob[%d]",BLOBTABLEN);
+    }
+    blobtab = malloc(vtablen*sizeof(struct var));
 }
 
 int main(int argc, char *argv[]) {
@@ -254,7 +261,7 @@ int main(int argc, char *argv[]) {
 
 	error=0;
 	prused = endapp+10;  /* a little slack */
-	nxtvar = 0;
+	nxtvar = vartab;
 	nxtstack = 0;
 	curfun = fun-1;   /* none */
 	logo(); 

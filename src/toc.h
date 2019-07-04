@@ -56,6 +56,7 @@
 
 #define VLEN 8
 #define VTABLEN 300
+#define BLOBTABLEN 30
 #define PRLEN 30000
 #define STACKLEN 100
 #define FUNLEN 100
@@ -96,6 +97,7 @@ int quiet;
 #define PTRERR		 28
 #define APPERR	     29 // lrb
 #define DIVERR		 30
+#define TMBLOBERR    31
 #define EXIT         98
 #define KILL         99
 
@@ -117,8 +119,8 @@ int nxtstack, stacklen;
 
 /* a fun entry */
 struct funentry {
-	int fvar,lvar;
-	char* prused;
+	struct var *fvar, *evar;
+	char *prused;
 };
 /* fun table */
 struct funentry *fun;
@@ -128,11 +130,14 @@ struct var {
 	char name[VLEN+1]; int class; Type type; int len; int brkpt;
 	union stuff value; 
 };
-/* variable table */
-struct var *vartab;
-int nxtvar, vtablen;
-/* sizes needed for each vartab, values area */
-struct lndata { int nvars; int valsize; } lndata;
+/* variable table, (active, local) */
+struct var *vartab, *nxtvar, *evar, *localvt, *localev;
+
+struct blob {
+	char name[VLEN+1]; struct varhdr *varhdr;
+};
+struct blob *blobtab, *nxtblob, *eblob;
+void newblob(char *blob);
 
 /* most recent function entered */
 char fcnName[VLEN+1];
