@@ -151,24 +151,30 @@ int doIncludes(char* fname) {
 int prlen, funlen, vtablen, btablen;
 void allocStuff() {
 	int err, size;
+/*	
+ *	program and locals value space
+ */
     prlen=PRLEN;
     err = iProperty("pps/tc.prop", "PRLEN", &prlen, PRLEN);
     if(err){
     	fprintf(stderr,"pps/tc.prop err, allocating pr[%d]",PRLEN);
     }
     pr = malloc(prlen);
-    EPR=pr+prlen;
-
+    EPR = pr+prlen;
+/*	
+ *	function table
+ */
     funlen=FUNLEN;
     err = iProperty("pps/tc.prop", "FUNLEN", &funlen, FUNLEN);
-//fprintf(stderr,"tcMain~237 funlen %d\n",funlen);
     if(err){
     	fprintf(stderr,"pps/tc.prop err, allocating fun[%d]",FUNLEN);
     }
     size = sizeof(struct funentry);
     fun = malloc(funlen*size);
     efun=fun+funlen*size;
-//fprintf(stderr,"~243 size,fun,efun-fun %d %d %d\n",size,fun,efun-fun);
+/*	
+ *	expression stack
+ */
     stacklen=STACKLEN;
     err = iProperty("pps/tc.prop", "STACKLEN", &stacklen, STACKLEN);
     if(err){
@@ -176,24 +182,50 @@ void allocStuff() {
     }
     stack = malloc(stacklen*sizeof(struct stackentry));
 
-    vtablen=VTABLEN;
-    err = iProperty("pps/tc.prop", "VTABLEN", &vtablen, VTABLEN);
-    if(err){
-    	fprintf(stderr,"pps/tc.prop err, allocating var[%d]",VTABLEN);
-    }
-    vartab = malloc(vtablen*sizeof(struct var));
-printf("main~185 vartab %x %d",vartab,vtablen);
-
+/*	
+ *	blob table
+ */
     btablen=BLOBTABLEN;
     err = iProperty("pps/tc.prop", "BLOBTABLEN", &btablen, BLOBTABLEN);
     if(err){
     	fprintf(stderr,"pps/tc.prop err, allocating blob[%d]",BLOBTABLEN);
     }
-    blobtab = malloc(vtablen*sizeof(struct var));
+    nxtblob = blobtab = malloc(btablen*sizeof(struct blob));
+    eblob = blobtab+btablen*sizeof(struct blob);
+//dumpBlTab(blobtab);
+
+/*	
+ *	local variable table PLUS space for their values
+ */
+ 	int locnumvars,locdatlen;
+    err = iProperty("pps/tc.prop", "LOCNUMVARS", &locnumvars, LOCNUMVARS);
+    if(err){
+    	fprintf(stderr,"pps/tc.prop err, continuing with local vartab len %d",LOCNUMVARS);
+    }
+    err = iProperty("pps/tc.prop", "LOCDATLEN", &locdatlen, LOCDATLEN);
+    if(err){
+    	fprintf(stderr,"pps/tc.prop err, continuing with local locdatlen %d",LOCDATLEN);
+    }
+    size=sizeof(struct varhdr)+locnumvars*sizeof(struct var)+locdatlen;
+//fprintf(stderr,"~%s %d:\n",__FILE__,__LINE__);
+    locals = malloc(size);
+//fprintf(stderr,"  ~ +2: locals,size %p %d\n",locals,size);
+    struct varhdr *vh = (struct varhdr*)locals;
+    _newblob("_Locals",locals);
+	memset(vh, 0, size); 
+//fprintf(stderr,"  ~ +6: sizeof(struct varhdr) %d\n",sizeof(struct varhdr));
+    vh->vartab = vh->nxtvar = vh->gltab = vh+1;
+    vh->val = vh->datused = vh->vartab + LOCNUMVARS;   // also serves as end of vartab
+    vh->endval = (char*)locals + size;
+//fprintf(stderr,"  ~ +12: vh->endval %p\n",vh->endval);
+dumpBV(locals); 
+//fprintf(stderr,"\nvh, vartab, nxtvar, val, datused, endval\n%d %d %d %d %d %d\n",
+//	vh, vh->vartab, vh->nxtvar, vh->val, vh->datused, vh->endval);
 }
 
 int main(int argc, char *argv[]) {
 	int opt,optopt,numIncs;
+	char *prused;   // end of seed
 
 	allocStuff();
 	strcpy(pr,startSeed);
@@ -258,17 +290,17 @@ int main(int argc, char *argv[]) {
 	markEndlibrary();
 	/* load the app */
 	loadCode(argv[argc-1]);
-
+// initialize: locals use legacy vartab, toclink() will do globals in a blob
 	error=0;
-	prused = endapp+10;  /* a little slack */
-	nxtvar = vartab;
-	nxtstack = 0;
+//	prused = endapp+10;  /* a little slack */
+//	nxtvar = vartab;
+//	nxtstack = 0;
 	curfun = fun-1;   /* none */
 	logo(); 
 	toclink();
 	cursor=pr;
 	prbegin();
-	st(vartab);   /* <<<== executes statement above, line 10 */
+	st();   /* <<<== executes statement above, line 15 */
 	prdone();
 	whatHappened();
     return 0;

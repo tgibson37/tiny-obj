@@ -95,7 +95,7 @@ struct brk *find_b(char *sym) {
 
 /* print description and value of variable v */
 void printVar(struct var *v) {
-	printf("\n4~88\n var %d: %s %d %s %d ", (int)(v-vartab),
+	printf("\n4~88\n var %p: %s %d %s %d ", (int)(v),
 		(*v).name, (*v).class, typeToWord((*v).type), (*v).len );
 		print_val(v);
 }
@@ -131,8 +131,10 @@ void db_brkset(char *sym) {
 void db_dump(char* param) {
 	int kase=*param;
 	switch(kase){
-	case 'f': dumpFun(); printf("\n"); break;
-	case 'v': dumpVarTab(vartab); printf("\n"); break;
+	case 'f': dumpFun(); printf("\n"); 
+		break;
+	case 'v': //dumpVarTab(vartab); printf("\n"); 
+		break;
 	default: printf("d needs f (fcn table) or v (var table) parameter");
 	break;
 	}

@@ -246,7 +246,7 @@ void varalloc(Type type, union stuff *vpassed, struct var *vartab) {
  * Gets actual value of arg, calls valloc which parses and sets
  * up local with the passed value.
  */ 
-void _setArg( Type type, struct stackentry *arg, struct var *vartab ) {
+void _setArg( Type type, struct stackentry *arg, struct var *locals ) {
 	union stuff vpassed  = (*arg).value;
 	char* where;
 	int class = (*arg).class;
@@ -262,7 +262,7 @@ void _setArg( Type type, struct stackentry *arg, struct var *vartab ) {
 			/* ui to clear high order byte */
 	}
 //fprintf(stderr,"\n~295SA type %d passed %d", type, vpassed.ui);
-	varalloc( type, &vpassed, vartab);
+	varalloc( type, &vpassed, locals);
 }
 
 /*	SITUATION: Just parsed symbol with class 'E', or special symbol MC.
@@ -274,7 +274,7 @@ void _setArg( Type type, struct stackentry *arg, struct var *vartab ) {
  *	cursor.
  */
 
-void _enter( char* where,struct var *vartab) {
+void _enter( char* where) {
 	int arg=nxtstack;
 	int nargs=0;
 	if(varargs>0) nargs=varargs-1;
@@ -317,7 +317,7 @@ void _enter( char* where,struct var *vartab) {
 			_rem();
 			if(_lit(xint)) { 
 				do {
-					_setArg(Int, &stack[arg],vartab);
+					_setArg(Int, &stack[arg],locals);
 					arg++;
 				} while(_lit(xcomma));
 				_lit(xsemi); /* optional */
@@ -325,7 +325,7 @@ void _enter( char* where,struct var *vartab) {
 			else if ( _lit(xchar)) {
 				do {
 //fprintf(stderr," ~358CHAR ");
-					_setArg(Char, &stack[arg],vartab);
+					_setArg(Char, &stack[arg],locals);
 					arg++;
 				} while(_lit(xcomma));
 				_lit(xsemi);
@@ -350,7 +350,7 @@ void _enter( char* where,struct var *vartab) {
 				--nargs;
 			}
 		}
-		if(!error)st(vartab);     /*  <<-- execute fcn's body */
+		if(!error)st();     /*  <<-- execute fcn's body */
 		if(!leave)pushzero();
 		leave=0;
 		cursor=localcurs;
@@ -596,9 +596,9 @@ void _factor() {
 		cursor = lname+1;
 		int where, len, class, obsize, stuff;
 		if( _symNameIs("MC") ) { 
-			_enter(0, vartab); return;
+			_enter(0); return;
 		} else {
-			struct var *v = addrval(vartab);  /* looks up symbol */
+			struct var *v = addrval();  /* looks up symbol */
 			if( !v ){ eset(SYMERR); return; } /* no decl */
 		  	char* where = (*v).value.up;
 		  	int integer =  (*v).value.ui; 
@@ -607,7 +607,7 @@ void _factor() {
 	  		int type=(*v).type; 
 	  		int obsize = typeToSize(class,type);
 	  		int len=(*v).len;
-		  	if( class=='E' ) _enter(where, vartab);  /* fcn call */
+		  	if( class=='E' ) _enter(where);  /* fcn call */
 			else {   /* is var name */
 				if( _lit(xlpar) ) {		       /* is dimensioned */
 			  		if( !class ) {   /* must be class>0 */
@@ -727,7 +727,7 @@ int _decl(struct var *vartab) {
 
 /* st(): interprets a possibly compound statement
  */
-void st(struct var *vartab) {
+void st() {
 	char *whstcurs, *whcurs, *objt, *agin ;
 	brake=0;
 
@@ -735,7 +735,7 @@ void st(struct var *vartab) {
 	_rem();
 	stbegin();
 	stcurs = cursor;
-	if(_decl(vartab)){
+	if(_decl(locals)){
 		_rem();
 		return;
 	}
@@ -747,13 +747,13 @@ void st(struct var *vartab) {
 				_rem();
 				return;
 			}
-			st(vartab);
+			st();
 		}
 	}
 	else if(_lit(xif)) {
 		if(_asgn()) {
 			if(toptoi()) {
-				st(vartab);
+				st();
 				_rem();
 				if(_lit(xelse)) {
 					_skipSt();
@@ -763,7 +763,7 @@ void st(struct var *vartab) {
 				_skipSt();
 				_rem();
 				if(_lit(xelse)) {
-					st(vartab);
+					st();
 				}
 			}
 			_rem();
@@ -780,7 +780,7 @@ void st(struct var *vartab) {
 	or object */ 
 			agin = stcurs;
 			objt = cursor;
-			st(vartab);
+			st();
 
 			if(brake) {
 				cursor = objt;	/* break: done with the while */

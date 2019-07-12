@@ -54,13 +54,14 @@
 #define RIGHTARROW -67
 #define LEFTARROW -68
 
-#define VLEN 8
-#define VTABLEN 300
+#define VLEN 15
 #define BLOBTABLEN 30
 #define PRLEN 30000
 #define STACKLEN 100
 #define FUNLEN 100
 #define MAX_UNIT 10
+#define LOCNUMVARS 100
+#define LOCDATLEN 1000
 
 /* debug and verbosity tags */
 #define VE 0
@@ -120,7 +121,7 @@ int nxtstack, stacklen;
 /* a fun entry */
 struct funentry {
 	struct var *fvar, *evar;
-	char *prused;
+	char *datused;
 };
 /* fun table */
 struct funentry *fun;
@@ -130,9 +131,16 @@ struct var {
 	char name[VLEN+1]; int class; Type type; int len; int brkpt;
 	union stuff value; 
 };
-/* variable table, (active, local) */
-struct var *vartab, *nxtvar, *evar, *localvt, *localev;
 
+/* blob header */
+struct varhdr {
+	struct var *vartab; struct var *gltab; struct var *nxtvar; 
+	char *val; char *endval; char *datused; 
+};
+struct varhdr *locals, *globals;
+/* sizes needed for each vartab, values area */
+struct lndata { int nvars; int valsize; } lndata;
+/* blob table */
 struct blob {
 	char name[VLEN+1]; struct varhdr *varhdr;
 };
@@ -144,17 +152,15 @@ char fcnName[VLEN+1];
 void saveName();
 
 /* program space */
-char* pr;
-char *lpr, *apr, *endapp, *prused, *EPR;
+char *pr;
+char *lpr, *apr, *endapp, *EPR;
 
 /* EPR is end of program SPACE. 
- *	pr starts with startSeed, then libs, then app, then values
+ *	pr starts with startSeed, then libs, then app
  *	lpr is start of libraries
  *	apr is start of application program
- *	endapp is end of ALL program text, 
- *	endapp+10 start of value space
- *	prused includes values, moves up/down with fcn entry/leaving
- *	EPR is pointer to last byte of pr array
+ *	endapp is end of ALL program text
+ *	EPR is pointer just beyond last byte of pr array 
  */
 
 /************ Globals **************/
@@ -197,11 +203,11 @@ void pc(char c);
 char* find( char *from, char *upto, char c);
 void newfun();
 void fundone();
-void newvar( int class, Type type, int len, union stuff *passed, struct var *vartab );
+void newvar(int class, Type type, int len, union stuff *passed, struct varhdr *vh );
 struct var* addrval();
 void canon(struct var *v);
 int quit();
-void st(struct var *vartab);
+void st();
 void machinecall();
 char* typeToWord(Type t);
 void dumpVal(Type t, int class, union stuff *val, char lval);
@@ -213,7 +219,7 @@ void dumpStack();
 void dumpPopTop();
 void dumpTop();
 void dumpVar(struct var *v);
-void dumpVarTab(struct var *vartab);
+void dumpVarTab(struct varhdr *vh);
 void dumpHex( void* where, int len );
 void dumpState();
 void dumpName();
@@ -240,7 +246,7 @@ void whatHappened();
 void tcUsage();
 void br_hit(struct var *v);
 void pft(char *from, char *to );
-  /* All these two do is prevent warnings from compiler */
+  /* All these do is prevent warnings from compiler */
 int Mchrdy();
 int Mgch(int,int*);
 int _asgn();
