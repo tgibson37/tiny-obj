@@ -56,13 +56,14 @@ int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
 /* allocates memory for value of v, return 0 on success, else !0
  */
 int _allocSpace(struct var *v, int amount, struct varhdr *vh){
-	if( vh->datused+amount > EPR ) {
+	if( vh->datused+amount > vh->endval ) {
 		eset(TMVLERR);
 		return TMVLERR;
 	}
 	v->value.up = vh->datused;
 	memset( vh->datused, 0, amount );
 	vh->datused += amount;
+//fprintf(stderr,"\n%s~%d amount %d ",__FILE__,__LINE__,amount);
 	return 0;
 }
 /* SITUATION: Declaration is parsed, and its descriptive data known.
@@ -77,7 +78,9 @@ void newvar( int class, Type type, int len, union stuff *passed, struct varhdr *
 		lndata.valsize += len*obsize;
 		return;
 	}
-//printf("var~105 nxtvar len %d %d\n",nxtvar,nxtvar-vh);
+//fprintf(stderr,"\n%s~%d len,obsize %d %d ",__FILE__,__LINE__,len,obsize);
+//dumpft(fname,lname);
+//fprintf(stderr,"  ~+1 nxtvar nx-tb %p %d\n",vh->nxtvar,vh->nxtvar-vh->vartab);
 	struct var *v = vh->nxtvar;
 	canon(v);    /* sets the canon'd name into v */
 	(*v).class = class;
@@ -88,7 +91,7 @@ void newvar( int class, Type type, int len, union stuff *passed, struct varhdr *
 	if(passed) _copyArgValue( v, class, type, passed);
 	if(curfun>=fun) curfun->evar = vh->nxtvar;
 	if( vh->nxtvar++ >= vh->val )eset(TMVRERR);
-fprintf(stderr,"~122 nxtvar,evar,error %p %p %d    ",vh->nxtvar,vh->val,error);
+//fprintf(stderr,"~122 nxtvar,evar,error %p %p %d    ",vh->nxtvar,vh->val,error);
 	if(verbose[VV])dumpVar(v);
 	return;
 }
@@ -145,6 +148,8 @@ struct var* _addrval(char *sym, struct var *first, struct var *last) {
 /* 	looks up a symbol at three levels via function table
  */
 struct var* addrval_all(char *sym) {
+fprintf(stderr,"\n%s~%d sym %s ",__FILE__,__LINE__,sym);
+dumpft(fname,lname);
 	struct var *v;
 	v = _addrval( sym, curfun->fvar, curfun->evar );
 	if(!v) v = _addrval( sym, curglbl->fvar, curglbl->evar );
@@ -230,7 +235,7 @@ void dumpBlob(struct varhdr *vh){
 
 void dumpBV(struct varhdr *vh){ 
 	dumpBlob(vh); 
-	dumpVarTab(vh->vartab);
+	dumpVarTab(vh);
 }
 
 // Enters blob into blobtab. 
@@ -294,10 +299,12 @@ void lnpass12(char *from, char *to, struct varhdr *varhdr) {
 	char* savedEndapp=endapp;
 	char* savedCursor=cursor;
 	struct var *vartab;
-	if(varhdr==NULL)vartab=NULL;   // pass 1 
-	else {
-fprintf(stderr,"~%s %d:\n",__FILE__,__LINE__);
-dumpBlob(varhdr);
+	if(varhdr==NULL){
+		vartab=NULL;   // pass 1 
+		xxpass=1;
+	} else {
+		vartab=varhdr->vartab;
+		xxpass=2;
 		newfun();
 	}
 /*	check Brackets from cursor to limit*/
@@ -310,7 +317,7 @@ dumpBlob(varhdr);
 		char* lastcur = cursor;
 		_rem();
 		if(_lit(xlb)) _skip('[',']');
-		else if( _decl(vartab) ) ;
+		else if( _decl(varhdr) ) ;
 		else if( _lit(xendlib) ){
 			if(varhdr != NULL){     //  <<==  PASS TWO endlibrary
 				if(curfun==fun) {   /* 1st endlib, assume app globals follow */
@@ -320,14 +327,12 @@ dumpBlob(varhdr);
 				else {        // multiple endlib tolerance, undo the assumption
 					fun[0].evar = fun[1].fvar = varhdr->nxtvar;
 				}
-				varhdr->gltab = varhdr->nxtvar;
+				varhdr->gltab = varhdr->nxtvar;  // start (or start over) on fun[1]
 			}
 		}
 		else if(_symName()) {     /* fctn decl */
-			union stuff kursor;
-			kursor.up = cursor = lname+1;
-			newvar('E',2,1,&kursor,vartab);
-			if(varhdr && (!error))varhdr->nxtvar++;   //keep sync'd with global nxtvar
+//fprintf(stderr,"~%s %d: xxpass,vartab %d %p\n",__FILE__,__LINE__,xxpass,vartab);
+			newvar('E',2,0,0,varhdr);
 			if( (x=_mustFind(cursor, endapp, '[',LBRCERR)) ) {
 				cursor=x+1;
 				_skip('[',']');
@@ -346,7 +351,7 @@ dumpBlob(varhdr);
 
 /*	build its vartab, make entry into owner's vartab
  */
-void classlink(struct var *vartab){
+void classlink(struct var *varhdr){
 	return;   // model for this in Resources link.c/h
 }
 
@@ -367,21 +372,19 @@ void* lnlink(char *from, char *to){
         endapp=to;
         lndata.nvars = lndata.valsize = 0;
         lnpass12(from,to,NULL);    // PASS one
-fprintf(stderr,"~%s %d:\n",__FILE__,__LINE__);
-fprintf(stderr,"  ~ +1: lndata: %d %d",lndata.nvars,lndata.valsize);
         size = sizeof(struct varhdr) + lndata.nvars*sizeof(struct var) + lndata.valsize;
         blob = vh = malloc(size);
         _newblob("_Globals",blob);
 		memset(vh, 0, size);
-        vh->vartab = vh->nxtvar = blob + sizeof(struct varhdr);
-        vh->datused = vh->val = vh->vartab + lndata.nvars*sizeof(struct var);
+        vh->vartab = vh->nxtvar = vh->gltab = vh+1;
+        vh->val = vh->datused = vh->vartab + lndata.nvars;
         vh->endval = blob + size;
 		cursor=from;
 fprintf(stderr,"\npass ONE done, sizeof var %d\n\n",sizeof(struct var));
-dumpBlob(blob);
+dumpBV(blob);
         lnpass12(from,to,blob);    // PASS two
 fprintf(stderr,"\npass TWO done\n\n");
-dumpBlob(blob);
+dumpBV(blob);
         cursor=savedcursor;
         endapp=savedendapp;
         return blob;

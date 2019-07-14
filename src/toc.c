@@ -15,6 +15,7 @@ int varargs = 0;
 
 /* stored size of one datum */
 int typeToSize( int class, Type type ) {
+	if(type=='E')return 0;
 	if(type==Char)return 1;
 	else if(type==Int)return sizeof(int);
 	else eset(TYPEERR);
@@ -219,7 +220,7 @@ void _rem() {
 /* 	SITUATION: int or char is parsed.
  *	Parses one variable. Makes allocation and symbol entry.
  */
-void varalloc(Type type, union stuff *vpassed, struct var *vartab) {
+void varalloc(Type type, union stuff *vpassed, struct varhdr *vh) {
 	if( !_symName() ) {		/*defines fname,lname. True is match.*/
 		eset(SYMERR);
 		return;
@@ -238,7 +239,7 @@ void varalloc(Type type, union stuff *vpassed, struct var *vartab) {
 		vclass = 0;
 		alen = 1;
 	}
-	newvar(vclass, type, alen, vpassed, vartab);
+	newvar(vclass, type, alen, vpassed, vh);
 }
 
 /* Situation: parsing argument declarations, passed values are on the stack.
@@ -706,18 +707,19 @@ int quit() {
  *	if not a declaration statement, true if it is. Leaves cursor just past
  *  optional semi. 
  */
-int _decl(struct var *vartab) { 
+int _decl(struct varhdr *vh) { 
+//fprintf(stderr,"\n~%s %d (_decl): vartab %p\n",__FILE__,__LINE__,vh->vartab);
 	Type t;
 	if( _lit(xchar) ) {
 		do {
-			varalloc( Char, 0, vartab );  /* 2nd arg is vpassed */
+			varalloc( Char, 0, vh );  /* 2nd arg is vpassed */
 		} while( _lit(xcomma) );
 	} else if( _lit(xint) ) {
 		do {
-			varalloc( Int, 0, vartab );  /* 2nd arg is vpassed */
+			varalloc( Int, 0, vh );  /* 2nd arg is vpassed */
 		} while( _lit(xcomma) );
 	} else if ( _lit(xclass)) {
-		classlink(vartab);  // 
+		classlink(vh);  // 
 	} else {
 		return 0;  /* not decl */
 	}

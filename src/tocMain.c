@@ -192,7 +192,6 @@ void allocStuff() {
     }
     nxtblob = blobtab = malloc(btablen*sizeof(struct blob));
     eblob = blobtab+btablen*sizeof(struct blob);
-//dumpBlTab(blobtab);
 
 /*	
  *	local variable table PLUS space for their values
@@ -207,20 +206,13 @@ void allocStuff() {
     	fprintf(stderr,"pps/tc.prop err, continuing with local locdatlen %d",LOCDATLEN);
     }
     size=sizeof(struct varhdr)+locnumvars*sizeof(struct var)+locdatlen;
-//fprintf(stderr,"~%s %d:\n",__FILE__,__LINE__);
     locals = malloc(size);
-//fprintf(stderr,"  ~ +2: locals,size %p %d\n",locals,size);
     struct varhdr *vh = (struct varhdr*)locals;
     _newblob("_Locals",locals);
 	memset(vh, 0, size); 
-//fprintf(stderr,"  ~ +6: sizeof(struct varhdr) %d\n",sizeof(struct varhdr));
     vh->vartab = vh->nxtvar = vh->gltab = vh+1;
     vh->val = vh->datused = vh->vartab + LOCNUMVARS;   // also serves as end of vartab
     vh->endval = (char*)locals + size;
-//fprintf(stderr,"  ~ +12: vh->endval %p\n",vh->endval);
-dumpBV(locals); 
-//fprintf(stderr,"\nvh, vartab, nxtvar, val, datused, endval\n%d %d %d %d %d %d\n",
-//	vh, vh->vartab, vh->nxtvar, vh->val, vh->datused, vh->endval);
 }
 
 int main(int argc, char *argv[]) {
