@@ -88,6 +88,7 @@ void whatHappened() {
 		while((*(fc+firstSignif))==' ' ||(*(fc+firstSignif))=='\t' )
 			 ++firstSignif;
 		lc=lchar(errat);
+		if(lc>endapp)lc=endapp;
 		pft(fc,lc);
 		printf("\n");
 		pft(fc,fc+firstSignif-1);        /* leading whitespace */

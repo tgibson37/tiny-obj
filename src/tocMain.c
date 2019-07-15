@@ -287,7 +287,7 @@ int main(int argc, char *argv[]) {
 //	prused = endapp+10;  /* a little slack */
 //	nxtvar = vartab;
 //	nxtstack = 0;
-	curfun = fun-1;   /* none */
+	curfun = fun-1;
 	logo(); 
 	toclink();
 	cursor=pr;

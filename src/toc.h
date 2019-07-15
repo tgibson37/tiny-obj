@@ -140,6 +140,7 @@ struct varhdr {
 struct varhdr *locals, *globals;
 /* sizes needed for each vartab, values area */
 struct lndata { int nvars; int valsize; } lndata;
+
 /* blob table */
 struct blob {
 	char name[VLEN+1]; struct varhdr *varhdr;
@@ -201,7 +202,7 @@ void pl(char* s);
 int  pn(int n);
 void pc(char c);
 char* find( char *from, char *upto, char c);
-void newfun();
+void newfun(struct varhdr *vh);
 void fundone();
 void newvar(int class, Type type, int len, union stuff *passed, struct varhdr *vh );
 struct var* addrval();

@@ -1,15 +1,15 @@
 #include "toc.h"
 
-/* SITUATION: Function call parsed. 
-	Open new var and value frames for the functions locals.
+/* SITUATION: Function call parsed PLUS two calls during linking.
+	Open new var and value frames for library, globals, and function locals.
  */
-void newfun() {
+void newfun(struct varhdr *vh) {
 	if(++curfun>efun){
 		eset(TMFUERR);
 	} 
 	else {
-		curfun->fvar = curfun->evar = locals->nxtvar;
-		curfun->datused = locals->datused;
+		curfun->fvar = curfun->evar = vh->nxtvar;
+		curfun->datused = vh->datused;
 	}
 	if(verbose[VV]){
 		fflush(stdout);
@@ -63,7 +63,6 @@ int _allocSpace(struct var *v, int amount, struct varhdr *vh){
 	v->value.up = vh->datused;
 	memset( vh->datused, 0, amount );
 	vh->datused += amount;
-//fprintf(stderr,"\n%s~%d amount %d ",__FILE__,__LINE__,amount);
 	return 0;
 }
 /* SITUATION: Declaration is parsed, and its descriptive data known.
@@ -78,9 +77,6 @@ void newvar( int class, Type type, int len, union stuff *passed, struct varhdr *
 		lndata.valsize += len*obsize;
 		return;
 	}
-//fprintf(stderr,"\n%s~%d len,obsize %d %d ",__FILE__,__LINE__,len,obsize);
-//dumpft(fname,lname);
-//fprintf(stderr,"  ~+1 nxtvar nx-tb %p %d\n",vh->nxtvar,vh->nxtvar-vh->vartab);
 	struct var *v = vh->nxtvar;
 	canon(v);    /* sets the canon'd name into v */
 	(*v).class = class;
@@ -91,7 +87,6 @@ void newvar( int class, Type type, int len, union stuff *passed, struct varhdr *
 	if(passed) _copyArgValue( v, class, type, passed);
 	if(curfun>=fun) curfun->evar = vh->nxtvar;
 	if( vh->nxtvar++ >= vh->val )eset(TMVRERR);
-//fprintf(stderr,"~122 nxtvar,evar,error %p %p %d    ",vh->nxtvar,vh->val,error);
 	if(verbose[VV])dumpVar(v);
 	return;
 }
@@ -106,7 +101,6 @@ char* _canon(char* first, char* l, char* buff) {
 	while(f<=l && i<VLEN-1) buff[i++]=*(f++);
 	if(f<=l)buff[i++]=*l;
 	buff[i]=0;
-//printf("~129 %p <- %s ",buff,buff);
 	return buff;
 }
 
@@ -117,22 +111,8 @@ char* _canon(char* first, char* l, char* buff) {
 void canon(struct var *v) {
 	_canon(fname,lname,(*v).name);
 }
-#if 0
-	char* n=(*v).name;
-	while( n < ((*v).name)+VLEN ) *n++ = 0;
-	int len = lname-fname+1;
-	len = len>VLEN ? VLEN : len;
-	/* zap name field of v */
-	strncpy( (*v).name, fname, len );  /* pads with nulls if short */
-	(*v).name[8] = 0;     /* so long name canonicalized as a string */
-	int length = lname-fname+1;
-	if(length>VLEN) {
-		(*v).name[VLEN-1] = *lname; 
-	} 
-#endif
 
-
-/* 	looks up a symbol
+/* 	looks up a symbol at one level
  */
 struct var* _addrval(char *sym, struct var *first, struct var *last) {
 	struct var *pvar;
@@ -148,8 +128,6 @@ struct var* _addrval(char *sym, struct var *first, struct var *last) {
 /* 	looks up a symbol at three levels via function table
  */
 struct var* addrval_all(char *sym) {
-fprintf(stderr,"\n%s~%d sym %s ",__FILE__,__LINE__,sym);
-dumpft(fname,lname);
 	struct var *v;
 	v = _addrval( sym, curfun->fvar, curfun->evar );
 	if(!v) v = _addrval( sym, curglbl->fvar, curglbl->evar );
@@ -191,7 +169,7 @@ void dumpVal(Type t, int class, union stuff *val, char lval){
 }
 
 void dumpFunEntry( int e ) {
-	fprintf(stderr,"\n fun entry at %d:  %d %d %d", e,
+	fprintf(stderr,"\n fun entry at %d:  %p %p %p", e,
 		fun[e].fvar, fun[e].evar, (int)(fun[e].datused) );
 }
 
@@ -294,18 +272,18 @@ int checkBrackets(char *from, char *to) {
  *	The logic here mimics classical void link().
  */
 int xxpass=0;
-void lnpass12(char *from, char *to, struct varhdr *varhdr) {
+void lnpass12(char *from, char *to, struct varhdr *vh) {
 	char* x;
 	char* savedEndapp=endapp;
 	char* savedCursor=cursor;
 	struct var *vartab;
-	if(varhdr==NULL){
+	if(vh==NULL){
 		vartab=NULL;   // pass 1 
 		xxpass=1;
 	} else {
-		vartab=varhdr->vartab;
+		vartab=vh->vartab;
 		xxpass=2;
-		newfun();
+		newfun(vh);
 	}
 /*	check Brackets from cursor to limit*/
 	cursor=pr;
@@ -317,22 +295,23 @@ void lnpass12(char *from, char *to, struct varhdr *varhdr) {
 		char* lastcur = cursor;
 		_rem();
 		if(_lit(xlb)) _skip('[',']');
-		else if( _decl(varhdr) ) ;
+		else if( _decl(vh) ) ;
 		else if( _lit(xendlib) ){
-			if(varhdr != NULL){     //  <<==  PASS TWO endlibrary
+			if(vh != NULL){     //  <<==  PASS TWO endlibrary
 				if(curfun==fun) {   /* 1st endlib, assume app globals follow */
-					newfun();
+					newfun(vh);
 					curglbl=curfun;
 				}
 				else {        // multiple endlib tolerance, undo the assumption
-					fun[0].evar = fun[1].fvar = varhdr->nxtvar;
+					fun[0].evar = fun[1].fvar = vh->nxtvar;
 				}
-				varhdr->gltab = varhdr->nxtvar;  // start (or start over) on fun[1]
+				vh->gltab = vh->nxtvar;  // start (or start over) on fun[1]
 			}
 		}
 		else if(_symName()) {     /* fctn decl */
-//fprintf(stderr,"~%s %d: xxpass,vartab %d %p\n",__FILE__,__LINE__,xxpass,vartab);
-			newvar('E',2,0,0,varhdr);
+			union stuff kursor;
+			kursor.up = cursor = lname+1;
+			newvar('E',2,0,&kursor,vh);
 			if( (x=_mustFind(cursor, endapp, '[',LBRCERR)) ) {
 				cursor=x+1;
 				_skip('[',']');
@@ -351,7 +330,7 @@ void lnpass12(char *from, char *to, struct varhdr *varhdr) {
 
 /*	build its vartab, make entry into owner's vartab
  */
-void classlink(struct var *varhdr){
+void classlink(struct var *vh){
 	return;   // model for this in Resources link.c/h
 }
 
@@ -380,11 +359,12 @@ void* lnlink(char *from, char *to){
         vh->val = vh->datused = vh->vartab + lndata.nvars;
         vh->endval = blob + size;
 		cursor=from;
-fprintf(stderr,"\npass ONE done, sizeof var %d\n\n",sizeof(struct var));
-dumpBV(blob);
+//fprintf(stderr,"\npass ONE done\n\n");
+//dumpBV(blob);
         lnpass12(from,to,blob);    // PASS two
-fprintf(stderr,"\npass TWO done\n\n");
-dumpBV(blob);
+//fprintf(stderr,"\npass TWO done\n\n");
+//dumpBV(blob);
+//dumpFun();
         cursor=savedcursor;
         endapp=savedendapp;
         return blob;

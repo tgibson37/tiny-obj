@@ -313,7 +313,7 @@ void _enter( char* where) {
 //fprintf(stderr,"\n~342E BELOW: va %d na %d",varargs,nargs);
 		char *localstcurs=stcurs, *localcurs=cursor;
 		cursor = where;
-		newfun();  
+		newfun(locals);  
 		for(;;) {	  
 			_rem();
 			if(_lit(xint)) { 
