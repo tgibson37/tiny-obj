@@ -1,0 +1,25 @@
+
+// pieces.tc - lrb - Halloween 2007
+// based on a "99 bottles of beer on the wall" program in Mouse (99bot.mse)
+// made "fully recursive" - November 26
+
+int delay
+int foobar
+main [
+ int s
+ pl"Enter number of verses ";s=gn
+ ps"Enter delay in seconds between verses [0..3] ";delay=gn
+ pl"";verse s
+ ]
+
+verse int u [
+ sleep delay
+ if u [
+  printf "%d piece(s) of pumpkin pie on the shelf,%c",u,10
+  printf "%d piece(s) of pumpkin pie.%c",u,10
+  printf "If one of those pieces of pumpkin pie should happen to fall ...%c",10
+  printf "%d piece(s) of pumpkin pie on the shelf.%c%c",u-1,10,10
+  verse u-1 // recursive call
+  ]
+ ]
+

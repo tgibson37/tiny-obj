@@ -1,0 +1,26 @@
+#loadMC pigra
+#include PlugIns/PicaGraphics/pigra_lib.tc
+
+main [
+ blank
+ int p1,p2
+ p1=20
+ while p1<80 [
+  p2=20
+  while p2<80 [ 
+   line(p1,p2,0,79)
+   line(p1,p2,0,0)
+   line(p1,p2,79,0)
+   line(p1,p2,79,79)
+   line(79,0,79,79)
+   line(79,79,0,79)
+   line(0,79,0,0)
+   line(0,0,79,0)
+   show
+   sleep(1)
+   blank
+   p2=p2+10
+   ]
+  p1=p1+10
+ ]
+]

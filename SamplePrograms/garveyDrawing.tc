@@ -1,0 +1,12 @@
+#include pps/lineLib.tc
+#include pps/mathLib.tc
+#include pps/pyGraphicsLib.tc
+#include pps/library.tc
+
+//garveyDrawing.tc
+
+main[
+	start "garvey_drawing", 600,700
+	raster 600,700,100,1
+	show
+]

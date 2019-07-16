@@ -1,0 +1,19 @@
+#include lrblib.tc
+#include pps/library.tc
+
+// veile.tc - lrb - 6/1/18
+
+main [veile]
+
+veile [
+ char s(100),t(100);int n
+ printf "%cveile.tc - lrb - 6/1/18%c",10,10
+ printf "%cEnter a number (0..4) : ",10;n=gn
+ if ((n>=0)*(n<=4)) printf "%c%s",10,url(n,s)
+ else [printf "%cYour bad. You didn't follow directions!%c",10,10;abort]
+ getprop "pps/version.prop","date =",t,100,"..."
+ printf "%c%ctinyC build date is %s",10,10,t
+ getprop "pps/version.prop","os =",t,100,"..."
+ printf"%c%cThe operating system is %s",10,10,t
+ printf "%c",10
+ ]

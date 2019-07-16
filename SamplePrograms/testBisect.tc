@@ -1,0 +1,226 @@
+#include pps/lineLib.tc
+#include pps/mathLib.tc
+#include pps/library.tc
+#include pps/pyGraphicsLib.tc
+
+// NOTE TO READER: several main/seed/test functions. Some renamed with 
+// leading x. Do a specific test by removing the x (or y or z) from 
+// one main, commenting out the DO EVERYTHING main at the end.
+// Further select the actual test(s) of interest 
+// by covering test calls with comment flag.
+
+// This file has 2/20/2019 version of parallel, bisectseg, bisect with
+// comments and imbedded debug code. They are renamed with leading x
+// so the actual test code wont call them, but rather call the
+// lineLib.tc version. The library versions are stripped of comments
+// and test code.
+
+//////////////  SUBJECTs of tests
+// Return true if two segments are parallel
+xparallel int a(3),b(3) [
+	return _parallel a(0),a(1),a(2),a(3),b(0),b(1),b(2),b(3)
+]
+x_parallel int ax0,ay0,ax1,ay1, bx0,by0,bx1,by1 [
+    int day,dax,dby,dbx,aslope,bslope
+    dax = ax1-ax0; day = ay1-ay0; dbx = bx1-bx0; dby = by1-by0
+    if(dax==0) [             // a vertical, 
+    	if(dbx==0) return 1      // both vertical
+    	else return 0            // b slopes
+    ] else [                 // a slopes
+    	if(dbx==0) return 0      // b vertical
+    ]
+    aslope = 1000*day/dax; bslope = 1000*dby/dbx  // both slope
+    if(aslope==bslope) return 1         // parallel
+    return 0
+]
+
+// set a point bsect that bisects the angle between sega,segb.
+// assumes the angle is defined by sega's first point, the
+// intersection, and segb's last point. The returned point bsect has
+// distance 1000 from the returned intersection, icntr.
+xbisectseg int bsect(1), icntr(1), sega(3),segb(3) [
+		int dbg; dbg=0
+	int xret, segin(3),segout(3), ptout(1),ptin(1)
+	xret = _xersect icntr,sega(0),sega(1),sega(2),sega(3),segb(0),segb(1),segb(2),segb(3)
+	if(xret)return xret   // parallel, no angle
+	bisect bsect, sega(0),sega(1),icntr(0),icntr(1),segb(2),segb(3)
+]
+
+// given 3 points, begin,middle,end, set the point bsect to
+// bisect the angle at middle.
+xbisect int bsect(1), b0,b1,m0,m1,e0,e1 [
+		int dbg;dbg=1
+	int segin(3), segout(3), ptout(1),ptin(1),inoutlen
+	setsegment segin, m0,m1,b0,b1       //both segs middle outwards
+	setsegment segout, m0,m1,e0,e1
+		if(dbg)[pl"    segin,segout";psegment(segin);psegment(segout)]
+	if(parallel(segin,segout)) return -1
+	extend ptin,  segin,  500
+	extend ptout, segout, 500
+	inoutlen = alen(ptin(0),ptin(1),ptout(0),ptout(1))
+		if(dbg)[pl"    ptin,ptout,len";
+			ppoint(ptin);ppoint(ptout);
+			pn inoutlen
+		]
+	if(inoutlen<=800)[
+		bsect(0) = (ptout(0)+ptin(0))/2
+		bsect(1) = (ptout(1)+ptin(1))/2
+		return 0
+	] else [
+		if(dbg) [
+			pl"OBTUSE   segin, segout "
+			psegment segin
+			psegment segout
+		]
+		reverseseg segin; reverseseg segout
+		if(dbg)[
+			pl"reversed segin, segout "
+			psegment segin
+			psegment segout
+			pl"both now point inwards"
+		]
+		int in90(1), out90(1)
+		_corner90 in90, segin(0), segin(1), segin(2), segin(3), -1
+		_corner90 out90, segout(0), segout(1), segout(2), segout(3), 1
+		if(dbg)[
+			int midpt(1); setpoint(midpt,m0,m1)
+			pl"new acute angle "
+			ppoint in90
+			ppoint midpt
+			ppoint out90
+			int duw; duw = drawing_under_way
+			if(duw)[
+				setsegment segin,  midpt(0), midpt(1), in90(0), in90(1)
+				setsegment segout, midpt(0), midpt(1), out90(0), out90(1)
+				pl"   ~313"
+				showtext "   ~313"
+				drawseg segin
+				drawseg segout
+			]
+		]
+		return bisect(bsect,in90(0),in90(1),m0,m1,out90(0),out90(1))
+	]
+]
+
+
+//////////  TEST CODE
+// x TESTS FOR parallel (just main, no seed or test fcn)
+xmain[
+	int sega(3), segb(3)
+	ps"parallel test"
+	pn _parallel(20,20,60,00,20,50,60,30)  // parallel and slope
+	pn _parallel(20,20,60,00,20,50,60,29)  // not by one pixel
+	pn _parallel(20,20,60,00,20,50,60,31)  // ditto
+	pn _parallel(1,1,1,5,2,1,2,5)  // both vert
+	pn _parallel(1,1,1,5,2,1,12,5) // a vert
+	pn _parallel(1,1,2,5,2,1,2,5)  // b vert
+	pn _parallel(1,1,2,5,2,1,3,5)  // both slope, parallel
+	setsegment(sega,20,20,60,00)
+	setsegment(segb,20,50,60,30)
+	pn parallel(sega,segb)  // parallel and slope
+	segb(3) = segb(3)-1
+	pn parallel(sega,segb)  // not by one pixel
+	pl"SHOULD GET    1 0 0 1 0 0 1 1 0"
+	pl"reverseseg test"
+	pl"";psegment sega
+	reverseg sega
+	pl"";psegment sega
+]
+
+// y TESTS FOR bisectseg (test, seed, and main fcns)
+ytest int sega(3),segb(3) [
+	int bsect(1), icntr(1), prll
+	pl"segs a:"; psegment sega
+	ps" b:"; psegment segb
+	prll=bisectseg bsect, icntr, sega, segb
+	if(prll)pl"parallel segs"
+	pl"        bsect "; ppoint bsect
+
+	start "bisect_test", 1000,1000
+	moveto sega(0),sega(1)
+	lineto sega(2),sega(3)
+	moveto segb(0),segb(1)
+	lineto segb(2),segb(3)
+	next
+	arc bsect(0),bsect(1),5,0,360
+	stroke
+	moveto icntr(0), icntr(1)
+	setdash2 5,3,5
+	lineto bsect(0),bsect(1)
+	show
+]
+yseed int a,b,c,d, e,f,g,h[
+	int sega(3), segb(3)
+	setsegment sega, a,b,c,d
+	setsegment segb, e,f,g,h
+	ytest sega, segb
+]
+ymain [
+	yseed 10,100,10,20, 20,10,100,10
+	pl"    SHOULD BE ";ps"[ 260 260]"
+	yseed 50,50,100,100, 10,50,10,100
+	pl"    SHOULD BE ";ps"[ 187 437]"
+	yseed 110,130,140,110, 140,110,150,130
+	pl"    SHOULD BE ";ps"[ 51 483]"
+]
+
+// z TESTS FOR point bisect (main and test, no seed)
+zmain[
+	factor = 1
+	ztest 100,400,100,100,400,100
+	pl"SHOULD BE [ 350 350]"
+	ztest 100,400,250,100,400,400
+	pl"SHOULD BE [ 250 548]"
+	ztest 200,100,500,250,200,400
+	pl"SHOULD BE [ 52 250]"
+	ztest 100,100,250,500,400,100
+	pl"SHOULD BE [ 250 32]"
+	ztest 400,100,100,400,500,150
+	pl"SHOULD BE [ 489 90]"
+	ztest 100,400,100,100,400,100
+	pl"SHOULD BE [ 350 350]"
+]
+int factor
+// c,d is the angle point
+ztest int a,b,c,d,e,f [
+	int bsect(1), segbisect(3)
+	start "pt_bisect", 1000, 600
+	pl"points, begin,mid,end "; pn a; pn b; pn c; pn d; pn e; pn f
+	bisect bsect,a,b,c,d,e,f
+	pl"    bsect ";ppoint bsect
+	moveto a,b; lineto c,d; lineto e,f
+	stroke
+		// w test cases: extend the bisect line by big factor
+	setsegment segbisect, c,d,bsect(0),bsect(1)  //needs to be a seg
+	pl "bisect line len before extending"
+	pn seglen(segbisect)
+	_extend bsect, segbisect, factor
+
+	moveto c,d; 
+	lineto bsect(0),bsect(1)
+	arc bsect(0),bsect(1), 5, 0, 360  // the point
+
+	setdash2 5,3,5       // the dashed bisect line
+	show
+]
+// compute point ix that would extend seg's length by a factor,
+// _extend int ix(1), seg(3), fac
+
+// w TESTS FOR obtuse angles, uses  ztest
+wmain [
+	factor = 100
+	ztest 10,310, 160,157, 310,10
+	pl"   10,310, 160,157, 310,10"
+	ztest 10,310, 210,158, 410,30
+	pl"   10,310, 210,158, 410,30"
+	ztest 10,310, 210,158, 410,20
+	pl"   10,310, 210,158, 410,20"
+]
+
+// TESTS EVERYTHING
+main [ 
+//	wmain  // obtuse
+//	xmain  // parallel, no pics
+	ymain  // 2 seg args
+//	zmain  // 3 point args
+]

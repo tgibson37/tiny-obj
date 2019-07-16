@@ -1,0 +1,175 @@
+#include pps/pyGraphicsLib.tc
+#include pps/mathLib.tc
+#include pps/lineLib.tc
+#include pps/library.tc
+//#include pps/oldnames.tc
+				int dbg
+//AdamHyler.tc, draws replica of Santos's painting
+// points: 
+//      Extremities of 6 spars (sticks)
+int Map(1),Mas(1),Mzp(1),Mzs(1)		// Mast,  main|mizzen, peak|step
+int Sap(1),Sab(1),Szp(1),Szb(1)		// Sprit, main|mizzen, peak|butt
+int Bat(1),Bac(1),Bzt(1),Bzc(1)		// Boom,  main|mizzen, tack|clew
+
+// segments (lines): 
+//      sticks
+int Ma(3), Mz(3), Sa(3), Sz(3), Ba(3), Bz(3)
+
+init1[      // Masts, Sails, Boom
+	setpoint(Map,367,130)
+	setpoint(Mas,415,522)
+	setsegpt(Ma,Map,Mas)
+	setpoint(Mzp,207,265)
+	setpoint(Mzs,215,528)
+	setsegpt(Mz,Mzp,Mzs)
+	setpoint(Sap,230,005)
+	setpoint(Sab,408,410)
+	setsegpt(Sa,Sap,Sab)
+	setpoint(Szp,050,150)
+	setpoint(Szb,215,395)
+	setsegpt(Sz,Szp,Szb)
+	setpoint(Bat,410,473)
+	setpoint(Bac,150,462)
+	setsegpt(Ba,Bat,Bac)
+	setpoint(Bzt,212,463)
+	setpoint(Bzc,008,440)
+	setsegpt(Bz,Bzt,Bzc)
+]
+drawPoints1[
+	moveto1 Map; dotpt Map;showtext "Map"
+	moveto1 Mas; dotpt Mas;showtext "Mas"
+	moveto1 Mzp; dotpt Mzp;showtext "Mzp"
+	moveto1 Mzs; dotpt Mzs;showtext "Mzs"
+	moveto1 Sap; dotpt Sap;showtext "Sap"
+	moveto1 Sab; dotpt Sab;showtext "Sab"
+	moveto1 Szp; dotpt Szp;showtext "Szp"
+	moveto1 Szb; dotpt Szb;showtext "Szb"
+	moveto1 Bat; dotpt Bat;showtext "Bat"
+	moveto1 Bac; dotpt Bac;showtext "Bac"
+	moveto1 Bzt; dotpt Bzt;showtext "Bzt"
+	moveto1 Bzc; dotpt Bzc;showtext "Bzc"
+]
+
+drawSticks1[
+	setrgb 171,145,63
+	drawseg Ma
+	drawseg Mz
+	drawseg Sa
+	drawseg Ba
+	drawseg Bz
+	stroke
+]
+drawSticks2[
+	setrgb 171,145,63
+	drawseg Sz
+	stroke
+]
+drawSails1[
+	setrgb 160,80,80
+	int szp(1),bzc(1),bzt(1),mzp(1)
+	offset(szp,Szp,5,10)
+	offset(bzc,Bzc,10,2)
+	offset(bzt,Bzt,-10,-5)
+	offset(mzp,Mzp,-5,10)
+	arcbow szp,bzc,20
+	lineto1 bzt
+	lineto1 mzp
+	lineto1 szp
+	fill
+]
+drawSails2[
+	int sap(1),bac(1),bat(1),map(1)
+	setrgb 160,80,80
+	offset(sap,Sap,5,10)
+	offset(bac,Bac,10,2)
+	offset(bat,Bat,-10,-5)
+	offset(map,Map,-5,10)
+	arcbow sap,bac,20
+	lineto1 bat
+	lineto1 map
+	lineto1 sap
+	fill
+]
+
+//xxx[
+// More points
+int Dbp(1),Dsp(1),Dbs(1),Dss(1)     // Hull and water line
+//int Bp(1),Bs(1)                     // Shear curvature
+int Hfs(1),Hfp(1),Has(1)             // Hull at water
+int Wf(1),Wa(1)                     // Water itself
+
+// More segments     Deck, Hull, Water
+int Dp(3), Ds(3), Df(3), Da(3), Hs(3), Hp(3), Ha(3), W1(3), W2(3), W3(3)
+
+init2[   // Deck, Hull, Water
+        // 3 long segs
+    setpoint(Dbp, 500,500)
+    setpoint(Dsp, 170,505)
+    setsegpt(Dp , Dbp,Dsp)      // port sheer
+    setpoint(Dbs, 455,520)
+    setpoint(Dss,  87,525)
+    setsegpt(Ds , Dbs,Dss)      // stbd sheer
+    setpoint(Wf , 520,540)
+    setpoint(Wa ,  50,545)
+    setpoint(Hfs,385,560)
+    setpoint(Hfp,460,540)
+    setsegpt(W1 ,  Wa, Hfs)      // water, 3 segs
+    setsegpt(W2 , Hfs, Hfp)
+    setsegpt(W3 , Hfp, Wf)
+        // 3 short fore segs
+    setsegpt(Hs,Dbs,Hfs)      // stbd chine
+    setsegpt(Hp,Dbp,Hfp)      // port chine
+    setsegpt(Df,Dbp,Dbs)      // bow
+        // 2 short aft segs
+    setpoint(Has, 92, 547)
+    setsegpt(Ha,Dss,Has)      // stbd transom
+    setsegpt(Da,Dsp,Dss)      // aft deck
+]
+drawHull[
+    int f(1), t(1)
+    setrgb 0,0,0
+    assignpt f,Dbp; f(0)=f(0)+5     // tweak the points a bit
+    assignpt t,Dsp; t(0)=t(0)-4
+    arcbow f,t,-15
+    assignpt f,Dbs; f(0)=f(0)+3     // tweak the point a bit
+    assignpt t,Dss; t(0)=t(0)-3
+    arcbow f,t,-15
+    drawseg W1
+    drawseg W2
+    drawseg W3
+    drawseg Df
+    arcbow Dbs,Hfs,-5
+    arcbow Dbp,Hfp,-5
+    drawseg Ha
+    drawseg Da
+    stroke
+]
+drawPoints2[
+    moveto1 Dbp; dotpt Dbp;showtext "Dbp"
+    moveto1 Dsp; dotpt Dsp;showtext "Dsp"
+    moveto1 Dbs; dotpt Dbs;showtext "Dbs"
+    moveto1 Dss; dotpt Dss;showtext "Dss"
+    moveto1 Hfs; dotpt Hfs;showtext "Hfs"
+    moveto1 Hfp; dotpt Hfp;showtext "Hfp"
+    moveto1 Ha ; dotpt Ha ;showtext "Ha"
+    moveto1 Wf ; dotpt Wf ;showtext "Wf"
+    moveto1 Wa ; dotpt Wa ;showtext "Wa"
+]
+
+//] // endxxx
+
+main[
+				dbg=0
+	init1
+    init2
+	start "AdamHyler", 600,700
+//	raster 600,700,100,1
+//	drawPoints1
+	drawSticks1
+	drawSails1
+	drawSticks2
+	drawSails2
+//  drawPoints2
+    drawHull
+	show
+]

@@ -1,0 +1,135 @@
+#include pps/lineLib.tc
+#include pps/pyGraphicsLib.tc
+#include pps/library.tc
+
+//intersect.tc  --  computes intersection between two lines.
+//  The lines are defined by pixel locations of two points each.
+
+int num
+test int a0,a1,a2,a3, b0,b1,b2,b3, ttl(0)
+[
+	int x,y, err, sega(3),segb(3)
+	num = num+1
+	int ix(1), err
+	start "test", 300,300
+	moveto 20,20
+	setfontsize 15
+	showtext ttl
+	setsegment sega, a0,a1,a2,a3
+	setsegment segb, b0,b1,b2,b3
+
+	moveto a0, a1; showtext "aS"; moveto a0,a1
+	lineto a2, a3; showtext "aE" 
+	moveto b0, b1; showtext "bS"; moveto b0,b1 
+	lineto b2, b3; showtext "bE" 
+//	err=_xersect ix,a0,a1,a2,a3, b0,b1,b2,b3
+	err=xersectseg ix,sega,segb
+	x=ix(0); y=ix(1)
+	next
+	if(err)showtext "parallel"
+	else arc x,y,5,0,360
+	pl"test"; pn num; ps": x,y,err ="; pn x; pn y;ps"  "; pn err
+if(1)[
+	a0=a0+150;a1=a1+150;a2=a2+150;a3=a3+150;
+	b0=b0+150;b1=b1+150;b2=b2+150;b3=b3+150;
+	setsegment sega, a0,a1,a2,a3
+	setsegment segb, b0,b1,b2,b3
+
+	moveto a0, a1; showtext "aS"; moveto a0,a1
+	lineto a2, a3; showtext "aE" 
+	moveto b0, b1; showtext "bS"; moveto b0,b1 
+	lineto b2, b3; showtext "bE" 
+//	err=_xersect ix,a0,a1,a2,a3, b0,b1,b2,b3
+	err=xersectseg ix,sega,segb
+	x=ix(0); y=ix(1)
+	next
+	if(err)showtext "parallel"
+	else arc x,y,5,0,360
+	pl"test"; pn num; ps": x,y,err ="; pn x; pn y;ps"  "; pn err
+]
+	show
+]
+
+main[
+//Note: turn off/on using if(0) and/or //
+if(0)[
+	xmain1
+	test 60,40,60,120, 70,50,75,120, "acute verticle a"
+	test 10,70,40,40,  50,80,90,120, "line b away from a"
+	test 10,70,40,40,  90,120,50,80, "line b toward a"
+	test 50,90,80,60,  60,60,65,140, "near vertical across diagonal"
+	test 20,50,25,120, 10,70,40,40,  "diagonal across near vertical"
+	test 40,100,80,60,  30,80,100,75, "near horzntl across diagonal"
+] else [
+	test 30,80,100,75, 40,100,80,60,   "diag across near horizontal"
+	test 30,80,100,75, 30,90,100,85, "parallel, check err == -1 ?"
+	test 20,50,25,120, 40,50,45,120, "parallel near vert"
+	test 20,50,125,50, 20,70,125,70, "parallel horz"
+	test 20,50,20,120, 40,50,40,120, "parallel vert"
+//	test fake, fake, fake
+]
+]
+
+xmain1[
+    int ix(1), la(4), lb(4)
+    la(0)=5; la(1)=5; la(2)=55; la(3)=55
+    lb(0)=125; lb(1)=5; lb(2)=75; lb(3)=55
+
+    // args: answer, line a, line b
+    xersect ix, la(0),la(1),la(2),la(3), lb(0),lb(1),lb(2),lb(3)
+    ps"x,y =";pn ix(0); pn ix(1)
+
+    start "intersect", 130,130
+    moveto la(0),la(1)
+    lineto la(2),la(3)
+    moveto lb(0),lb(1)
+    lineto lb(2),lb(3)
+    next
+    arc ix(0),ix(1),3,0,360
+    dot ix(0),ix(1)
+    show
+
+    start "intersect", 130,130
+    lb(3) = 35
+    xersect ix, la(0),la(1),la(2),la(3), lb(0),lb(1),lb(2),lb(3)
+    pl"x,y =";pn ix(0); pn ix(1)
+    moveto la(0),la(1)
+    lineto la(2),la(3)
+    moveto lb(0),lb(1)
+    lineto lb(2),lb(3)
+    next
+    arc ix(0),ix(1),5,0,360
+    dot ix(0),ix(1)
+    show
+]
+
+// THE MATH
+// See actual tc code in pyGraphicsLib.tc
+//
+// find x,y, the intersection where ay==by, and ax==bx
+//         given the args lax0,..,lby1 above, compute e,f,g,h
+//
+// General formula for each line:
+// a    y = e + f*x                    (line a)
+// b    y = g + h*x                    (line b)
+//   x,y notations specific to each line
+// 1    ay = e + f*ax                  (a)
+// 2    by = g + h*bx                  (b)
+// 3  At pt ax0,ay0..
+// 4    ay0 = e + f*ax0                (3->1)
+// 5    e = ay0 - f*ax0                (4)
+// 6  At pt ax1,ay1..
+// 7    e = ay1 - f*ax1                (like 5)
+// 8    ay0-ay1-f*ax0+f*ax1 = 0        (5 minus 7)
+// 9*   f = day/dax                    (8)
+//          where day = ay1-ay0, etc
+// 10*  e = ay0 - f*ax0                (9->5)
+// 11*  h = dby/dbx                    (like 9)
+// 12*  g = by0 - h*bx0                (like 10)
+// compute x,y, the intersection
+// 13   e + f*x = g + h*x              (a=b)
+// 14   e-g = h*x-f*x = (h-f)*x        (13)
+// 15*  x = (e-g)/(h-f)                (14)
+// 16*  y = g + h*x                    (a)
+//   * lines are solutions
+// 2 CAUTIONs: avoid divide by 0, avoid loss of precision

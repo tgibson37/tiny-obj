@@ -1,0 +1,33 @@
+#include pps/mathLib.tc
+#include pps/library.tc
+
+// various asqrt tests (a because it is approximate)
+main [
+	int x,y
+	y=asqrt(x=612)
+	pl"sqrt of"; pn x; ps" is" pn y
+	y=asqrt(x=99)
+	pl"sqrt of"; pn x; ps" is" pn y
+	y=asqrt(x=4612)
+	pl"sqrt of"; pn x; ps" is" pn y
+	y=asqrt(x=20612)
+	pl"sqrt of"; pn x; ps" is" pn y
+	y=asqrt(x=32000)
+	pl"sqrt of"; pn x; ps" is" pn y
+	y=asqrt(x=1000000)
+	pl"sqrt of"; pn x; ps" is" pn y
+	y=asqrt(x=2000000)
+	pl"sqrt of"; pn x; ps" is" pn y
+	y=asqrt(x=49000000)
+	pl"sqrt of"; pn x; ps" is" pn y
+	y=asqrt(x=100000000)
+	pl"sqrt of"; pn x; ps" is" pn y
+	y=asqrt(x=1440000000)
+	pl"sqrt of"; pn x; ps" is" pn y
+	y=asqrt(x=2000000000)
+	pl"sqrt of"; pn x; ps" is" pn y
+	pl"NEXT ONE FAILS: 2.25 billion, overflow"
+	pl"  (MC119 is defined, by the way, it did all the above)..."
+	y=asqrt(x=2250000000)
+	pl"sqrt of"; pn x; ps" is" pn y
+]
