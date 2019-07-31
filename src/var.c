@@ -272,7 +272,8 @@ int checkBrackets(char *from, char *to) {
  *	The logic here mimics classical void link().
  */
 int xxpass=0;
-void lnpass12(char *from, char *to, struct varhdr *vh) {
+void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
+fprintf(stderr,"\nnewop %d",newop);
 	char* x;
 	char* savedEndapp=endapp;
 	char* savedCursor=cursor;
@@ -308,6 +309,36 @@ void lnpass12(char *from, char *to, struct varhdr *vh) {
 				vh->gltab = vh->nxtvar;  // start (or start over) on fun[1]
 			}
 		}
+		else if(_lit(xclass)||_lit(xabstract)){
+			char cname[VLEN+1], ename[VLEN+1];
+			*cname=*ename=0;
+			int abst=0;
+			if( *(cursor-1)=='t') {
+				abst=1;
+				if(_lit(xclass)) ;
+				else eset(SYNXERR);
+			}
+			if(_symName()) {     /* class name */
+				union stuff kursor;
+				kursor.up = cursor = lname+1;
+				canon(cname);
+				if(_lit(xextends)){
+					if(_symName()){   // parent name
+//dumpft(fname,lname);
+						cursor=lname+1;
+						canon(ename);
+					}
+					else eset(SYNXERR);
+				}
+			}
+			else {
+				eset(SYNXERR);
+				return;
+			}
+			if(xxpass==2){
+fprintf(stderr,"\nvar~323 abst %d %s %s",abst,cname,ename);
+			}
+		}
 		else if(_symName()) {     /* fctn decl */
 			union stuff kursor;
 			kursor.up = cursor = lname+1;
@@ -341,30 +372,26 @@ void classlink(struct var *vh){
  *	Parse, var, and other services are supplied by whole unchanged tiny-c files.
  *	Uses lnpass12 as a service.
  */
-void* lnlink(char *from, char *to){
-        int size;
+void* lnlink(char *from, char *to, char *blobName){
+        int size, newop;
         void* blob;
         struct varhdr *vh;
         char* savedcursor=cursor;
         char* savedendapp=endapp;
+        newop = strcmp(blobName,"__Globals__"); // true iff doing new operator
         cursor=from;
         endapp=to;
         lndata.nvars = lndata.valsize = 0;
-        lnpass12(from,to,NULL);    // PASS one
+        lnpass12(from,to,NULL,newop);    // PASS one
         size = sizeof(struct varhdr) + lndata.nvars*sizeof(struct var) + lndata.valsize;
         blob = vh = malloc(size);
-        _newblob("_Globals",blob);
+        _newblob(blobName,blob);
 		memset(vh, 0, size);
         vh->vartab = vh->nxtvar = vh->gltab = vh+1;
         vh->val = vh->datused = vh->vartab + lndata.nvars;
         vh->endval = blob + size;
 		cursor=from;
-//fprintf(stderr,"\npass ONE done\n\n");
-//dumpBV(blob);
-        lnpass12(from,to,blob);    // PASS two
-//fprintf(stderr,"\npass TWO done\n\n");
-//dumpBV(blob);
-//dumpFun();
+        lnpass12(from,to,blob,newop);    // PASS two
         cursor=savedcursor;
         endapp=savedendapp;
         return blob;
@@ -376,5 +403,9 @@ void* lnlink(char *from, char *to){
  */
 void toclink() {
 	struct varhdr *vh;	
-	vh = lnlink(cursor,endapp);
+	vh = lnlink(cursor,endapp,"__Globals__");
 }
+
+//fprintf(stderr,"\nline --->>>");
+//dumpLine();
+//fprintf(stderr,"<<<---");

@@ -701,7 +701,7 @@ int quit() {
 }
 #endif
 
-/* Match char or int, else do nothing. If match parse
+/* Match char, int, or class, else do nothing. If match parse
  *  all comma separated declarations of that particular type
  *	making var table entries and allocating value storage. Returns false
  *	if not a declaration statement, true if it is. Leaves cursor just past
@@ -718,8 +718,8 @@ int _decl(struct varhdr *vh) {
 		do {
 			varalloc( Int, 0, vh );  /* 2nd arg is vpassed */
 		} while( _lit(xcomma) );
-	} else if ( _lit(xclass)) {
-		classlink(vh);  // 
+//	} else if ( _lit(xclass)) {
+//		classlink(vh);  // 
 	} else {
 		return 0;  /* not decl */
 	}

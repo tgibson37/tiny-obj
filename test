@@ -47,12 +47,12 @@ dokeep() {
 #does one diff
 dodiff() {
 	FILE=./TF/$1/r
+	echo ------------------- $1 -------------------
 	if [ -f $FILE ]; then
-		#echo "File $FILE exists."
 		FILE=./TF/$1/er
 		if [ -f $FILE ]; then
 			diff TF/$1/r TF/$1/er
-			#echo "File $FILE exists."
+			diff TF/$1/d TF/$1/ed
 		else
 		   echo "File $FILE does not exist."
 		fi
