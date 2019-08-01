@@ -36,14 +36,14 @@ void fundone() {
  */
 int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
 	if(passed && class){   					/* passed pointer */
-		(*v).value.up = (*passed).up;
+		(*v).vdcd.vd.value.up = (*passed).up;
 	} else if( passed && !class ) {			/* passed datum */
 		switch(type){
 		case Int:
-			put_int( (*v).value.up, (*passed).ui );
+			put_int( (*v).vdcd.vd.value.up, (*passed).ui );
 			break;
 		case Char:
-			put_char( (*v).value.up, (*passed).uc );
+			put_char( (*v).vdcd.vd.value.up, (*passed).uc );
 			break;
 		default:
 			eset(TYPEERR);
@@ -60,7 +60,7 @@ int _allocSpace(struct var *v, int amount, struct varhdr *vh){
 		eset(TMVLERR);
 		return TMVLERR;
 	}
-	v->value.up = vh->datused;
+	v->vdcd.vd.value.up = vh->datused;
 	memset( vh->datused, 0, amount );
 	vh->datused += amount;
 	return 0;
@@ -79,10 +79,10 @@ void newvar( int class, Type type, int len, union stuff *passed, struct varhdr *
 	}
 	struct var *v = vh->nxtvar;
 	canon(v);    /* sets the canon'd name into v */
-	(*v).class = class;
+	(*v).vdcd.vd.class = class;
 	(*v).type = type;
-	(*v).len = len;
-	(*v).brkpt = 0;
+	(*v).vdcd.vd.len = len;
+	(*v).vdcd.vd.brkpt = 0;
 	if(_allocSpace(v,len*obsize,vh)) return;  /* true is bad, eset done */
 	if(passed) _copyArgValue( v, class, type, passed);
 	if(curfun>=fun) curfun->evar = vh->nxtvar;
@@ -118,7 +118,7 @@ struct var* _addrval(char *sym, struct var *first, struct var *last) {
 	struct var *pvar;
 	for(pvar=first; pvar<=last; ++pvar) {
 		if( !strcmp(pvar->name, sym) ) {
-			if( debug && (pvar->brkpt==1) )br_hit(pvar);
+			if( debug && (pvar->vdcd.vd.brkpt==1) )br_hit(pvar);
 			return pvar;
 		}
 	}
@@ -184,7 +184,7 @@ void dumpFun() {
 
 void dumpVar(struct var *v) {
 	fprintf(stderr,"\n var %p: %s %d %s %d ", v,
-		(*v).name, (*v).class, typeToWord((*v).type), (*v).len );
+		(*v).name, (*v).vdcd.vd.class, typeToWord((*v).type), (*v).vdcd.vd.len );
 }
 
 void dumpVarTab(struct varhdr *vh) {
@@ -324,7 +324,6 @@ fprintf(stderr,"\nnewop %d",newop);
 				canon(cname);
 				if(_lit(xextends)){
 					if(_symName()){   // parent name
-//dumpft(fname,lname);
 						cursor=lname+1;
 						canon(ename);
 					}
@@ -335,7 +334,8 @@ fprintf(stderr,"\nnewop %d",newop);
 				eset(SYNXERR);
 				return;
 			}
-			if(xxpass==2){
+			if(xxpass==1){
+				lndata.nvars += 1;
 fprintf(stderr,"\nvar~323 abst %d %s %s",abst,cname,ename);
 			}
 		}

@@ -29,22 +29,22 @@ struct var* addrval_nohit(char* sym) {
 
 /* printf a value ref'd from a struct var, strings truncated at 32 */
 void print_val(struct var *var) {
-	int class=(*var).class;
+	int class=(*var).vdcd.vd.class;
 	int type =(*var).type;
 	if(class==0) {
 		if(type==Int){
-			int iDatum = get_int((*var).value.up);
+			int iDatum = get_int((*var).vdcd.vd.value.up);
 			printf(" %d", iDatum);
 		}
 		else if(type==Char){
-			char cDatum = get_char((*var).value.up);
+			char cDatum = get_char((*var).vdcd.vd.value.up);
 			printf(" (%x)%c", cDatum,cDatum);
 		}
 	}
 	else if(class==1) {
 		if(type==Int){
-			int* where=(int*)((*var).value.up);
-			int len=(*var).len;
+			int* where=(int*)((*var).vdcd.vd.value.up);
+			int len=(*var).vdcd.vd.len;
 			int iDatum, i;
 			for(i=0;i<len;++i){
 				iDatum = get_int((char*)(where+i));
@@ -52,7 +52,7 @@ void print_val(struct var *var) {
 			}
 		}
 		else if(type==Char){
-			char* where=(*var).value.up;
+			char* where=(*var).vdcd.vd.value.up;
 			if(*where<32) {
 				int i;
 				for(i=0; i<30; ++i) {
@@ -96,7 +96,7 @@ struct brk *find_b(char *sym) {
 /* print description and value of variable v */
 void printVar(struct var *v) {
 	printf("\n4~88\n var %p: %s %d %s %d ", (int)(v),
-		(*v).name, (*v).class, typeToWord((*v).type), (*v).len );
+		(*v).name, (*v).vdcd.vd.class, typeToWord((*v).type), (*v).vdcd.vd.len );
 		print_val(v);
 }
 
@@ -122,7 +122,7 @@ void db_brkset(char *sym) {
 			(*b).var = v;
 			(*b).hits = 0;
 			(*b).enabled = 1;
-			(*v).brkpt = 1;
+			(*v).vdcd.vd.brkpt = 1;
 		}
 	}
 }

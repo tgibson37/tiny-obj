@@ -601,13 +601,13 @@ void _factor() {
 		} else {
 			struct var *v = addrval();  /* looks up symbol */
 			if( !v ){ eset(SYMERR); return; } /* no decl */
-		  	char* where = (*v).value.up;
-		  	int integer =  (*v).value.ui; 
-		  	int character = (*v).value.uc;
-		  	int class=(*v).class; 
+		  	char* where = (*v).vdcd.vd.value.up;
+		  	int integer =  (*v).vdcd.vd.value.ui; 
+		  	int character = (*v).vdcd.vd.value.uc;
+		  	int class=(*v).vdcd.vd.class; 
 	  		int type=(*v).type; 
 	  		int obsize = typeToSize(class,type);
-	  		int len=(*v).len;
+	  		int len=(*v).vdcd.vd.len;
 		  	if( class=='E' ) _enter(where);  /* fcn call */
 			else {   /* is var name */
 				if( _lit(xlpar) ) {		       /* is dimensioned */
@@ -629,7 +629,7 @@ void _factor() {
 				} else {	
 				/* is simple. Must push as 'L', &storagePlace. */
 					if(class==1){
-						foo.up = &((*v).value.up);
+						foo.up = &((*v).vdcd.vd.value.up);
 					}
 					else{
 						foo.up = where;

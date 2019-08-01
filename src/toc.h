@@ -128,9 +128,24 @@ struct funentry {
 struct funentry *fun;
 struct funentry *curglbl, *curfun, *efun;
 
-struct var { 
-	char name[VLEN+1]; int class; Type type; int len; int brkpt;
-	union stuff value; 
+//struct var { 
+//	char name[VLEN+1]; int class; Type type; int len; int brkpt;
+//	union stuff value; 
+//};
+//  MUST add after -> or ). before value/class/etc    vdcd.vd.
+//  but NOT before name or type.
+
+struct cd {
+  void *parent; void *child; int abst;
+};
+struct vd {
+  int class; int len; int brkpt; union stuff value;
+};
+union vdcd {
+  struct vd vd; struct cd cd;
+};
+struct var{
+  char name[VLEN+1]; Type type; union vdcd vdcd; 
 };
 
 /* blob header */
