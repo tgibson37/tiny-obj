@@ -136,7 +136,7 @@ struct funentry *curglbl, *curfun, *efun;
 //  but NOT before name or type.
 
 struct cd {
-  void *parent; void *child; int abst;
+  char parent[VLEN+1]; char child[VLEN+1]; int abst;
 };
 struct vd {
   int class; int len; int brkpt; union stuff value;

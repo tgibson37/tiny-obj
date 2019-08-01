@@ -90,6 +90,14 @@ void newvar( int class, Type type, int len, union stuff *passed, struct varhdr *
 	if(verbose[VV])dumpVar(v);
 	return;
 }
+void newcls(int abst,char *cname,char *ename,struct varhdr *vh){
+//dumpBlob(vh);
+	struct var *c = vh->nxtvar++;
+	strcpy(c->name,cname);
+	c->type = abst?'A':'C';
+	strncpy(c->vdcd.cd.parent,ename,VLEN);
+dumpVar(c);
+}
 
 /* Canonicalizes the name bracket by f,l inclusive into buff, and returns buff.
 	sizeOf buff must be at least VLEN+1.
@@ -183,7 +191,12 @@ void dumpFun() {
 }
 
 void dumpVar(struct var *v) {
-	fprintf(stderr,"\n var %p: %s %d %s %d ", v,
+	if(v->type=='A' || v->type=='C') {
+		fprintf(stderr,"\n class %s type %c",v->name, v->type);
+		if(*(v->vdcd.cd.parent))fprintf(stderr," extends %s", v->vdcd.cd.parent);
+	}
+	else
+		fprintf(stderr,"\n var %p: %s %d %s %d ", v,
 		(*v).name, (*v).vdcd.vd.class, typeToWord((*v).type), (*v).vdcd.vd.len );
 }
 
@@ -338,6 +351,9 @@ fprintf(stderr,"\nnewop %d",newop);
 				lndata.nvars += 1;
 fprintf(stderr,"\nvar~323 abst %d %s %s",abst,cname,ename);
 			}
+			else if(xxpass==2){
+				newcls(abst,cname,ename,vh);
+			}
 		}
 		else if(_symName()) {     /* fctn decl */
 			union stuff kursor;
@@ -404,6 +420,7 @@ void* lnlink(char *from, char *to, char *blobName){
 void toclink() {
 	struct varhdr *vh;	
 	vh = lnlink(cursor,endapp,"__Globals__");
+dumpVarTab(vh);
 }
 
 //fprintf(stderr,"\nline --->>>");
