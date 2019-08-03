@@ -102,7 +102,6 @@ dumpVar(c);
 /* Canonicalizes the name bracket by f,l inclusive into buff, and returns buff.
 	sizeOf buff must be at least VLEN+1.
  */
-
 char* _canon(char* first, char* l, char* buff) {
 	int i=0; 
 	char* f=first;
@@ -119,6 +118,14 @@ char* _canon(char* first, char* l, char* buff) {
 void canon(struct var *v) {
 	_canon(fname,lname,(*v).name);
 }
+/*	if *cursor is alphanum find end of sym and canon into buff
+ */
+int canonIf(char* buff){
+	char *c=cursor;
+	while(isalnum(*c)||*c=='_')++c;
+	_canon(cursor,c-1,buff);
+	return (c-cursor);
+}
 
 /* 	looks up a symbol at one level
  */
@@ -131,6 +138,26 @@ struct var* _addrval(char *sym, struct var *first, struct var *last) {
 		}
 	}
 	return 0;
+}
+
+/* cursor points to possible sym. If it is a class name
+ *	bump the cursor and return var entry
+ */
+struct var* _isClassName() {
+	char buf[VLEN+1];
+	int len = canonIf(buf);
+	if(len){
+		struct var *maybe = _addrval(buf,curglbl->fvar, curglbl->evar);
+		if(maybe){
+			int t = maybe->type;
+			if(t=='C' || t=='A') {
+				cursor += len;
+				return maybe;
+			}
+		}
+		return NULL;
+	}
+	return NULL;
 }
 
 /* 	looks up a symbol at three levels via function table
@@ -213,7 +240,7 @@ void dumpVarTab(struct varhdr *vh) {
 }
 
 void dumpBlob(struct varhdr *vh){
-	fprintf(stderr,"Blob (aka varhdr) at %p \n",vh );
+	fprintf(stderr,"\nBlob (aka varhdr) at %p \n",vh );
 	struct var *vt = vh->vartab;
 	char* dt = vh->val;
 	fprintf(stderr,"  vartab       nxtvar    gltab     evar(val)\n");
@@ -221,7 +248,7 @@ void dumpBlob(struct varhdr *vh){
 			,vh->vartab,vh->nxtvar-vt,vh->gltab-vt,vh->val-(char*)vt);
 	fprintf(stderr,"  val          used      endval\n");
 	fprintf(stderr,"   %9p %9d %9d\n",vh->val,vh->datused-dt,vh->endval-dt);
-	fprintf(stderr,"nxtvar,gltab,endval,used are decimal relative to vartab,val\n");
+	fprintf(stderr,"nxtvar,gltab,endval,used are decimal relative to vartab,val");
 }
 
 void dumpBV(struct varhdr *vh){ 
@@ -420,9 +447,11 @@ void* lnlink(char *from, char *to, char *blobName){
 void toclink() {
 	struct varhdr *vh;	
 	vh = lnlink(cursor,endapp,"__Globals__");
-dumpVarTab(vh);
+dumpBV(vh);
 }
 
 //fprintf(stderr,"\nline --->>>");
 //dumpLine();
 //fprintf(stderr,"<<<---");
+
+//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);

@@ -30,8 +30,10 @@ char foo(0)
 
 main [
     NPLAYERS = 2
-    Cannibal can = new Cannibal 1
-    Nurse nur = new Nurse 2
+    Cannibal can
+    can = new Cannibal 1
+    Nurse nur
+    nur = new Nurse 2
     can.printName
     can.printNumber
     nur.printName

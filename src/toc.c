@@ -15,7 +15,9 @@ int varargs = 0;
 
 /* stored size of one datum */
 int typeToSize( int class, Type type ) {
-	if(type=='E')return 0;
+	if(type>='A')return 0;
+	if(type>='C')return 0;
+	if(type>='E')return 0;
 	if(type==Char)return 1;
 	else if(type==Int)return sizeof(int);
 	else eset(TYPEERR);
@@ -718,8 +720,6 @@ int _decl(struct varhdr *vh) {
 		do {
 			varalloc( Int, 0, vh );  /* 2nd arg is vpassed */
 		} while( _lit(xcomma) );
-//	} else if ( _lit(xclass)) {
-//		classlink(vh);  // 
 	} else {
 		return 0;  /* not decl */
 	}
@@ -727,11 +727,11 @@ int _decl(struct varhdr *vh) {
 	return 1;
 }
 
-/* st(): interprets a possibly compound statement
- */
+/* st(): interprets a possibly compound statement */
 void st() {
 	char *whstcurs, *whcurs, *objt, *agin ;
 	brake=0;
+	struct var *isvar;
 
 	if(quit())return;
 	_rem();
@@ -825,6 +825,10 @@ void st() {
 		brake=1;
 		return;
 	}
+	else if(isvar=_isClassName()) {
+fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
+dumpVar(isvar);
+	}
 	else if( _asgn() ) {      /* if expression discard its value */
 		toptoi();
         _lit(xsemi);
@@ -914,3 +918,5 @@ char get_char(char *where) {
 	memcpy( &datum, where, sizeof(datum));
 	return datum;
 }
+
+//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
