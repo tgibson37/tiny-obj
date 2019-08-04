@@ -213,6 +213,8 @@ void allocStuff() {
     vh->vartab = vh->nxtvar = vh->gltab = vh+1;
     vh->val = vh->datused = vh->vartab + LOCNUMVARS;   // also serves as end of vartab
     vh->endval = (char*)locals + size;
+fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
+dumpVarTab(locals);
 }
 
 int main(int argc, char *argv[]) {

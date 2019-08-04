@@ -151,7 +151,7 @@ int _skip(char l, char r) {
 /* Parse a symbol defining fname, lname. ret: true if symbol.
  *	Advances the cursor to but not over the symbol,
  */
-int _symName() {
+int symName() {
 	char* temp;
 	while( *cursor == ' ' || *cursor == '\t' ) ++cursor;
 	temp=cursor;
@@ -173,7 +173,7 @@ int _symName() {
 /****************** some C helper functions **************/
 
 /* return true if symname matches arg, no state change */
-int _symNameIs(char* name){
+int symNameIs(char* name){
 	int x = strncmp(fname, name, lname-fname+1);
 	return( !x );
 }
@@ -223,7 +223,7 @@ void _rem() {
  *	Parses one variable. Makes allocation and symbol entry.
  */
 void varalloc(Type type, union stuff *vpassed, struct varhdr *vh) {
-	if( !_symName() ) {		/*defines fname,lname. True is match.*/
+	if( !symName() ) {		/*defines fname,lname. True is match.*/
 		eset(SYMERR);
 		return;
 	}
@@ -595,10 +595,10 @@ void _factor() {
 			return;
 		}
 	}
-	else if( _symName() ) {
+	else if( symName() ) {
 		cursor = lname+1;
 		int where, len, class, obsize, stuff;
-		if( _symNameIs("MC") ) { 
+		if( symNameIs("MC") ) { 
 			_enter(0); return;
 		} else {
 			struct var *v = addrval();  /* looks up symbol */
@@ -827,7 +827,11 @@ void st() {
 	}
 	else if(isvar=_isClassName()) {
 fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
-dumpVar(isvar);
+		if(symName()) {
+			newref(isvar,locals);
+dumpVarTab(locals);
+		}
+		else eset(SYMERR);
 	}
 	else if( _asgn() ) {      /* if expression discard its value */
 		toptoi();
@@ -837,6 +841,14 @@ dumpVar(isvar);
 		eset(STATERR);
 	}
 }
+
+/*  Refenence to an object refname (fname,lname), type 'o', 
+ *  details: class entry (cls), blob to referenced object's blob (NULL) 
+ *  to be filled in when known.
+ */
+//void newref(char *refname, struct var *cls, struct varhdr *blob ,struct varhdr *vh) {
+
+
 
 /*********** a variety of dumps for debugging **********/
 char* typeToWord(Type t){

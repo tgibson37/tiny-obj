@@ -141,8 +141,11 @@ struct cd {
 struct vd {
   int class; int len; int brkpt; union stuff value;
 };
+struct od {
+  struct var *cls; struct varhdr *blob;
+};
 union vdcd {
-  struct vd vd; struct cd cd;
+  struct vd vd; struct cd cd; struct od od;
 };
 struct var{
   char name[VLEN+1]; Type type; union vdcd vdcd; 
@@ -278,7 +281,7 @@ void _rem();
 int _decl(struct varhdr *vh);
 int _lit(char*);
 void varalloc(Type type, union stuff *vpassed, struct varhdr *vh);
-int _symName();
+int symName();
 int charIn(char c, char *choices );
 void pFmt(char *fmt, int *args);
 int _skip(char l, char r);

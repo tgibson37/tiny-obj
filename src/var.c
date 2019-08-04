@@ -96,7 +96,21 @@ void newcls(int abst,char *cname,char *ename,struct varhdr *vh){
 	strcpy(c->name,cname);
 	c->type = abst?'A':'C';
 	strncpy(c->vdcd.cd.parent,ename,VLEN);
-dumpVar(c);
+//dumpVar(c);
+}
+
+/*  Refenence to an object: refname (fname,lname), type 'o', 
+ *  details: class entry (cls), blob to referenced object's blob (NULL) 
+ *  to be filled in when known.
+ */
+void newref(struct var *cls, struct varhdr *vh) {
+  struct var *r = vh->nxtvar;
+  canon(r);
+  r->type = 'o';
+  r->vdcd.od.cls = cls;
+  r->vdcd.od.blob=NULL;
+  vh->nxtvar++;
+dumpVar(r);
 }
 
 /* Canonicalizes the name bracket by f,l inclusive into buff, and returns buff.
@@ -140,6 +154,26 @@ struct var* _addrval(char *sym, struct var *first, struct var *last) {
 	return 0;
 }
 
+/* 	looks up a symbol at three levels via function table. sym must be canonical.
+ */
+struct var* addrval_all(char *sym) {
+	struct var *v;
+	v = _addrval( sym, curfun->fvar, curfun->evar );
+	if(!v) v = _addrval( sym, curglbl->fvar, curglbl->evar );
+	if(!v) v = _addrval( sym, fun->fvar,fun->evar ); 
+	if(v)return v;
+	return 0;	
+}
+
+/* 	looks up a symbol pointed to by fname,lname: 
+ *	locals, globals, library levels in that order. First hit wins.
+ */
+struct var* addrval() {
+	struct var sym;
+	canon( &sym );
+	return addrval_all(sym.name);
+}
+
 /* cursor points to possible sym. If it is a class name
  *	bump the cursor and return var entry
  */
@@ -158,26 +192,6 @@ struct var* _isClassName() {
 		return NULL;
 	}
 	return NULL;
-}
-
-/* 	looks up a symbol at three levels via function table
- */
-struct var* addrval_all(char *sym) {
-	struct var *v;
-	v = _addrval( sym, curfun->fvar, curfun->evar );
-	if(!v) v = _addrval( sym, curglbl->fvar, curglbl->evar );
-	if(!v) v = _addrval( sym, fun->fvar,fun->evar ); 
-	if(v)return v;
-	return 0;	
-}
-
-/* 	looks up a symbol pointed to by fname,lname: 
- *	locals, globals, library levels in that order. First hit wins.
- */
-struct var* addrval() {
-	struct var sym;
-	canon( &sym );
-	return addrval_all(sym.name);
 }
 
 /*	prints a value given its description taken from a struct stackEntry */
@@ -222,6 +236,11 @@ void dumpVar(struct var *v) {
 		fprintf(stderr,"\n class %s type %c",v->name, v->type);
 		if(*(v->vdcd.cd.parent))fprintf(stderr," extends %s", v->vdcd.cd.parent);
 	}
+	if(v->type=='o') {
+		fprintf(stderr,"\n oref: %s type %c classvar %x (%s) blob %x"
+				,v->name, v->type,v->vdcd.od.cls, v->vdcd.od.cls->name
+				,v->vdcd.od.blob);
+	}
 	else
 		fprintf(stderr,"\n var %p: %s %d %s %d ", v,
 		(*v).name, (*v).vdcd.vd.class, typeToWord((*v).type), (*v).vdcd.vd.len );
@@ -231,7 +250,7 @@ void dumpVarTab(struct varhdr *vh) {
 	int pos = 0;
 	fprintf(stderr,"\nVar Table: name class type len (type)value");
 	struct var *v = vh->vartab;
-	while(v < vh->val) {
+	while(v < vh->nxtvar) {
 		dumpVar(v++);
 		++pos;
 	};
@@ -256,6 +275,8 @@ void dumpBV(struct varhdr *vh){
 	dumpVarTab(vh);
 }
 
+/*	_newblob,newblob,_getblob,getblob build and search the blob table
+ */
 // Enters blob into blobtab. 
 void _newblob(char* name, char* blob){
 	if(nxtblob >= eblob)eset(TMBLOBERR);
@@ -280,12 +301,12 @@ struct varhdr* _getblob(char* sym){
     	}
   	}
 }
-//Assumes symname() has just parsed and defined fname,lname
+//Assumes symName() has just parsed and defined fname,lname
 struct varhdr* getblob(){
   char sym[VLEN+1];
   memset(sym,0,VLEN+1);
   canon( &sym );
-  return getblob(sym);
+  return _getblob(sym);
 }
 
 /*	Checks for balanced brackets, from *from to *to.
@@ -358,12 +379,12 @@ fprintf(stderr,"\nnewop %d",newop);
 				if(_lit(xclass)) ;
 				else eset(SYNXERR);
 			}
-			if(_symName()) {     /* class name */
+			if(symName()) {     /* class name */
 				union stuff kursor;
 				kursor.up = cursor = lname+1;
 				canon(cname);
 				if(_lit(xextends)){
-					if(_symName()){   // parent name
+					if(symName()){   // parent name
 						cursor=lname+1;
 						canon(ename);
 					}
@@ -382,7 +403,7 @@ fprintf(stderr,"\nvar~323 abst %d %s %s",abst,cname,ename);
 				newcls(abst,cname,ename,vh);
 			}
 		}
-		else if(_symName()) {     /* fctn decl */
+		else if(symName()) {     /* fctn decl */
 			union stuff kursor;
 			kursor.up = cursor = lname+1;
 			newvar('E',2,0,&kursor,vh);

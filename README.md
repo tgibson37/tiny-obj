@@ -16,7 +16,7 @@ Warning: this gets wonkish...
 
 Step one is to modify the linker making it flexible enough to link portions of text. As designed the tiny-c linker makes one pass over the entire application text, including all loaded libraries, and builds one large variable table. But the new linker must also go into the subtext of the class body which defines an object, and link that for each object created from that definition. The OOP 'new' operator triggers these sublinkings. As of this writing step one is achieved: coded, and tested. 
 
-Step two is to modify the variable table itself, so it can accomodate the classical tiny-c variables and the new object ones. This is currently underway. The design is partial, but sufficient so coding is underway.
+Step two is to modify the variable table itself, so it can accomodate the classical tiny-c variables and the new object ones. (Aug 4, 2019 update): Both class and oref entries DONE.
 
 Future steps: implement the 'new' and 'delete' operators to create and remove objects dynamically as the program runs. And then finally the symbol search must use these modified tables to look up object symbols.
 
