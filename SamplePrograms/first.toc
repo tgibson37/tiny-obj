@@ -29,7 +29,7 @@ char a,b,stuff(99)
 char foo(0)
 
 main [
-    NPLAYERS = 2
+//    NPLAYERS = 2
     Cannibal can
     can = new Cannibal 1
     Nurse nur
@@ -38,4 +38,6 @@ main [
     can.printNumber
     nur.printName
     nur.printNumber
+    delete can
+    delete nur
 ]

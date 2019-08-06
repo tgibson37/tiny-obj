@@ -18,6 +18,8 @@ int typeToSize( int class, Type type ) {
 	if(type>='A')return 0;
 	if(type>='C')return 0;
 	if(type>='E')return 0;
+	if(type>='O')return 0;
+	if(type>='o')return 0;
 	if(type==Char)return 1;
 	else if(type==Int)return sizeof(int);
 	else eset(TYPEERR);
@@ -32,7 +34,12 @@ void _eq() {
 	char cDatum;  /*  and val.size, giving needed cast */
 	void* pDatum;
 	void* where;
-
+#if 0
+if(*(cursor-1)=='2');else{
+fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
+dumpStack();
+}
+#endif
 	struct stackentry *val = &stack[nxtstack-1]; /* value (on top) */
 	struct stackentry *lval = &stack[nxtstack-2]; /* where to put it */
 	if(verbose[VE]){
@@ -436,6 +443,8 @@ int _asgn(){
 	if(_reln()){
 		if(_lit(xeq)){
 			_asgn();
+//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
+//dumpStack();
 			if(!error)_eq();
 		}
 	}
@@ -577,9 +586,7 @@ void _factor() {
 		}
 	} 
 	else if( (type=_konst()) ) {
-	/* Defines fname,lname. Returns Type. 
-	   void pushst( int class, int lvalue, Type type, void* stuff );
-	*/
+	/* Defines fname,lname. Returns Type. */
 		switch(type){
 		case Int: 
 			pushk( _atoi() );  /* integer, use private _atoi */
@@ -595,6 +602,42 @@ void _factor() {
 			return;
 		}
 	}
+	else if(_lit(xnew)){
+//fprintf(stderr,"\ntoc~604 parsed xnew");
+		_rem();
+		struct var *isclvar;
+		if(isclvar=_isClassName()){
+// scope body of cn
+			int from, to;
+			from = isclvar->vdcd.cd.where+1;
+			int temp = cursor;
+			cursor=from;
+			if(_skip('[',']'))eset(LBRCERR);
+			to = cursor-1;
+			cursor=temp;
+//dumpVar(isclvar);
+//fprintf(stdout,"\nfrom to %d %d",from,to);
+//dumpft(from,to);
+// link
+			void *value = lnlink(from, to, isclvar->name);
+			if(error){
+				whatHappened();
+				exit(1);
+			}
+//dumpBV(value);
+//exit(0);
+
+// onto stack
+			pushst(0,'A','O',value);
+// parse args
+// call constructor
+		}
+		else eset(CLASSERR);
+	}
+//void pushst( int class, int lvalue, Type type, union stuff *value ) {
+	else if(_lit(xdelete)){
+fprintf(stderr,"toc~607 parsed xdelete");
+	}
 	else if( symName() ) {
 		cursor = lname+1;
 		int where, len, class, obsize, stuff;
@@ -603,6 +646,11 @@ void _factor() {
 		} else {
 			struct var *v = addrval();  /* looks up symbol */
 			if( !v ){ eset(SYMERR); return; } /* no decl */
+			if(v->type=='o'){  //object ref
+				pushst(0,'L','o',&(v->vdcd.od.blob));
+//dumpStack();
+				return;
+			}
 		  	char* where = (*v).vdcd.vd.value.up;
 		  	int integer =  (*v).vdcd.vd.value.ui; 
 		  	int character = (*v).vdcd.vd.value.uc;
@@ -826,10 +874,10 @@ void st() {
 		return;
 	}
 	else if(isvar=_isClassName()) {
-fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
+//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 		if(symName()) {
 			newref(isvar,locals);
-dumpVarTab(locals);
+//dumpVarTab(locals);
 		}
 		else eset(SYMERR);
 	}

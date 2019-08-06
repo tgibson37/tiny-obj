@@ -90,12 +90,13 @@ void newvar( int class, Type type, int len, union stuff *passed, struct varhdr *
 	if(verbose[VV])dumpVar(v);
 	return;
 }
-void newcls(int abst,char *cname,char *ename,struct varhdr *vh){
+void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, char* where){
 //dumpBlob(vh);
 	struct var *c = vh->nxtvar++;
 	strcpy(c->name,cname);
 	c->type = abst?'A':'C';
 	strncpy(c->vdcd.cd.parent,ename,VLEN);
+	c->vdcd.cd.where = where;
 //dumpVar(c);
 }
 
@@ -374,6 +375,7 @@ fprintf(stderr,"\nnewop %d",newop);
 			char cname[VLEN+1], ename[VLEN+1];
 			*cname=*ename=0;
 			int abst=0;
+			char *where;
 			if( *(cursor-1)=='t') {
 				abst=1;
 				if(_lit(xclass)) ;
@@ -390,6 +392,8 @@ fprintf(stderr,"\nnewop %d",newop);
 					}
 					else eset(SYNXERR);
 				}
+				_rem();
+				where = cursor;
 			}
 			else {
 				eset(SYNXERR);
@@ -397,15 +401,17 @@ fprintf(stderr,"\nnewop %d",newop);
 			}
 			if(xxpass==1){
 				lndata.nvars += 1;
-fprintf(stderr,"\nvar~323 abst %d %s %s",abst,cname,ename);
+//fprintf(stderr,"\nvar~323 abst %d %s %s",abst,cname,ename);
 			}
 			else if(xxpass==2){
-				newcls(abst,cname,ename,vh);
+				cls_dcl(abst,cname,ename,vh,where);
 			}
 		}
 		else if(symName()) {     /* fctn decl */
 			union stuff kursor;
-			kursor.up = cursor = lname+1;
+			cursor = lname+1;
+			_rem();
+			kursor.up = cursor;
 			newvar('E',2,0,&kursor,vh);
 			if( (x=_mustFind(cursor, endapp, '[',LBRCERR)) ) {
 				cursor=x+1;
@@ -468,7 +474,7 @@ void* lnlink(char *from, char *to, char *blobName){
 void toclink() {
 	struct varhdr *vh;	
 	vh = lnlink(cursor,endapp,"__Globals__");
-dumpBV(vh);
+//dumpBV(vh);
 }
 
 //fprintf(stderr,"\nline --->>>");

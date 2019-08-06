@@ -31,11 +31,13 @@ void dumpTop() {
 }
 
 void stuffCopy( union stuff *to, union stuff *from ) {
+//fprintf(stderr,"\n%d %d",to,from);
 	memcpy( to, from, sizeof(*to));
 }
 
 /* basic pusher */
 void pushst( int class, int lvalue, Type type, union stuff *value ) {
+//fprintf(stderr,"\npushst~40 class,lvalue,type,value %d %d %d %d",class,lvalue,type,value);
 	if( nxtstack > stacklen) { error = PUSHERR; return; }
 	stack[nxtstack].class = class;
 	stack[nxtstack].lvalue = lvalue;
@@ -50,7 +52,7 @@ void pushst( int class, int lvalue, Type type, union stuff *value ) {
 
 /* basic popper, entry stays accessible until pushed over */
 struct stackentry* popst() {
-	if( nxtstack-1 < 0 ) { error = POPERR; return NULL; }
+	if( nxtstack-1 < 0 ) { eset(POPERR); return NULL; }
 	if(verbose[VS]){
 		fprintf(stderr,"\nstack pop: ");
 		dumpStackEntry(nxtstack-1);
@@ -76,6 +78,7 @@ int toptoi() {
 		fprintf(stderr,"\ntoptoi pop: ");
 		dumpStackEntry(nxtstack-1);
 	}
+//fprintf(stderr,"\ntoptoi ~82");
 
 	struct stackentry *top = &stack[--nxtstack];
 	if( (*top).class==1 ) {
@@ -88,6 +91,10 @@ int toptoi() {
 	else if((*top).lvalue == 'L') {
 		if((*top).type==Int ) datum = *((int*)((*top).value.up));
 		else if((*top).type==Char) datum = *((char*)((*top).value.up));
+		else if((*top).type == 'o') {
+			datum = (*top).value.up;
+fprintf(stderr,"\nstack: toptoi~97 obj case %d",datum);
+		}
 		else eset(TYPEERR);
 	}
 	else if((*top).lvalue == 'A') {

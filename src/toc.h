@@ -19,6 +19,8 @@
 #define xclass "class"
 #define xabstract "abstract"
 #define xextends "extends"
+#define xnew "new"
+#define xdelete "delete"
 #define xr "r"
 #define xg "g"
 #define xlb "["
@@ -100,6 +102,7 @@ int quiet;
 #define APPERR	     29 // lrb
 #define DIVERR		 30
 #define TMBLOBERR    31
+#define CLASSERR	 32
 #define EXIT         98
 #define KILL         99
 
@@ -136,7 +139,7 @@ struct funentry *curglbl, *curfun, *efun;
 //  but NOT before name or type.
 
 struct cd {
-  char parent[VLEN+1]; char child[VLEN+1]; int abst;
+  char parent[VLEN+1]; char child[VLEN+1]; int abst; char* where;
 };
 struct vd {
   int class; int len; int brkpt; union stuff value;
@@ -150,6 +153,8 @@ union vdcd {
 struct var{
   char name[VLEN+1]; Type type; union vdcd vdcd; 
 };
+// struct var *vt = vh->vartab;			// vh == blob
+// vt->var.vdcd.od.blob  				// <<== typical
 
 /* blob header */
 struct varhdr {

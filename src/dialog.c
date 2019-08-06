@@ -67,34 +67,36 @@ void whatHappened() {
 	else if(error){
 		char *fc, *lc;
 		int firstSignif=0, blanks, lineno;
-		if(*errat==0x0a||*errat==0x0d)--errat;
-		if(errat<lpr){
-			printf("\nseed ");
-			lineno=0;
+		if(errat){
+			if(*errat==0x0a||*errat==0x0d)--errat;
+			if(errat<lpr){
+				printf("\nseed ");
+				lineno=0;
+			}
+			else if(errat<apr){
+				lineno = countch(lpr,errat,0x0a);
+				if(!lineno)lineno = countch(pr,errat,0x0d);
+				printf("\nlib ");
+			}
+			else {
+				lineno = countch(apr,errat,0x0a);
+				if(!lineno)lineno = countch(apr,errat,0x0d);
+				printf("\napp ");
+			}
+			printf("line %d (cursor pr[%d])", lineno,(int)(errat-pr));
+			_errToWords();
+			fc=fchar(errat);
+			while((*(fc+firstSignif))==' ' ||(*(fc+firstSignif))=='\t' )
+				 ++firstSignif;
+			lc=lchar(errat);
+			if(lc>endapp)lc=endapp;
+			pft(fc,lc);
+			printf("\n");
+			pft(fc,fc+firstSignif-1);        /* leading whitespace */
+			blanks=errat-fc-firstSignif-1;   /* blanks to carot */
+			while(--blanks >= 0) printf(" ");
+			printf("^\n");
 		}
-		else if(errat<apr){
-			lineno = countch(lpr,errat,0x0a);
-			if(!lineno)lineno = countch(pr,errat,0x0d);
-			printf("\nlib ");
-		}
-		else {
-			lineno = countch(apr,errat,0x0a);
-			if(!lineno)lineno = countch(apr,errat,0x0d);
-			printf("\napp ");
-		}
-		printf("line %d (cursor pr[%d])", lineno,(int)(errat-pr));
-		_errToWords();
-		fc=fchar(errat);
-		while((*(fc+firstSignif))==' ' ||(*(fc+firstSignif))=='\t' )
-			 ++firstSignif;
-		lc=lchar(errat);
-		if(lc>endapp)lc=endapp;
-		pft(fc,lc);
-		printf("\n");
-		pft(fc,fc+firstSignif-1);        /* leading whitespace */
-		blanks=errat-fc-firstSignif-1;   /* blanks to carot */
-		while(--blanks >= 0) printf(" ");
-		printf("^\n");
 	}
 	else {
 		if(!quiet)printf("\ndone");
