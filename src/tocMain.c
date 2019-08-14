@@ -208,7 +208,7 @@ void allocStuff() {
     size=sizeof(struct varhdr)+locnumvars*sizeof(struct var)+locdatlen;
     locals = malloc(size);
     struct varhdr *vh = (struct varhdr*)locals;
-    _newblob("_Locals",locals);
+    _newblob("__Locals__",locals);
 	memset(vh, 0, size); 
     vh->vartab = vh->nxtvar = vh->gltab = vh+1;
     vh->val = vh->datused = vh->vartab + LOCNUMVARS;   // also serves as end of vartab

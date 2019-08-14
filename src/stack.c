@@ -93,7 +93,6 @@ int toptoi() {
 		else if((*top).type==Char) datum = *((char*)((*top).value.up));
 		else if((*top).type == 'o') {
 			datum = (*top).value.up;
-fprintf(stderr,"\nstack: toptoi~97 obj case %d",datum);
 		}
 		else eset(TYPEERR);
 	}

@@ -58,7 +58,7 @@
 #define LEFTARROW -68
 
 #define VLEN 15
-#define BLOBTABLEN 30
+#define BLOBTABLEN 100
 #define PRLEN 30000
 #define STACKLEN 100
 #define FUNLEN 100
@@ -103,6 +103,7 @@ int quiet;
 #define DIVERR		 30
 #define TMBLOBERR    31
 #define CLASSERR	 32
+#define WHERERR      33
 #define EXIT         98
 #define KILL         99
 
@@ -161,7 +162,7 @@ struct varhdr {
 	struct var *vartab; struct var *gltab; struct var *nxtvar; 
 	char *val; char *endval; char *datused; 
 };
-struct varhdr *locals, *globals;
+struct varhdr *locals;
 /* sizes needed for each vartab, values area */
 struct lndata { int nvars; int valsize; } lndata;
 

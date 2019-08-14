@@ -276,7 +276,7 @@ void _setArg( Type type, struct stackentry *arg, struct var *locals ) {
 }
 
 /*	SITUATION: Just parsed symbol with class 'E', or special symbol MC.
- *	Parses the args putting values are on the stack, arg pointing to the first 
+ *	Parses the args putting values on the stack, arg pointing to the first 
  *	of them.
  *	Sets the cursor to the called function's 'where'. Parses arg decl's
  *	giving them values from the stack. Executes the function body.
@@ -603,34 +603,34 @@ void _factor() {
 		}
 	}
 	else if(_lit(xnew)){
-//fprintf(stderr,"\ntoc~604 parsed xnew");
 		_rem();
 		struct var *isclvar;
 		if(isclvar=_isClassName()){
 // scope body of cn
-			int from, to;
+			char *from, *to;
 			from = isclvar->vdcd.cd.where+1;
-			int temp = cursor;
+			char *temp = cursor;
 			cursor=from;
 			if(_skip('[',']'))eset(LBRCERR);
 			to = cursor-1;
 			cursor=temp;
-//dumpVar(isclvar);
-//fprintf(stdout,"\nfrom to %d %d",from,to);
-//dumpft(from,to);
-// link
-			void *value = lnlink(from, to, isclvar->name);
+// link the body, return blob address
+			struct varhdr *vh = lnlink(from, to, isclvar->name);
 			if(error){
 				whatHappened();
 				exit(1);
 			}
-//dumpBV(value);
-//exit(0);
-
 // onto stack
-			pushst(0,'A','O',value);
-// parse args
-// call constructor
+			pushst(0,'A','O',vh);
+// call constructor (enter) if exist
+			struct var *con = _addrval(isclvar->name,vh->vartab,(vh->nxtvar)-1);
+			if(con){
+				char *where = con->vdcd.vd.value.up;
+				_enter(where);
+			}
+//fprintf(stderr,"\n--- %s %d ---",__FILE__,__LINE__);
+//dumpBV(value);
+//fprintf(stderr,"\n--- %s %d ---",__FILE__,__LINE__);
 		}
 		else eset(CLASSERR);
 	}
@@ -874,10 +874,8 @@ void st() {
 		return;
 	}
 	else if(isvar=_isClassName()) {
-//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 		if(symName()) {
 			newref(isvar,locals);
-//dumpVarTab(locals);
 		}
 		else eset(SYMERR);
 	}
@@ -889,14 +887,6 @@ void st() {
 		eset(STATERR);
 	}
 }
-
-/*  Refenence to an object refname (fname,lname), type 'o', 
- *  details: class entry (cls), blob to referenced object's blob (NULL) 
- *  to be filled in when known.
- */
-//void newref(char *refname, struct var *cls, struct varhdr *blob ,struct varhdr *vh) {
-
-
 
 /*********** a variety of dumps for debugging **********/
 char* typeToWord(Type t){
@@ -919,6 +909,11 @@ void dumpHex( void* where, int len ) {
 void dumpft(char *from, char *to ) {
 	fflush(stdout);
 	while(from <= to) fprintf(stderr,"%c",*(from++));
+}
+/* dump from..to inclusive  */
+void xdumpft(char *from, char *to ) {
+	fflush(stdout);
+	while(from <= to) fprintf(stderr,"%x ",*(from++));
 }
 
 /* dump the line cursor is in from cursor to nl */

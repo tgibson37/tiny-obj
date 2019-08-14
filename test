@@ -3,8 +3,8 @@
 usage() {
   cat << EOF >&2
 Usage: ./test [-kdltC] [testname testname ...]
-  -k keep: copy latest results fo expected expected
-  -d diff: show differences between latest results and expected results
+  -k keep: copy latest results to expected
+  -d diff: show differences between latest results and expected
   -l list: list -lt files
   -t tree: tree files
   -C clean: remove latest results
@@ -27,7 +27,7 @@ Setup:
 		r has results (printf(...)), d has dumps (fprintf(stderr,...))
 	Examine those two files. 
 		If they look good run './test -k tn', keep.
-		Keep copies r and d to er and dr respectively, as expected results.
+		Keep copies r and d to er and ed respectively, as expected results.
 	(Notice you can set up tests that are expected to fail, hence capturing dumps.)
 EOF
   exit 1

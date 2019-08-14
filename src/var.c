@@ -1,5 +1,7 @@
 #include "toc.h"
 
+int newop;
+
 /* SITUATION: Function call parsed PLUS two calls during linking.
 	Open new var and value frames for library, globals, and function locals.
  */
@@ -111,7 +113,6 @@ void newref(struct var *cls, struct varhdr *vh) {
   r->vdcd.od.cls = cls;
   r->vdcd.od.blob=NULL;
   vh->nxtvar++;
-dumpVar(r);
 }
 
 /* Canonicalizes the name bracket by f,l inclusive into buff, and returns buff.
@@ -243,8 +244,9 @@ void dumpVar(struct var *v) {
 				,v->vdcd.od.blob);
 	}
 	else
-		fprintf(stderr,"\n var %p: %s %d %s %d ", v,
-		(*v).name, (*v).vdcd.vd.class, typeToWord((*v).type), (*v).vdcd.vd.len );
+		fprintf(stderr,"\n var %p: %s %d %s %d %d "
+			, v, (*v).name, (*v).vdcd.vd.class, typeToWord((*v).type)
+			, (*v).vdcd.vd.len, (*v).vdcd.vd.value.ui );
 }
 
 void dumpVarTab(struct varhdr *vh) {
@@ -302,7 +304,11 @@ struct varhdr* _getblob(char* sym){
     	}
   	}
 }
-//Assumes symName() has just parsed and defined fname,lname
+
+/*	A class blob is named the same as the class whose vars it defines.
+ *	Globals and locals are named __Globals__ and 
+ *	Assumes symName() has just parsed and defined fname,lname.
+ */
 struct varhdr* getblob(){
   char sym[VLEN+1];
   memset(sym,0,VLEN+1);
@@ -329,13 +335,13 @@ int checkBrackets(char *from, char *to) {
 	return 0;
 }
 
+int xxpass=0;
+
 /*	Pass one if vartab is NULL computes the needed sizes. Pass two does
  *	the actual link into vartab, which also has room for all values.
  *	The logic here mimics classical void link().
  */
-int xxpass=0;
 void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
-fprintf(stderr,"\nnewop %d",newop);
 	char* x;
 	char* savedEndapp=endapp;
 	char* savedCursor=cursor;
@@ -346,10 +352,8 @@ fprintf(stderr,"\nnewop %d",newop);
 	} else {
 		vartab=vh->vartab;
 		xxpass=2;
-		newfun(vh);
+		if(!newop)newfun(vh);
 	}
-/*	check Brackets from cursor to limit*/
-	cursor=pr;
 	if(checkBrackets(from,to))eset(RBRCERR+1000);
 	if(error){ whatHappened(); exit(1); }
 	cursor=from;
@@ -362,8 +366,10 @@ fprintf(stderr,"\nnewop %d",newop);
 		else if( _lit(xendlib) ){
 			if(vh != NULL){     //  <<==  PASS TWO endlibrary
 				if(curfun==fun) {   /* 1st endlib, assume app globals follow */
-					newfun(vh);
-					curglbl=curfun;
+					if(!newop){
+						newfun(vh);
+						curglbl=curfun;
+					}
 				}
 				else {        // multiple endlib tolerance, undo the assumption
 					fun[0].evar = fun[1].fvar = vh->nxtvar;
@@ -401,7 +407,6 @@ fprintf(stderr,"\nnewop %d",newop);
 			}
 			if(xxpass==1){
 				lndata.nvars += 1;
-//fprintf(stderr,"\nvar~323 abst %d %s %s",abst,cname,ename);
 			}
 			else if(xxpass==2){
 				cls_dcl(abst,cname,ename,vh,where);
@@ -423,9 +428,12 @@ fprintf(stderr,"\nnewop %d",newop);
 				if( (*cursor==0x0d)||(*cursor=='\n') )break;
 			}
 		}
-		if(cursor==lastcur)eset(LINKERR);
+		if(cursor==lastcur){
+			eset(LINKERR);
+		}
 	}
 	cursor = savedCursor;
+	endapp = savedEndapp;
 	if(verbose[VL])dumpVarTab(vartab);
 }
 
@@ -433,6 +441,78 @@ fprintf(stderr,"\nnewop %d",newop);
  */
 void classlink(struct var *vh){
 	return;   // model for this in Resources link.c/h
+}
+
+/*	tools for accessing specific data in a *var. A var can be
+ *	id'd two ways: ptr to the var entry (struct var *v), and
+ *	symbol name used to install that entry. These use the former.
+ *	The latter requires	a search, and that search needs to know 
+ *	what vartab to search. cname_to_var() searches globals for class name.
+ */
+
+/*	Return var if name is a class, else NULL
+ */
+struct var *visclass(char *name){
+	struct var* v = _addrval( name, curglbl->fvar, curglbl->evar );
+	if(!v)return NULL;
+	int t = v->type;
+	if(t=='C' || t=='A') return v;
+	return NULL;
+}
+char* vname(struct var *v) {
+	return v->name;
+}
+int vtype(struct var *v){
+	return (int)v->type;
+}
+/* v must be a class entry. Returns ptr to string, parent name. */
+char* vparent(struct var *v) {
+	return v->vdcd.cd.parent;
+}
+char* vwhere(struct var *v){
+	return v->vdcd.cd.where;
+}
+
+/*	return length of body of class definition,
+ *	incl lead [, excl trail ]. So an empty body [] has length 1.
+ *	Return NULL if bracket problem. Note that where MUST point to [.
+ */
+int class_body(char* name){
+	char *f;
+	int len=0;
+	struct var *v = visclass(name);
+	char* saved_cursor = cursor;
+	f = cursor = vwhere(v);
+	if(*cursor != '[')eset(WHERERR);
+	++cursor;
+	if(_skip('[',']'))eset(RBRCERR);
+	else len = cursor-f-1;
+	cursor = saved_cursor;
+	if(error)return NULL;
+	return len;
+}
+
+char par_buf[VLEN+2];
+
+/*	ascend is used by lnlink to climb one step up the
+ *	inheritance chain and set from/to to the text of
+ *	the parents body, inside the []'s. The new object's
+ *	vartab thus includes all inherited declarations.
+ *	Callers arg from==zero signals no parent to stop the loop.
+ */
+void ascend(char *cname, char **from, char **to){
+	struct var *v = visclass(cname);
+	if(v){
+		strcpy(par_buf,vparent(v));
+		v = visclass(par_buf);
+		if(v){
+			*from = vwhere(v)+1;
+			int len = class_body(par_buf);
+			*to = *from+len-1;
+		}
+		else *from=0;
+	}
+	else *from=0;	
 }
 
 /*	Modified version of tclink() to parse and build class tables. 
@@ -443,16 +523,23 @@ void classlink(struct var *vh){
  *	Uses lnpass12 as a service.
  */
 void* lnlink(char *from, char *to, char *blobName){
-        int size, newop;
+        newop = strcmp(blobName,"__Globals__"); // true iff doing new operator
+        int size;
         void* blob;
         struct varhdr *vh;
         char* savedcursor=cursor;
         char* savedendapp=endapp;
-        newop = strcmp(blobName,"__Globals__"); // true iff doing new operator
-        cursor=from;
-        endapp=to;
         lndata.nvars = lndata.valsize = 0;
-        lnpass12(from,to,NULL,newop);    // PASS one
+        char *f; char *t;
+        f=from; t=to;
+		strncpy(par_buf,blobName,VLEN+1);
+        while(f){
+	        lnpass12(f,t,NULL,newop);    // PASS one
+	        if(newop){
+	        	ascend(par_buf,&f,&t);
+	        }
+	        else break;
+        }
         size = sizeof(struct varhdr) + lndata.nvars*sizeof(struct var) + lndata.valsize;
         blob = vh = malloc(size);
         _newblob(blobName,blob);
@@ -460,8 +547,16 @@ void* lnlink(char *from, char *to, char *blobName){
         vh->vartab = vh->nxtvar = vh->gltab = vh+1;
         vh->val = vh->datused = vh->vartab + lndata.nvars;
         vh->endval = blob + size;
-		cursor=from;
-        lnpass12(from,to,blob,newop);    // PASS two
+        f=from; t=to;
+		strncpy(par_buf,blobName,VLEN+1);
+        while(f){
+	        lnpass12(f,t,blob,newop);    // PASS two
+	        if(newop){
+	        	ascend(par_buf,&f,&t);
+	        }
+	        else break;
+        }
+		strncpy(par_buf,blobName,VLEN+1);  // just in case
         cursor=savedcursor;
         endapp=savedendapp;
         return blob;
@@ -474,11 +569,4 @@ void* lnlink(char *from, char *to, char *blobName){
 void toclink() {
 	struct varhdr *vh;	
 	vh = lnlink(cursor,endapp,"__Globals__");
-//dumpBV(vh);
 }
-
-//fprintf(stderr,"\nline --->>>");
-//dumpLine();
-//fprintf(stderr,"<<<---");
-
-//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);

@@ -3,7 +3,7 @@
 
 abstract class Player [
     int number
-    char(20) name
+    char name(20)
     printNumber[
         pn number
     ]
