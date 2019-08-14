@@ -20,7 +20,9 @@ Step two is to modify the variable table itself, so it can accomodate the classi
 
 Future steps: implement the 'new' and 'delete' operators to create and remove objects dynamically as the program runs. And then finally the symbol search must use these modified tables to look up object symbols.
 
+Status: new creates an object blob with var table and value space. Symbol search does not yet search this table, so that generates a SYMERR.
+
 Tom Gibson
-August 3, 2019
+August 14, 2019
 
 

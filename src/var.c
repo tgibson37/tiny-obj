@@ -435,6 +435,7 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 	cursor = savedCursor;
 	endapp = savedEndapp;
 	if(verbose[VL])dumpVarTab(vartab);
+if(newop&&(xxpass==2))dumpVarTab(vh);
 }
 
 /*	build its vartab, make entry into owner's vartab
