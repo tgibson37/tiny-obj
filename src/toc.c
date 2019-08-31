@@ -34,12 +34,6 @@ void _eq() {
 	char cDatum;  /*  and val.size, giving needed cast */
 	void* pDatum;
 	void* where;
-#if 0
-if(*(cursor-1)=='2');else{
-fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
-dumpStack();
-}
-#endif
 	struct stackentry *val = &stack[nxtstack-1]; /* value (on top) */
 	struct stackentry *lval = &stack[nxtstack-2]; /* where to put it */
 	if(verbose[VE]){
@@ -124,7 +118,10 @@ dumpStack();
 
 /******* set error unless already set, capture cursor in errat *******/
 void eset( int err ){
-	if(!error){error=err;errat=cursor;}
+	if(!error){
+		error=err;
+		errat=cursor;
+	}
 }
 
 /* Bump cursor over whitespace. Then return true on match and advance
@@ -626,7 +623,9 @@ void _factor() {
 			struct var *con = _addrval(isclvar->name,vh->vartab,(vh->nxtvar)-1);
 			if(con){
 				char *where = con->vdcd.vd.value.up;
+				curobj = vh;   // enable instance variable search
 				_enter(where);
+				curobj = NULL;
 			}
 //fprintf(stderr,"\n--- %s %d ---",__FILE__,__LINE__);
 //dumpBV(value);

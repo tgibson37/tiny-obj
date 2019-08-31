@@ -156,13 +156,16 @@ struct var* _addrval(char *sym, struct var *first, struct var *last) {
 	return 0;
 }
 
-/* 	looks up a symbol at three levels via function table. sym must be canonical.
+/* 	looks up a symbol at three levels via function table. 
+ *	sym must be canonical.
  */
 struct var* addrval_all(char *sym) {
 	struct var *v;
-	v = _addrval( sym, curfun->fvar, curfun->evar );
-	if(!v) v = _addrval( sym, curglbl->fvar, curglbl->evar );
-	if(!v) v = _addrval( sym, fun->fvar,fun->evar ); 
+	v = _addrval( sym, curfun->fvar, curfun->evar );  // locals
+	if(!v && curobj)                                  // instances
+			v = _addrval( sym, curobj->vartab, curobj->nxtvar-1);
+	if(!v) v = _addrval( sym, curglbl->fvar, curglbl->evar ); //globals
+	if(!v) v = _addrval( sym, fun->fvar,fun->evar );  //libs
 	if(v)return v;
 	return 0;	
 }
@@ -270,7 +273,18 @@ void dumpBlob(struct varhdr *vh){
 			,vh->vartab,vh->nxtvar-vt,vh->gltab-vt,vh->val-(char*)vt);
 	fprintf(stderr,"  val          used      endval\n");
 	fprintf(stderr,"   %9p %9d %9d\n",vh->val,vh->datused-dt,vh->endval-dt);
-	fprintf(stderr,"nxtvar,gltab,endval,used are decimal relative to vartab,val");
+	fprintf(stderr,"nxtvar,gltab are decimal sizes in vartab");
+	fprintf(stderr,"\nused,endval are decimal sizes in/of val");
+}
+void dumpBlobTab() {
+	struct blob *b;
+	fprintf(stderr,"\nvvv blob table vvv\n");
+	for(b=blobtab; b<nxtblob; ++b) {
+		fprintf(stderr,"\n%s: ",b);
+		dumpBlob(b->varhdr);
+		fprintf(stderr,"\n");
+	}
+	fprintf(stderr,"\n^^^ blob table ^^^\n");
 }
 
 void dumpBV(struct varhdr *vh){ 
@@ -288,13 +302,16 @@ void _newblob(char* name, char* blob){
 	b->varhdr = blob;
 }
 
-//Assumes blob is malloc'd and fname,lname defined blob name
+#if 0
+//Assumes blob is malloc'd and fname,lname defines blob name
 void newblob(char* blob){
 	if(nxtblob >= eblob)eset(TMBLOBERR);
 	struct blob *b = nxtblob++;
 	canon(b);
 	b->varhdr = blob;
 }
+#endif
+
 //Assumes sym is canonicalized
 struct varhdr* _getblob(char* sym){
 	struct blob *b;
@@ -306,7 +323,7 @@ struct varhdr* _getblob(char* sym){
 }
 
 /*	A class blob is named the same as the class whose vars it defines.
- *	Globals and locals are named __Globals__ and 
+ *	Globals and locals are named __Globals__ and __Locals__ resp.
  *	Assumes symName() has just parsed and defined fname,lname.
  */
 struct varhdr* getblob(){
@@ -435,7 +452,6 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 	cursor = savedCursor;
 	endapp = savedEndapp;
 	if(verbose[VL])dumpVarTab(vartab);
-if(newop&&(xxpass==2))dumpVarTab(vh);
 }
 
 /*	build its vartab, make entry into owner's vartab
@@ -523,10 +539,10 @@ void ascend(char *cname, char **from, char **to){
  *	Parse, var, and other services are supplied by whole unchanged tiny-c files.
  *	Uses lnpass12 as a service.
  */
-void* lnlink(char *from, char *to, char *blobName){
+struct varhdr* lnlink(char *from, char *to, char *blobName){
         newop = strcmp(blobName,"__Globals__"); // true iff doing new operator
         int size;
-        void* blob;
+        char* blob;
         struct varhdr *vh;
         char* savedcursor=cursor;
         char* savedendapp=endapp;
@@ -560,6 +576,11 @@ void* lnlink(char *from, char *to, char *blobName){
 		strncpy(par_buf,blobName,VLEN+1);  // just in case
         cursor=savedcursor;
         endapp=savedendapp;
+if(newop){
+fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
+dumpBlob(vh);
+dumpVarTab(vh);
+}
         return blob;
 }
 
@@ -571,3 +592,11 @@ void toclink() {
 	struct varhdr *vh;	
 	vh = lnlink(cursor,endapp,"__Globals__");
 }
+
+#if 0
+if(newop){
+fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
+dumpBlobTab();
+dumpBlob(blob);
+}
+#endif

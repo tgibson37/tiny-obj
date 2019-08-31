@@ -192,6 +192,7 @@ void allocStuff() {
     }
     nxtblob = blobtab = malloc(btablen*sizeof(struct blob));
     eblob = blobtab+btablen*sizeof(struct blob);
+    curobj = NULL;   // current objects varhdr
 
 /*	
  *	local variable table PLUS space for their values

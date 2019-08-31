@@ -162,13 +162,13 @@ struct varhdr {
 	struct var *vartab; struct var *gltab; struct var *nxtvar; 
 	char *val; char *endval; char *datused; 
 };
-struct varhdr *locals;
+struct varhdr *locals, *curobj;
 /* sizes needed for each vartab, values area */
 struct lndata { int nvars; int valsize; } lndata;
 
-/* blob table */
+/* blob table, f,t scope the text for enter to set curclass */
 struct blob {
-	char name[VLEN+1]; struct varhdr *varhdr;
+	char name[VLEN+1]; char *f; char *t; struct varhdr *varhdr;
 };
 struct blob *blobtab, *nxtblob, *eblob;
 void newblob(char *blob);
