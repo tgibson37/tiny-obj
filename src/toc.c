@@ -618,7 +618,7 @@ void _factor() {
 				exit(1);
 			}
 // onto stack
-			pushst(0,'A','O',vh);
+			pushst(0,'L','O',vh);
 // call constructor (enter) if exist
 			struct var *con = _addrval(isclvar->name,vh->vartab,(vh->nxtvar)-1);
 			if(con){
