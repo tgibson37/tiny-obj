@@ -53,10 +53,10 @@ void _eq() {
 		union stuff *to   = lval->value.up;
 		union stuff *from =  &(val->value);
 		stuffCopy(to,from);
-
-// push something
-
+// maybe should push 'to' instead of 'from'
+		pushst(class, 'A', type, from);
 	}
+
 	if(class==1 && (*val).class==1) {
 		pDatum = (*val).value.up;
 		if( (*val).lvalue=='L' ){
