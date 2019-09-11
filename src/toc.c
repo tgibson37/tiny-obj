@@ -35,9 +35,6 @@ void _eq() {
 	void* where;
 	struct stackentry *val = &stack[nxtstack-1]; /* value (on top) */
 	struct stackentry *lval = &stack[nxtstack-2]; /* where to put it */
-fprintf(stderr,"\n--- %s %d ---      eq types\n",__FILE__,__LINE__);
-dumpLine();
-dumpStack();
 	if(verbose[VE]){
 		fprintf(stderr,"\neq: lval");
 		dumpStackEntry(nxtstack-2);
@@ -48,24 +45,17 @@ dumpStack();
 	where = &((*lval).value.up);
 	int class = (*lval).class;
 	int type = (*lval).type;
-//	int whereSize = typeToSize(class,type);  /* of the lvalue */
-fprintf(stderr,"\ntypes %c %c",type,val->type);
 	if((*lval).lvalue != 'L') { 
 		eset(LVALERR); 
 		return; 
 	}
 	if(type=='o' && val->type=='o'){
-
-
 		union stuff *to   = lval->value.up;
 		union stuff *from =  &(val->value);
 		stuffCopy(to,from);
 
 // push something
 
-fprintf(stderr,"\n--- %s %d --- eq o-o case\n",__FILE__,__LINE__);
-dumpVarTab(locals);
-exit(0);
 	}
 	if(class==1 && (*val).class==1) {
 		pDatum = (*val).value.up;
@@ -127,15 +117,6 @@ exit(0);
 			put_char( (*lval).value.up, cDatum );
 			pushk(cDatum);
 		}
-#if 0
-		else if(type=='o' && val->type=='o'){
-fprintf(stderr,"\neq()~119, o=o case BEFORE");
-dumpStack();
-			char **where = (*val).value.up;
-fprintf(stderr,"\neq()~119, o=o case AFTER");
-dumpStack();
-		}
-#endif
 	}
 	else eset(EQERR);
 }
@@ -292,7 +273,6 @@ void _setArg( Type type, struct stackentry *arg, struct var *locals ) {
 		else if( stacktype==Char) vpassed.ui = get_char(where);
 			/* ui to clear high order byte */
 	}
-//fprintf(stderr,"\n~295SA type %d passed %d", type, vpassed.ui);
 	varalloc( type, &vpassed, locals);
 }
 
@@ -309,7 +289,6 @@ void _enter( char* where) {
 	int arg=nxtstack;
 	int nargs=0;
 	if(varargs>0) nargs=varargs-1;
-//fprintf(stderr,"\n~311E ABOVE: va %d na %d",varargs,nargs);
 	if(where)fcn_enter();
 	_lit(xlpar); /* optional (   */
 	int haveArgs = ! (  _lit(xrpar)
@@ -334,13 +313,11 @@ void _enter( char* where) {
 		if(nxtstack) {
 			machinecall( nargs );
 			varargs=0;
-//fprintf(stderr,"\n~336E va %d na %d",varargs,nargs);
 		}
 		else eset(MCERR);
 		return;
 	}
 	else {   /* ABOVE parses the call args, BELOW parses the called's arg decls */
-//fprintf(stderr,"\n~342E BELOW: va %d na %d",varargs,nargs);
 		char *localstcurs=stcurs, *localcurs=cursor;
 		cursor = where;
 		newfun(locals);  
@@ -355,7 +332,6 @@ void _enter( char* where) {
 			} 
 			else if ( _lit(xchar)) {
 				do {
-//fprintf(stderr," ~358CHAR ");
 					_setArg(Char, &stack[arg],locals);
 					arg++;
 				} while(_lit(xcomma));
@@ -363,7 +339,6 @@ void _enter( char* where) {
 			}
 			else if ( _lit(xvarargs) ){
 				varargs=nargs+1;
-//fprintf(stderr,"\n~362E va %d na %d ",varargs,nargs);
 				break;
 			}
 			else {
@@ -464,8 +439,6 @@ int _asgn(){
 	if(_reln()){
 		if(_lit(xeq)){
 			_asgn();
-//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
-//dumpStack();
 			if(!error)_eq();
 		}
 	}
@@ -659,15 +632,6 @@ void _factor() {
 // here points into the local var entry's pointer cell.
 			struct stackentry *top = &stack[nxtstack-1];
 			if((top>=stack) && (top->type=='o')){
-#if 0
-fprintf(stderr,"\n--- %s %d ---\n FILL IN BLOB",__FILE__,__LINE__);
-dumpStack();
-				void *where;
-				union stuff *here;
-				where = top->value.up;
-				here = where;
-				here->up = vh;
-#endif
 			}
 			else eset(TYPEERR);
 // call constructor (enter) if exist
@@ -679,15 +643,10 @@ dumpStack();
 				popst();      // pop constructor returned value
 				curobj = NULL;
 			}
-// onto stack
 			pushst(0,'A','o',vh);
-//fprintf(stderr,"\n--- %s %d ---",__FILE__,__LINE__);
-//dumpBV(value);
-//fprintf(stderr,"\n--- %s %d ---",__FILE__,__LINE__);
 		}
 		else eset(CLASSERR);
 	}
-//void pushst( int class, int lvalue, Type type, union stuff *value ) {
 	else if(_lit(xdelete)){
 fprintf(stderr,"toc~607 parsed xdelete, NOT CODED YET");
 	}
@@ -703,23 +662,14 @@ fprintf(stderr,"toc~607 parsed xdelete, NOT CODED YET");
 				char qual[VLEN+1];
 				canon(qual);
 				cursor = lname+2;
-fprintf(stderr,"\n--- %s %d --- dot parsed, exiting",__FILE__,__LINE__);
-exit(0);
 				v = obsym(qual);  /* looks up symbol */
 			}
 			else v = addrval();  /* looks up symbol */
 			if( !v ){ eset(SYMERR); return; } /* no decl */
 			if(v->type=='o'){  //object ref
-
-fprintf(stderr,"\nv = %p",v);
-fprintf(stderr,"\nblob = %d",v->vdcd.od.blob);
-fprintf(stderr,"\namp of blob = %p",&(v->vdcd.od.blob));
 				union stuff value;
 				value.up = &(v->vdcd.od.blob);
 				pushst(0,'L','o',&value);
-fprintf(stderr,"\n--- %s %d --- pushed can as 'o', lvalue",__FILE__,__LINE__);
-dumpStack();
-//exit(0);
 				return;
 			}
 		  	char* where = (*v).vdcd.vd.value.up;
@@ -829,7 +779,6 @@ int quit() {
  *  optional semi. 
  */
 int _decl(struct varhdr *vh) { 
-//fprintf(stderr,"\n~%s %d (_decl): vartab %p\n",__FILE__,__LINE__,vh->vartab);
 	Type t;
 	if( _lit(xchar) ) {
 		do {

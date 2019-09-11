@@ -307,16 +307,6 @@ void _newblob(char* name, char* blob){
 	b->varhdr = blob;
 }
 
-#if 0
-//Assumes blob is malloc'd and fname,lname defines blob name
-void newblob(char* blob){
-	if(nxtblob >= eblob)eset(TMBLOBERR);
-	struct blob *b = nxtblob++;
-	canon(b);
-	b->varhdr = blob;
-}
-#endif
-
 //Assumes sym is canonicalized
 struct varhdr* _getblob(char* sym){
 	struct blob *b;
@@ -581,13 +571,6 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
 		strncpy(par_buf,blobName,VLEN+1);  // just in case
         cursor=savedcursor;
         endapp=savedendapp;
-#if 0
-if(newop){
-fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
-dumpBlob(vh);
-dumpVarTab(vh);
-}
-#endif
         return blob;
 }
 

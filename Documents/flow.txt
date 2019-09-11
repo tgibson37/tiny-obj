@@ -1,30 +1,36 @@
 Sep 1, 2019
 ---
-toc.c runs first.toc partly. The Cannibal class links. Its constructor runs. It reaches eq() in 'can = new Cannibal'. That eq code is not written. But the stack has can as an lvalue, and new Cannibal on top.
-Further work seems horribly complex, given my weak short term memory. So maybe a few walkthroughs of first.toc execution will help. This is my attempt at such. Assume global linking is done.
-Looking at first.toc, these walkthroughs seem appropriate.
-	Cannibal can
-		Cannibal
-		can
-	can = new Cannibal
-		can
-		new Cannibal
-		eq
+toc.c runs first.toc partly. The Cannibal class links. Its constructor runs. It reaches eq() in 'can = new Cannibal'. That eq code is partly written. The stack has can as an lvalue, and new Cannibal on top, and the assign is done, but the push is not yet, hence POPERR when run.
 WARNING: ~'s are subject to drift.
 ===
-Cannibal can
-^
+Slim Flow
+This section extracts essential action for the detailed section
+---   Sep 9   ~'s are 1-flow.txt, 2-toc.c, 3-(info)
+can = new Cannibal
+^                      [assumed cursor after rem call]
+parse can 53 700 (addrval call)
+push as L,o  57 703   ( datum is &(vdcd.od.blob) )
+parse new 63 630   (lit call)
+vh defined 68 644  (lnlink call)
+Cannibal constructor 73 669  (enter call)
+push as 'o' vh 76 674   (datum is vh)
+eq 82 31
+===
+Detailed Flow
+parsing ....
+	Cannibal can
+	^
 st recognizes global 'Cannibal', ~917, using recognizer _isClassName
-	toc~917, _isClassName var~185
+	toc~896, _isClassName var~153
 		bumps cursor to just after Cannibal
 		tests type 'C', [it is]
 		returns global entry to Cannibal, struct var *maybe
-	toc~918, symName is required else eset SYMERR, 
+	toc~897, symName is required else eset SYMERR, 
 		scopes the next symbol, can, defining fname,lname
 			fname -->can<-- lname
 			that is a setup for canon
-	~919 cursor bumped
-	toc~920, newref var~109 
+	~898 cursor bumped
+	toc~899, newref var~109
 		canon's the sym, 'can'
 		enters 'can' as type 'o' into locals, var~112
 			vdcd.od.cls is the parent class
@@ -32,9 +38,9 @@ st recognizes global 'Cannibal', ~917, using recognizer _isClassName
 		So this local knows 
 			Cannibal qualifier
 			BUT NOT its own blob.
-	toc~931, st returns
+	toc~910, st returns
 		but is called again after a rem call
-			[see the compound statment for loop, ~810]
+			[see the compound statment for loop, ~813,820]
 STATUS: 
 	'Cannibal can' is parsed. 
 	locals has an entry for can, type 'o', ref to globals Cannibal
@@ -43,46 +49,50 @@ STATUS:
 ===
 can = new Cannibal
 ^                      [assumed cursor after rem call]
-st recognizes 'can=new Cannibal' as an asgn, toc~899.
+st recognizes 'can=new Cannibal' as an asgn, toc~886
 	[See the walk_through.html document at...
 		https://drive.google.com/open?id=1pguAp9HyR_KvpegpCM3fq8kRmPv6X3pO
 	]
 details:
-	toc~923, st calls asgn which tunnels down to factor at toc~598
+	toc~903, st calls asgn which tunnels down to factor at toc~585
 		factor 
-			recognizes 'can' as a symName, ~673
-			looks up its var entry, addrvar, ~685
+			recognizes 'can' as a symName, ~653
+			looks up its var entry, addrval, ~667
 				found as local
-			tests it is type 'o', (it is) ~687
+			tests it is type 'o', (it is) ~669
 			pushes it onto the stack as an lvalue, type 'o' 
-				with reference to its vartab ADDRESS, ~688
+				with reference to its vartab ADDRESS, ~672
 				that address holds a NULL, can has no blob yet.
-			returns, ~692, tunneling up to asgn
+			returns, ~673, tunneling up to asgn
 	asgn parses the = and tunnels down to factor again.
 		factor parses 
-			new, ~622
-			required class name, Cannibal, ~625
+			new, ~612
+			required class name, Cannibal, ~615
 			scopes the text of the Cannibal class, 
-				defining from,to, ~628..632
-				linking that text, ~636
+				defining from,to, ~618..622
+				linking that text, ~626
 					which defines vh, the new blob aka varhdr
 					[the varhdr defines blob parts, toc.h ~160]
-				fills in needed blob ref, this~63, toc~643..651
-				looks up a possible constructor, ~654
+				fills in needed blob ref, this~65, toc~631..636
+					NOT WRITTEN YET, this may be handled by
+					eq's new o-o assign. Need to study this.
+				looks up a possible constructor, ~638
 					if so enables vh search by setting curobj=vh
-					enters the constructor, ~657
+					enters the constructor, ~642
 					sets curobj back to null. [enter needed access
 						to curobj which is VERY transient.]
-				pushes vh onto the stack as actual, type 'o', ~662
-			factor returns ~735, tunneling up to asgn, ~452
+				pushes vh onto the stack as actual, type 'o', ~646
+			factor returns ~716, tunneling up to asgn, ~442
 	STATUS: parsing of 'can = new Cannibal' is done.
 		lvalue can is poised to receive rvalue new Cannibal
 			both on the stack
-	asgn resumes at ~452, calls eq, toc~31
+	asgn resumes at ~442, calls eq, toc~31
 		eq, toc~31, LOTS of special cases.
-			case ~96, class==0 && (*val).class==0
-				subcase ~118, type=='o' && val->type=='o'
-			CODE NOT WRITTEN YET, just an fprintf we got here <<<===
+			case ~52, type=='o' && val->type=='o'
+			CODE PARTIALLY written
+				~55 stuffCopy effects the assign.
+				Needs more testing. Currently leaves stack empty.
+				Stack push is needed. 
 
 
 
