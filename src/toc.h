@@ -291,3 +291,6 @@ int symName();
 int charIn(char c, char *choices );
 void pFmt(char *fmt, int *args);
 int _skip(char l, char r);
+struct varhdr* lnlink(char *from, char *to, char *blobName);
+void* mymalloc(char *name, int size);
+int dump_mallocs;

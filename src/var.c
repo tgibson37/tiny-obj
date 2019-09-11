@@ -143,6 +143,11 @@ int canonIf(char* buff){
 	return (c-cursor);
 }
 
+struct var* addr_obj(vh){
+//	char sym[VLEN+1];
+//	canon(&sym);
+//	return _addrval(sym,vh->vartab, vh->nxtvar-1);
+}
 /* 	looks up a symbol at one level
  */
 struct var* _addrval(char *sym, struct var *first, struct var *last) {
@@ -153,7 +158,7 @@ struct var* _addrval(char *sym, struct var *first, struct var *last) {
 			return pvar;
 		}
 	}
-	return 0;
+	return NULL;
 }
 
 /* 	looks up a symbol at three levels via function table. 
@@ -558,7 +563,7 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
 	        else break;
         }
         size = sizeof(struct varhdr) + lndata.nvars*sizeof(struct var) + lndata.valsize;
-        blob = vh = malloc(size);
+        blob = vh = mymalloc("blob", size);
         _newblob(blobName,blob);
 		memset(vh, 0, size);
         vh->vartab = vh->nxtvar = vh->gltab = vh+1;
@@ -576,11 +581,13 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
 		strncpy(par_buf,blobName,VLEN+1);  // just in case
         cursor=savedcursor;
         endapp=savedendapp;
+#if 0
 if(newop){
 fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 dumpBlob(vh);
 dumpVarTab(vh);
 }
+#endif
         return blob;
 }
 
@@ -594,7 +601,9 @@ void toclink() {
 }
 
 #if 0
+// useful code lines...
 if(newop){
+
 fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 dumpBlobTab();
 dumpBlob(blob);

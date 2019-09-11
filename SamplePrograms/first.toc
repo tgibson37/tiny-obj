@@ -15,6 +15,7 @@ class Cannibal extends Player [
     Cannibal int n [ 
         number = n
         strcpy name, "cannibal"
+//ps name; pn number
     ]
 ]
 class Nurse extends Player [

@@ -159,7 +159,7 @@ void allocStuff() {
     if(err){
     	fprintf(stderr,"pps/tc.prop err, allocating pr[%d]",PRLEN);
     }
-    pr = malloc(prlen);
+    pr = mymalloc("pr", prlen);
     EPR = pr+prlen;
 /*	
  *	function table
@@ -170,7 +170,7 @@ void allocStuff() {
     	fprintf(stderr,"pps/tc.prop err, allocating fun[%d]",FUNLEN);
     }
     size = sizeof(struct funentry);
-    fun = malloc(funlen*size);
+    fun = mymalloc("fun", funlen*size);
     efun=fun+funlen*size;
 /*	
  *	expression stack
@@ -180,7 +180,7 @@ void allocStuff() {
     if(err){
     	fprintf(stderr,"pps/tc.prop err, allocating stack[%d]",STACKLEN);
     }
-    stack = malloc(stacklen*sizeof(struct stackentry));
+    stack = mymalloc("stack", stacklen*sizeof(struct stackentry));
 
 /*	
  *	blob table
@@ -190,7 +190,7 @@ void allocStuff() {
     if(err){
     	fprintf(stderr,"pps/tc.prop err, allocating blob[%d]",BLOBTABLEN);
     }
-    nxtblob = blobtab = malloc(btablen*sizeof(struct blob));
+    nxtblob = blobtab = mymalloc("blobs", btablen*sizeof(struct blob));
     eblob = blobtab+btablen*sizeof(struct blob);
     curobj = NULL;   // current objects varhdr
 
@@ -207,7 +207,7 @@ void allocStuff() {
     	fprintf(stderr,"pps/tc.prop err, continuing with local locdatlen %d",LOCDATLEN);
     }
     size=sizeof(struct varhdr)+locnumvars*sizeof(struct var)+locdatlen;
-    locals = malloc(size);
+    locals = mymalloc("locals", size);
     struct varhdr *vh = (struct varhdr*)locals;
     _newblob("__Locals__",locals);
 	memset(vh, 0, size); 
@@ -222,11 +222,7 @@ int main(int argc, char *argv[]) {
 	int opt,optopt,numIncs;
 	char *prused;   // end of seed
 
-	allocStuff();
-	strcpy(pr,startSeed);
-	lpr = endapp = prused = pr+strlen(startSeed);
-
-    while ((opt = getopt(argc, argv, "lqdvr:")) != -1) {
+    while ((opt = getopt(argc, argv, "dlmqrv:")) != -1) {
         switch (opt) {
         case 'l':
         	loadMsg=1;
@@ -236,6 +232,9 @@ int main(int argc, char *argv[]) {
         	break;
         case 'd': 
         	debug=1; 
+        	break;
+        case 'm': 
+        	dump_mallocs=1; 
         	break;
         case 'v': 
         	verbose[VL]=1; 
@@ -262,6 +261,11 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
     }
+
+	allocStuff();
+	strcpy(pr,startSeed);
+	lpr = endapp = prused = pr+strlen(startSeed);
+
 	if(loadMsg){
 		fprintf(stdout,"Sizes: of pr %d fun %d stack %d var %d\n", 
     			prlen, funlen, stacklen, vtablen);
@@ -287,9 +291,6 @@ int main(int argc, char *argv[]) {
 	loadCode(argv[argc-1]);
 // initialize: locals use legacy vartab, toclink() will do globals in a blob
 	error=0;
-//	prused = endapp+10;  /* a little slack */
-//	nxtvar = vartab;
-//	nxtstack = 0;
 	curfun = fun-1;
 	logo(); 
 	toclink();
@@ -299,4 +300,11 @@ int main(int argc, char *argv[]) {
 	prdone();
 	whatHappened();
     return 0;
+}
+void* mymalloc(char *name, int size){
+	void *m;
+	m=malloc(size);
+	if(dump_mallocs)fprintf(stderr,
+			"\nMALLOC %s size %d at %p-%p",name,size,m,m+size);
+	return m;
 }

@@ -1,0 +1,106 @@
+Sep 1, 2019
+---
+toc.c runs first.toc partly. The Cannibal class links. Its constructor runs. It reaches eq() in 'can = new Cannibal'. That eq code is not written. But the stack has can as an lvalue, and new Cannibal on top.
+Further work seems horribly complex, given my weak short term memory. So maybe a few walkthroughs of first.toc execution will help. This is my attempt at such. Assume global linking is done.
+Looking at first.toc, these walkthroughs seem appropriate.
+	Cannibal can
+		Cannibal
+		can
+	can = new Cannibal
+		can
+		new Cannibal
+		eq
+WARNING: ~'s are subject to drift.
+===
+Cannibal can
+^
+st recognizes global 'Cannibal', ~917, using recognizer _isClassName
+	toc~917, _isClassName var~185
+		bumps cursor to just after Cannibal
+		tests type 'C', [it is]
+		returns global entry to Cannibal, struct var *maybe
+	toc~918, symName is required else eset SYMERR, 
+		scopes the next symbol, can, defining fname,lname
+			fname -->can<-- lname
+			that is a setup for canon
+	~919 cursor bumped
+	toc~920, newref var~109 
+		canon's the sym, 'can'
+		enters 'can' as type 'o' into locals, var~112
+			vdcd.od.cls is the parent class
+			vdcd.od.blob will become the locals blob, when created
+		So this local knows 
+			Cannibal qualifier
+			BUT NOT its own blob.
+	toc~931, st returns
+		but is called again after a rem call
+			[see the compound statment for loop, ~810]
+STATUS: 
+	'Cannibal can' is parsed. 
+	locals has an entry for can, type 'o', ref to globals Cannibal
+	can does not have a blob, it is NULL
+
+===
+can = new Cannibal
+^                      [assumed cursor after rem call]
+st recognizes 'can=new Cannibal' as an asgn, toc~899.
+	[See the walk_through.html document at...
+		https://drive.google.com/open?id=1pguAp9HyR_KvpegpCM3fq8kRmPv6X3pO
+	]
+details:
+	toc~923, st calls asgn which tunnels down to factor at toc~598
+		factor 
+			recognizes 'can' as a symName, ~673
+			looks up its var entry, addrvar, ~685
+				found as local
+			tests it is type 'o', (it is) ~687
+			pushes it onto the stack as an lvalue, type 'o' 
+				with reference to its vartab ADDRESS, ~688
+				that address holds a NULL, can has no blob yet.
+			returns, ~692, tunneling up to asgn
+	asgn parses the = and tunnels down to factor again.
+		factor parses 
+			new, ~622
+			required class name, Cannibal, ~625
+			scopes the text of the Cannibal class, 
+				defining from,to, ~628..632
+				linking that text, ~636
+					which defines vh, the new blob aka varhdr
+					[the varhdr defines blob parts, toc.h ~160]
+				fills in needed blob ref, this~63, toc~643..651
+				looks up a possible constructor, ~654
+					if so enables vh search by setting curobj=vh
+					enters the constructor, ~657
+					sets curobj back to null. [enter needed access
+						to curobj which is VERY transient.]
+				pushes vh onto the stack as actual, type 'o', ~662
+			factor returns ~735, tunneling up to asgn, ~452
+	STATUS: parsing of 'can = new Cannibal' is done.
+		lvalue can is poised to receive rvalue new Cannibal
+			both on the stack
+	asgn resumes at ~452, calls eq, toc~31
+		eq, toc~31, LOTS of special cases.
+			case ~96, class==0 && (*val).class==0
+				subcase ~118, type=='o' && val->type=='o'
+			CODE NOT WRITTEN YET, just an fprintf we got here <<<===
+
+
+
+
+
+TO BE CONTINUED
+
+
+
+CONFUSION below: 
+			recognizes 'can' as a symName, ~673
+
+			no dot in this statement. 
+				and as a qualifier, ~681
+				parses the dot (lname+2, just after the dot)
+				calls obsym,~683
+			obsym ~580
+				parse nxt-sym
+				returns can's varhdr
+CONFUSION above
+

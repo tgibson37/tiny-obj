@@ -18,7 +18,6 @@ int typeToSize( int class, Type type ) {
 	if(type>='A')return 0;
 	if(type>='C')return 0;
 	if(type>='E')return 0;
-	if(type>='O')return 0;
 	if(type>='o')return 0;
 	if(type==Char)return 1;
 	else if(type==Int)return sizeof(int);
@@ -36,6 +35,9 @@ void _eq() {
 	void* where;
 	struct stackentry *val = &stack[nxtstack-1]; /* value (on top) */
 	struct stackentry *lval = &stack[nxtstack-2]; /* where to put it */
+fprintf(stderr,"\n--- %s %d ---      eq types\n",__FILE__,__LINE__);
+dumpLine();
+dumpStack();
 	if(verbose[VE]){
 		fprintf(stderr,"\neq: lval");
 		dumpStackEntry(nxtstack-2);
@@ -47,12 +49,24 @@ void _eq() {
 	int class = (*lval).class;
 	int type = (*lval).type;
 //	int whereSize = typeToSize(class,type);  /* of the lvalue */
-
+fprintf(stderr,"\ntypes %c %c",type,val->type);
 	if((*lval).lvalue != 'L') { 
 		eset(LVALERR); 
 		return; 
 	}
-	
+	if(type=='o' && val->type=='o'){
+
+
+		union stuff *to   = lval->value.up;
+		union stuff *from =  &(val->value);
+		stuffCopy(to,from);
+
+// push something
+
+fprintf(stderr,"\n--- %s %d --- eq o-o case\n",__FILE__,__LINE__);
+dumpVarTab(locals);
+exit(0);
+	}
 	if(class==1 && (*val).class==1) {
 		pDatum = (*val).value.up;
 		if( (*val).lvalue=='L' ){
@@ -113,7 +127,17 @@ void _eq() {
 			put_char( (*lval).value.up, cDatum );
 			pushk(cDatum);
 		}
+#if 0
+		else if(type=='o' && val->type=='o'){
+fprintf(stderr,"\neq()~119, o=o case BEFORE");
+dumpStack();
+			char **where = (*val).value.up;
+fprintf(stderr,"\neq()~119, o=o case AFTER");
+dumpStack();
+		}
+#endif
 	}
+	else eset(EQERR);
 }
 
 /******* set error unless already set, capture cursor in errat *******/
@@ -567,6 +591,19 @@ int _term() {
 	return 0;
 }
 
+/*	Parse a required symname. Return its required entry in vh.
+ 	Else appropriate error.
+ */
+struct var* obsym(char* obj) {
+	struct var *addr;
+	if(symName()){
+		addr = addr_obj(obj);
+		if(!addr) eset(SYMERR);
+		return addr;
+	}
+	else eset(SYNXERR);
+}
+
 /* a FACTOR is a ( asgn ), or a constant, or a variable reference, or a function
     reference. NOTE: factor must succeed or it esets SYNXERR. Callers test error
     instead of a returned true/false. This varies from the rest of the expression 
@@ -612,21 +649,38 @@ void _factor() {
 			to = cursor-1;
 			cursor=temp;
 // link the body, return blob address
-			struct varhdr *vh = lnlink(from, to, isclvar->name);
+			struct varhdr *vh;
+			vh = lnlink(from, to, isclvar->name);
 			if(error){
 				whatHappened();
 				exit(1);
 			}
-// onto stack
-			pushst(0,'L','O',vh);
+// fill in needed blob ref in (presumably fresh) local 'o'.
+// here points into the local var entry's pointer cell.
+			struct stackentry *top = &stack[nxtstack-1];
+			if((top>=stack) && (top->type=='o')){
+#if 0
+fprintf(stderr,"\n--- %s %d ---\n FILL IN BLOB",__FILE__,__LINE__);
+dumpStack();
+				void *where;
+				union stuff *here;
+				where = top->value.up;
+				here = where;
+				here->up = vh;
+#endif
+			}
+			else eset(TYPEERR);
 // call constructor (enter) if exist
 			struct var *con = _addrval(isclvar->name,vh->vartab,(vh->nxtvar)-1);
 			if(con){
 				char *where = con->vdcd.vd.value.up;
 				curobj = vh;   // enable instance variable search
 				_enter(where);
+				popst();      // pop constructor returned value
 				curobj = NULL;
 			}
+// onto stack
+			pushst(0,'A','o',vh);
 //fprintf(stderr,"\n--- %s %d ---",__FILE__,__LINE__);
 //dumpBV(value);
 //fprintf(stderr,"\n--- %s %d ---",__FILE__,__LINE__);
@@ -635,19 +689,37 @@ void _factor() {
 	}
 //void pushst( int class, int lvalue, Type type, union stuff *value ) {
 	else if(_lit(xdelete)){
-fprintf(stderr,"toc~607 parsed xdelete");
+fprintf(stderr,"toc~607 parsed xdelete, NOT CODED YET");
 	}
 	else if( symName() ) {
 		cursor = lname+1;
 		int where, len, class, obsize, stuff;
 		if( symNameIs("MC") ) { 
 			_enter(0); return;
-		} else {
-			struct var *v = addrval();  /* looks up symbol */
+		} 
+		else {
+			struct var *v;
+			if( *(lname+1)=='.' ) {  // obj qualifier
+				char qual[VLEN+1];
+				canon(qual);
+				cursor = lname+2;
+fprintf(stderr,"\n--- %s %d --- dot parsed, exiting",__FILE__,__LINE__);
+exit(0);
+				v = obsym(qual);  /* looks up symbol */
+			}
+			else v = addrval();  /* looks up symbol */
 			if( !v ){ eset(SYMERR); return; } /* no decl */
 			if(v->type=='o'){  //object ref
-				pushst(0,'L','o',&(v->vdcd.od.blob));
-//dumpStack();
+
+fprintf(stderr,"\nv = %p",v);
+fprintf(stderr,"\nblob = %d",v->vdcd.od.blob);
+fprintf(stderr,"\namp of blob = %p",&(v->vdcd.od.blob));
+				union stuff value;
+				value.up = &(v->vdcd.od.blob);
+				pushst(0,'L','o',&value);
+fprintf(stderr,"\n--- %s %d --- pushed can as 'o', lvalue",__FILE__,__LINE__);
+dumpStack();
+//exit(0);
 				return;
 			}
 		  	char* where = (*v).vdcd.vd.value.up;
@@ -873,13 +945,14 @@ void st() {
 		return;
 	}
 	else if(isvar=_isClassName()) {
-		if(symName()) {
+		if(symName()) {   // decl of var of type 'o'
+			cursor = lname+1;
 			newref(isvar,locals);
 		}
 		else eset(SYMERR);
 	}
 	else if( _asgn() ) {      /* if expression discard its value */
-		toptoi();
+		popst();
         _lit(xsemi);
 	}
 	else {
@@ -949,10 +1022,12 @@ void dumpState() {
 /* dump a just parsed piece of pr, typically a name */
 void dumpName() {
 	fflush(stdout);
+	fprintf(stderr,"\njust parsed: ");
 	char *c = fname;
 	while( c <= lname ) { 
-			pc(*(c++));
+			fprintf(stderr,"%c",*(c++));
 	}
+	fflush(stdout);
 }
 
 /****  C tools to deal with typeless storage ****/

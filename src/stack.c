@@ -3,8 +3,10 @@
 void dumpStackEntry(int e){
 	fflush(stdout);
 	if( 0<=e && e<=nxtstack ) {
-		fprintf(stderr,"\n stack entry at %d: %d %c %d ", e, stack[e].class, 
-			stack[e].lvalue, stack[e].type );
+		fprintf(stderr,"\n stack entry at %d: %d %c %d %p",
+			e, stack[e].class, 
+			stack[e].lvalue, stack[e].type,
+			stack[e].value.up );
 		if(verbose[VS])dumpVal(stack[e].type, stack[e].class, 
 				&stack[e].value,stack[e].lvalue);
 	}
@@ -101,7 +103,7 @@ int toptoi() {
 		else if((*top).type==Int) datum  = ((*top).value.ui);
 		else eset(TYPEERR);
 	}
-	else { eset(LVALERR); }
+	else { eset(TYPEERR); }
 	if(verbose[VS]){
 		fprintf(stderr," -- toptoi %d", datum);
 	}
