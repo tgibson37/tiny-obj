@@ -261,6 +261,8 @@ int countch(char*,char*,char);
 char* fchar(char*);
 char* lchar(char*);
 struct var* addrval_all(char*);
+struct var* _addrval(char *sym, struct var *first, struct var *last);
+struct var* addr_obj(struct varhdr *vh);
 void showLine(char*);
 char getch_(int echo);
 int kbhit(void);

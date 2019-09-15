@@ -1,36 +1,41 @@
-Sep 1, 2019
+Sep 11, 2019
 ---
-toc.c runs first.toc partly. The Cannibal class links. Its constructor runs. It reaches eq() in 'can = new Cannibal'. That eq code is partly written. The stack has can as an lvalue, and new Cannibal on top, and the assign is done, but the push is not yet, hence POPERR when run.
-WARNING: ~'s are subject to drift.
+toc.c runs first.toc partly. The Cannibal class links. Its constructor runs. It reaches eq() in 'can = new Cannibal'. That eq code is written. The stack has can as an lvalue, and new Cannibal on top, and the assign is done. It appears to work, but the real proof is the next goal, parsing the dot notation.
+WARNING: ~'s are subject to drift.  [All updated 9/11 push]
 ===
+
 Slim Flow
-This section extracts essential action for the detailed section
----   Sep 9   ~'s are 1-flow.txt, 2-toc.c, 3-(info)
+
+This section extracts essential action from the detailed section for a quick look at the flow so far.
+
+---   Sep 9   data are 1-flow.txt, 2-toc.c (line numbers), 3-(info)
 can = new Cannibal
 ^                      [assumed cursor after rem call]
-parse can 53 700 (addrval call)
-push as L,o  57 703   ( datum is &(vdcd.od.blob) )
-parse new 63 630   (lit call)
-vh defined 68 644  (lnlink call)
-Cannibal constructor 73 669  (enter call)
-push as 'o' vh 76 674   (datum is vh)
+.parse can 53 705 (addrval call)
+.push as L,o  57 708   ( datum is &(vdcd.od.blob) )
+.parse new 63 635   (lit call)
+.vh defined 68 649  (lnlink call)
+.Cannibal constructor 73 674  (enter call)
+.push as 'o' vh 76 679   (datum is vh)
 eq 82 31
 ===
-Detailed Flow
+
+Detailed Flow, ~'s are line numbers
+
 parsing ....
 	Cannibal can
 	^
 st recognizes global 'Cannibal', ~917, using recognizer _isClassName
-	toc~896, _isClassName var~153
+.	toc~901, _isClassName var~153
 		bumps cursor to just after Cannibal
 		tests type 'C', [it is]
 		returns global entry to Cannibal, struct var *maybe
-	toc~897, symName is required else eset SYMERR, 
+.	toc~902, symName is required else eset SYMERR, 
 		scopes the next symbol, can, defining fname,lname
 			fname -->can<-- lname
 			that is a setup for canon
-	~898 cursor bumped
-	toc~899, newref var~109
+.	~903 cursor bumped
+.	toc~904, newref var~109
 		canon's the sym, 'can'
 		enters 'can' as type 'o' into locals, var~112
 			vdcd.od.cls is the parent class
@@ -38,51 +43,52 @@ st recognizes global 'Cannibal', ~917, using recognizer _isClassName
 		So this local knows 
 			Cannibal qualifier
 			BUT NOT its own blob.
-	toc~910, st returns
+.	toc~915, st returns
 		but is called again after a rem call
 			[see the compound statment for loop, ~813,820]
 STATUS: 
 	'Cannibal can' is parsed. 
 	locals has an entry for can, type 'o', ref to globals Cannibal
-	can does not have a blob, it is NULL
+	can does NOT have a value for blob, it is NULL. this~81 resolves.
 
 ===
 can = new Cannibal
 ^                      [assumed cursor after rem call]
-st recognizes 'can=new Cannibal' as an asgn, toc~886
+.st recognizes 'can=new Cannibal' as an asgn, toc~891
 	[See the walk_through.html document at...
 		https://drive.google.com/open?id=1pguAp9HyR_KvpegpCM3fq8kRmPv6X3pO
 	]
 details:
-	toc~903, st calls asgn which tunnels down to factor at toc~585
+.	toc~908, st calls asgn which tunnels down to factor at toc~590
 		factor 
-			recognizes 'can' as a symName, ~653
-			looks up its var entry, addrval, ~667
+.			recognizes 'can' as a symName, ~658
+.			looks up its var entry, addrval, ~672
 				found as local
-			tests it is type 'o', (it is) ~669
+.			tests it is type 'o', (it is) ~674
 			pushes it onto the stack as an lvalue, type 'o' 
-				with reference to its vartab ADDRESS, ~672
+.				with reference to its vartab ADDRESS, ~677
 				that address holds a NULL, can has no blob yet.
-			returns, ~673, tunneling up to asgn
+.			returns, ~678, tunneling up to asgn
 	asgn parses the = and tunnels down to factor again.
 		factor parses 
-			new, ~612
-			required class name, Cannibal, ~615
+.			new, ~617
+.			required class name, Cannibal, ~620
 			scopes the text of the Cannibal class, 
-				defining from,to, ~618..622
-				linking that text, ~626
+.				defining from,to, ~623..627
+.				linking that text, ~631
 					which defines vh, the new blob aka varhdr
 					[the varhdr defines blob parts, toc.h ~160]
-				fills in needed blob ref, this~65, toc~631..636
-					NOT WRITTEN YET, this may be handled by
-					eq's new o-o assign. Need to study this.
-				looks up a possible constructor, ~638
+.				fills in needed blob ref, this~52, toc~636..641
+====>>>				NOT WRITTEN YET, this may be handled by
+					eq's new o-o assign. NO
+					toc~639 partial code.
+.				looks up a possible constructor, ~643
 					if so enables vh search by setting curobj=vh
-					enters the constructor, ~642
+.					enters the constructor, ~647
 					sets curobj back to null. [enter needed access
 						to curobj which is VERY transient.]
-				pushes vh onto the stack as actual, type 'o', ~646
-			factor returns ~716, tunneling up to asgn, ~442
+.				pushes vh onto the stack as actual, type 'o', ~651
+.			factor returns ~716, tunneling up to asgn, ~447
 	STATUS: parsing of 'can = new Cannibal' is done.
 		lvalue can is poised to receive rvalue new Cannibal
 			both on the stack
@@ -96,7 +102,7 @@ details:
 
 
 
-
+dots, toc ~'s > 580
 
 TO BE CONTINUED
 

@@ -1,4 +1,5 @@
 #include "toc.h"
+struct varhdr *__temp_vh__;
 
 #if defined(_WIN32)
         char* defaultLibrary = "pps\\library.tc";
@@ -53,11 +54,12 @@ void _eq() {
 		union stuff *to   = lval->value.up;
 		union stuff *from =  &(val->value);
 		stuffCopy(to,from);
-// maybe should push 'to' instead of 'from'
 		pushst(class, 'A', type, from);
+fprintf(stderr,"toc~59: locals,vartab AFTER eq: %x",locals );
+dumpVarTab(locals);
+		return;
 	}
-
-	if(class==1 && (*val).class==1) {
+	else if(class==1 && (*val).class==1) {
 		pDatum = (*val).value.up;
 		if( (*val).lvalue=='L' ){
 			pDatum = (char*)(*(int*)pDatum);   /* now its 'A' */
@@ -567,15 +569,23 @@ int _term() {
 /*	Parse a required symname. Return its required entry in vh.
  	Else appropriate error.
  */
-struct var* obsym(char* obj) {
-	struct var *addr;
+struct var* obsym(char* qual) {
+	struct var *qvar;
+	struct varhdr *qvh;
+	struct var *ovar;
+	qvar = addrval_all(qual);//good
+	if(!qvar)eset(SYMERR);
+	qvh = (struct varhdr*)qvar->vdcd.od.blob;
+fprintf(stderr,"toc~579 qualifiers blob");
+dumpBV(qvh);
 	if(symName()){
-		addr = addr_obj(obj);
-		if(!addr) eset(SYMERR);
-		return addr;
+		ovar = addr_obj(qvh);
+		cursor = lname+1;
+		if(!ovar) eset(SYMERR);
+		return ovar;
 	}
 	else eset(SYNXERR);
-}
+}   //was ~578
 
 /* a FACTOR is a ( asgn ), or a constant, or a variable reference, or a function
     reference. NOTE: factor must succeed or it esets SYNXERR. Callers test error
@@ -643,7 +653,11 @@ void _factor() {
 				popst();      // pop constructor returned value
 				curobj = NULL;
 			}
-			pushst(0,'A','o',vh);
+			pushst(0,'A','o',&vh);
+fprintf(stderr,"\n  PUSHED vh %x",vh);
+fprintf(stderr,"\n\ntoc~655 stack,vartab BEFORE eq, locals at %x", locals);
+dumpStack();
+dumpVarTab(locals);
 		}
 		else eset(CLASSERR);
 	}
@@ -663,6 +677,8 @@ fprintf(stderr,"toc~607 parsed xdelete, NOT CODED YET");
 				canon(qual);
 				cursor = lname+2;
 				v = obsym(qual);  /* looks up symbol */
+fprintf(stderr,"\ntoc~677");
+dumpVar(v);
 			}
 			else v = addrval();  /* looks up symbol */
 			if( !v ){ eset(SYMERR); return; } /* no decl */

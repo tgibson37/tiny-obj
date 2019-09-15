@@ -142,11 +142,12 @@ int canonIf(char* buff){
 	_canon(cursor,c-1,buff);
 	return (c-cursor);
 }
-
-struct var* addr_obj(vh){
-//	char sym[VLEN+1];
-//	canon(&sym);
-//	return _addrval(sym,vh->vartab, vh->nxtvar-1);
+/*	returns var* defining current sym
+ */
+struct var* addr_obj(struct varhdr *vh){
+	char sym[VLEN+1];
+	canon(&sym);
+	return _addrval(sym,vh->vartab, vh->nxtvar-1);
 }
 /* 	looks up a symbol at one level
  */
