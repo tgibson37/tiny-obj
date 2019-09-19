@@ -291,6 +291,7 @@ int main(int argc, char *argv[]) {
 	loadCode(argv[argc-1]);
 // initialize: locals use legacy vartab, toclink() will do globals in a blob
 	error=0;
+	curobj=canobj=NULL;
 	curfun = fun-1;
 	logo(); 
 	toclink();

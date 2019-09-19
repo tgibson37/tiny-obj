@@ -316,6 +316,7 @@ struct varhdr* _getblob(char* sym){
     		return b->varhdr;
     	}
   	}
+  	return NULL;
 }
 
 /*	A class blob is named the same as the class whose vars it defines.

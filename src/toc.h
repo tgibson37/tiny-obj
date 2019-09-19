@@ -162,7 +162,10 @@ struct varhdr {
 	struct var *vartab; struct var *gltab; struct var *nxtvar; 
 	char *val; char *endval; char *datused; 
 };
-struct varhdr *locals, *curobj;
+/*	locals, all of them, 
+ *	candidate for current object, current object
+ */
+struct varhdr *locals, *canobj, *curobj;
 /* sizes needed for each vartab, values area */
 struct lndata { int nvars; int valsize; } lndata;
 

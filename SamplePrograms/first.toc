@@ -15,7 +15,8 @@ class Cannibal extends Player [
     Cannibal int n [ 
         number = n
         strcpy name, "cannibal"
-//ps name; pn number
+        ps "Cannibal constructor: "
+        ps name; pn number
     ]
 ]
 class Nurse extends Player [
@@ -25,18 +26,17 @@ class Nurse extends Player [
     ]
 ]
 
-int NPLAYERS,i,j
-char a,b,stuff(99)
-char foo(0)
-
 main [
-//    NPLAYERS = 2
     Cannibal can
     can = new Cannibal 1
     Nurse nur
     nur = new Nurse 2
+
+    pl"main program: "
+    pl" "
     can.printName
     can.printNumber
+    pl" "
     nur.printName
     nur.printNumber
     delete can

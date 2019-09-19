@@ -55,8 +55,8 @@ void _eq() {
 		union stuff *from =  &(val->value);
 		stuffCopy(to,from);
 		pushst(class, 'A', type, from);
-fprintf(stderr,"toc~59: locals,vartab AFTER eq: %x",locals );
-dumpVarTab(locals);
+//fprintf(stderr,"toc~59: locals,vartab AFTER eq: %x",locals );
+//dumpVarTab(locals);
 		return;
 	}
 	else if(class==1 && (*val).class==1) {
@@ -128,6 +128,9 @@ void eset( int err ){
 	if(!error){
 		error=err;
 		errat=cursor;
+//fprintf(stderr,"\ntoc~131\n");
+//dumpft(fname,lname);
+//dumpBV(curobj);
 	}
 }
 
@@ -319,9 +322,12 @@ void _enter( char* where) {
 		else eset(MCERR);
 		return;
 	}
-	else {   /* ABOVE parses the call args, BELOW parses the called's arg decls */
+/* ABOVE parses the call args, BELOW parses the called's arg decls.
+ */
+	else {
 		char *localstcurs=stcurs, *localcurs=cursor;
 		cursor = where;
+		curobj = canobj;
 		newfun(locals);  
 		for(;;) {	  
 			_rem();
@@ -567,17 +573,17 @@ int _term() {
 }
 
 /*	Parse a required symname. Return its required entry in vh.
- 	Else appropriate error.
+ *	Else appropriate error. Set curobj to qual's vh.
  */
 struct var* obsym(char* qual) {
 	struct var *qvar;
 	struct varhdr *qvh;
 	struct var *ovar;
-	qvar = addrval_all(qual);//good
+	qvar = addrval_all(qual);
 	if(!qvar)eset(SYMERR);
-	qvh = (struct varhdr*)qvar->vdcd.od.blob;
-fprintf(stderr,"toc~579 qualifiers blob");
-dumpBV(qvh);
+	canobj = qvh = (struct varhdr*)qvar->vdcd.od.blob;
+//fprintf(stderr,"toc~579 qualifiers blob");
+//dumpBV(qvh);
 	if(symName()){
 		ovar = addr_obj(qvh);
 		cursor = lname+1;
@@ -638,31 +644,17 @@ void _factor() {
 				whatHappened();
 				exit(1);
 			}
-// fill in needed blob ref in (presumably fresh) local 'o'.
-// here points into the local var entry's pointer cell.
-			struct stackentry *top = &stack[nxtstack-1];
-			if((top>=stack) && (top->type=='o')){
-			}
-			else eset(TYPEERR);
 // call constructor (enter) if exist
 			struct var *con = _addrval(isclvar->name,vh->vartab,(vh->nxtvar)-1);
 			if(con){
 				char *where = con->vdcd.vd.value.up;
-				curobj = vh;   // enable instance variable search
+				canobj = vh;   // enable instance variable search
 				_enter(where);
 				popst();      // pop constructor returned value
-				curobj = NULL;
 			}
 			pushst(0,'A','o',&vh);
-fprintf(stderr,"\n  PUSHED vh %x",vh);
-fprintf(stderr,"\n\ntoc~655 stack,vartab BEFORE eq, locals at %x", locals);
-dumpStack();
-dumpVarTab(locals);
 		}
 		else eset(CLASSERR);
-	}
-	else if(_lit(xdelete)){
-fprintf(stderr,"toc~607 parsed xdelete, NOT CODED YET");
 	}
 	else if( symName() ) {
 		cursor = lname+1;
@@ -677,8 +669,6 @@ fprintf(stderr,"toc~607 parsed xdelete, NOT CODED YET");
 				canon(qual);
 				cursor = lname+2;
 				v = obsym(qual);  /* looks up symbol */
-fprintf(stderr,"\ntoc~677");
-dumpVar(v);
 			}
 			else v = addrval();  /* looks up symbol */
 			if( !v ){ eset(SYMERR); return; } /* no decl */
@@ -916,6 +906,19 @@ void st() {
 		}
 		else eset(SYMERR);
 	}
+	else if(_lit(xdelete)){
+		if(symName()){
+			char sym[VLEN+1];
+			canon(sym);
+			cursor = lname+1;
+			struct var *v = addrval_all(sym);
+			if(!v){eset(SYMERR); return;}
+			void *vh = v->vdcd.od.blob;
+			if(vh)free(vh);
+			else eset(SYNXERR);
+		}
+		else eset(SYNXERR);
+	}
 	else if( _asgn() ) {      /* if expression discard its value */
 		popst();
         _lit(xsemi);
@@ -961,6 +964,7 @@ void dumpLine() {
 	while (*end!=0x0a && *end!=0x0d && end<endapp){  /* find end of line */
 		++end;
 	}
+	if(begin==end)fprintf(stderr,"dumpLine: cursor at end of line");
 	while(begin<end){
 		fprintf(stderr,"%c",*begin);
 		++begin;
