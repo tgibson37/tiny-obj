@@ -580,7 +580,12 @@ struct var* obsym(char* qual) {
 	struct varhdr *qvh;
 	struct var *ovar;
 	qvar = addrval_all(qual);
-	if(!qvar)eset(SYMERR);
+	if(!qvar){
+		eset(SYMERR);
+		return;
+	}
+//fprintf(stderr,"\ntoc~584 qvar: %x",qvar);
+//dumpVar(qvar);
 	canobj = qvh = (struct varhdr*)qvar->vdcd.od.blob;
 //fprintf(stderr,"toc~579 qualifiers blob");
 //dumpBV(qvh);

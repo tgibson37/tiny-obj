@@ -1,5 +1,5 @@
 //FIRST test program
-//library needs pn,ps,strcpy.
+//library needs pn,ps,pl,strcpy.
 
 abstract class Player [
     int number
