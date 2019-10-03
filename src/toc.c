@@ -263,7 +263,7 @@ void varalloc(Type type, union stuff *vpassed, struct varhdr *vh) {
  * Gets actual value of arg, calls valloc which parses and sets
  * up local with the passed value.
  */ 
-void _setArg( Type type, struct stackentry *arg, struct var *locals ) {
+void _setArg( Type type, struct stackentry *arg, struct varhdr *locals ) {
 	union stuff vpassed  = (*arg).value;
 	char* where;
 	int class = (*arg).class;
@@ -582,12 +582,12 @@ struct var* obsym(char* qual) {
 	qvar = addrval_all(qual);
 	if(!qvar){
 		eset(SYMERR);
-		return;
+		return NULL;
 	}
-//fprintf(stderr,"\ntoc~584 qvar: %x",qvar);
+//fprintf(stderr,"\ntoc~587 qvar: %x",qvar);
 //dumpVar(qvar);
 	canobj = qvh = (struct varhdr*)qvar->vdcd.od.blob;
-//fprintf(stderr,"toc~579 qualifiers blob");
+//fprintf(stderr,"\ntoc~590 qualifiers blob, %p",qvh);
 //dumpBV(qvh);
 	if(symName()){
 		ovar = addr_obj(qvh);
@@ -596,6 +596,7 @@ struct var* obsym(char* qual) {
 		return ovar;
 	}
 	else eset(SYNXERR);
+	return NULL;
 }   //was ~578
 
 /* a FACTOR is a ( asgn ), or a constant, or a variable reference, or a function
@@ -633,7 +634,7 @@ void _factor() {
 	else if(_lit(xnew)){
 		_rem();
 		struct var *isclvar;
-		if(isclvar=_isClassName()){
+		if((isclvar=_isClassName())){
 // scope body of cn
 			char *from, *to;
 			from = isclvar->vdcd.cd.where+1;
@@ -657,23 +658,25 @@ void _factor() {
 				_enter(where);
 				popst();      // pop constructor returned value
 			}
-			pushst(0,'A','o',&vh);
+			union stuff value;
+			value.up = vh;
+			pushst(0,'A','o',&value);
 		}
 		else eset(CLASSERR);
 	}
 	else if( symName() ) {
 		cursor = lname+1;
-		int where, len, class, obsize, stuff;
+//		int where, len, class, obsize, stuff;
 		if( symNameIs("MC") ) { 
 			_enter(0); return;
 		} 
 		else {
 			struct var *v;
 			if( *(lname+1)=='.' ) {  // obj qualifier
-				char qual[VLEN+1];
-				canon(qual);
+				struct var qual;
+				canon(&qual);
 				cursor = lname+2;
-				v = obsym(qual);  /* looks up symbol */
+				v = obsym(qual.name);  /* looks up symbol */
 			}
 			else v = addrval();  /* looks up symbol */
 			if( !v ){ eset(SYMERR); return; } /* no decl */
@@ -808,7 +811,7 @@ int _decl(struct varhdr *vh) {
 
 /* st(): interprets a possibly compound statement */
 void st() {
-	char *whstcurs, *whcurs, *objt, *agin ;
+	char *objt, *agin ;
 	brake=0;
 	struct var *isvar;
 
@@ -904,7 +907,7 @@ void st() {
 		brake=1;
 		return;
 	}
-	else if(isvar=_isClassName()) {
+	else if((isvar=_isClassName())) {
 		if(symName()) {   // decl of var of type 'o'
 			cursor = lname+1;
 			newref(isvar,locals);
@@ -913,10 +916,11 @@ void st() {
 	}
 	else if(_lit(xdelete)){
 		if(symName()){
-			char sym[VLEN+1];
-			canon(sym);
+//			char sym[VLEN+1];
+			struct var sym;
+			canon(&sym);
 			cursor = lname+1;
-			struct var *v = addrval_all(sym);
+			struct var *v = addrval_all(sym.name);
 			if(!v){eset(SYMERR); return;}
 			void *vh = v->vdcd.od.blob;
 			if(vh)free(vh);

@@ -299,3 +299,6 @@ int _skip(char l, char r);
 struct varhdr* lnlink(char *from, char *to, char *blobName);
 void* mymalloc(char *name, int size);
 int dump_mallocs;
+void stuffCopy( union stuff *to, union stuff *from );
+struct var* _isClassName();
+void newref(struct var *cls, struct varhdr *vh);
