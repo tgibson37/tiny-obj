@@ -47,7 +47,7 @@ dokeep() {
 #does one diff
 dodiff() {
 	FILE=./TF/$1/r
-	echo ------------------- $1 -------------------
+	echo ----this run \< ----expected \> ---- diff $1 
 	if [ -f $FILE ]; then
 		FILE=./TF/$1/er
 		if [ -f $FILE ]; then

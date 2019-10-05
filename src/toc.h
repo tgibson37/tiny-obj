@@ -302,3 +302,4 @@ int dump_mallocs;
 void stuffCopy( union stuff *to, union stuff *from );
 struct var* _isClassName();
 void newref(struct var *cls, struct varhdr *vh);
+char* _mustFind( char *from, char *upto, char c, int err );
