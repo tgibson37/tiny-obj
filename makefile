@@ -16,8 +16,9 @@ TARGET   = toc
 
 CC       = gcc
 # compiling flags here
-CFLAGS   = -std=c99 -Wall  -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast \
+#CFLAGS   = -std=c99 -Wall  -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast \
 -Wno-unused-variable -Wno-unused-but-set-variable -I.
+CFLAGS   = -std=c99 -Wall -I.
 #CFLAGS   = -g -std=c99 -w -I.
 
 LINKER   = gcc

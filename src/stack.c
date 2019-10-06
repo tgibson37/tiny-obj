@@ -94,7 +94,7 @@ int toptoi() {
 		if((*top).type==Int ) datum = *((int*)((*top).value.up));
 		else if((*top).type==Char) datum = *((char*)((*top).value.up));
 		else if((*top).type == 'o') {
-			datum = (*top).value.up;
+			datum = (int)(*top).value.up;
 		}
 		else eset(TYPEERR);
 	}

@@ -303,3 +303,6 @@ void stuffCopy( union stuff *to, union stuff *from );
 struct var* _isClassName();
 void newref(struct var *cls, struct varhdr *vh);
 char* _mustFind( char *from, char *upto, char c, int err );
+void toclink();
+void _newblob(char* name, void* blob);
+

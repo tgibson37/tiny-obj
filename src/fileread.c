@@ -128,7 +128,7 @@ int tcFgets(char* buff, int len, int unit) {
  }
 /*	close the file -8 bad unit, -9 already closed, 0 good.
  */
- int tcFclose(unit) {
+ int tcFclose(int unit) {
 	if( (unit<0) || (unit>MAX_UNIT) )return -8;
 	if(fileUnit[unit]==NULL)return -9;
  	fclose(fileUnit[unit]);

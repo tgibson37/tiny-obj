@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <dlfcn.h>
 #include "toc.h"
 
@@ -211,16 +212,21 @@ void allocStuff() {
     struct varhdr *vh = (struct varhdr*)locals;
     _newblob("__Locals__",locals);
 	memset(vh, 0, size); 
-    vh->vartab = vh->nxtvar = vh->gltab = vh+1;
-    vh->val = vh->datused = vh->vartab + LOCNUMVARS;   // also serves as end of vartab
+//    vh->vartab = vh->nxtvar = vh->gltab = vh+1;
+    vh->gltab =  (struct var*)(vh+1);
+    vh->nxtvar = (struct var*)(vh+1);
+    vh->vartab = (struct var*)(vh+1);
+    vh->datused= (char*)(vh->vartab + LOCNUMVARS);   // also serves as end of vartab
+    vh->val =    (char*)(vh->vartab + LOCNUMVARS);   // also serves as end of vartab
     vh->endval = (char*)locals + size;
 //fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 //dumpVarTab(locals);
 }
 
 int main(int argc, char *argv[]) {
-	int opt,optopt,numIncs;
+	int opt,numIncs;
 	char *prused;   // end of seed
+	int optopt=0;
 
     while ((opt = getopt(argc, argv, "dlmqrv:")) != -1) {
         switch (opt) {
