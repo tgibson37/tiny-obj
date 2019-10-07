@@ -73,7 +73,7 @@ int topdiff() {
 
 /* pop the stack returning its int value, pointer 
 	resolved and cast to int if necessary. */
-int toptoi() {
+ptrdiff_t toptoi() {
 	int datum;
 	union stuff *ptr;
 	if(verbose[VS]){
@@ -86,15 +86,15 @@ int toptoi() {
 	if( (*top).class==1 ) {
 		if((*top).lvalue == 'L') {
 			ptr = (union stuff *)((*top).value.up);
-			datum=(int)((*ptr).up);
+			datum=(ptrdiff_t)((*ptr).up);
 		}
-		else datum=(int)((*top).value.up);
+		else datum=(ptrdiff_t)((*top).value.up);
 	}
 	else if((*top).lvalue == 'L') {
-		if((*top).type==Int ) datum = *((int*)((*top).value.up));
+		if((*top).type==Int ) datum = *((ptrdiff_t*)((*top).value.up));
 		else if((*top).type==Char) datum = *((char*)((*top).value.up));
 		else if((*top).type == 'o') {
-			datum = (int)(*top).value.up;
+			datum = (ptrdiff_t)(*top).value.up;
 		}
 		else eset(TYPEERR);
 	}
@@ -111,7 +111,7 @@ int toptoi() {
 }
 
 /* push an int */
-void pushk(int datum) {
+void pushk(ptrdiff_t datum) {
 	union stuff d;
 	d.ui = datum;
 	pushst( 0, 'A', Int, &d );
@@ -119,7 +119,7 @@ void pushk(int datum) {
 }
 
 /* push an int as a class 1 */
-void pushPtr(int datum) {
+void pushPtr(ptrdiff_t datum) {
 	union stuff d;
 	d.up = (void*)datum;
 	pushst( 1, 'A', Int, &d );

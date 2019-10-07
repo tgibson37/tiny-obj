@@ -129,7 +129,7 @@ char* _canon(char* first, char* l, char* buff) {
 }
 
 /* 	fname..lname is full name. Puts canonicalized name into v. If short
- *	enough same as name. If longer first VLEN-1 characters + last character.
+ *	enough same as name. If ptrdiff_ter first VLEN-1 characters + last character.
  *	The last char has more info than middle chars.
  */
 void canon(struct var *v) {
@@ -254,7 +254,7 @@ void dumpVar(struct var *v) {
 				,v->vdcd.od.blob);
 	}
 	else
-		fprintf(stderr,"\n var %p: %s %d %s %d %d %p"
+		fprintf(stderr,"\n var %p: %s %d %s %d %zd %p"
 			, v, (*v).name, (*v).vdcd.vd.class, typeToWord((*v).type)
 			, (*v).vdcd.vd.len, (*v).vdcd.vd.value.ui
 			, (*v).vdcd.vd.value.up );
@@ -278,12 +278,13 @@ void dumpBlob(struct varhdr *vh){
 	struct var *vt = vh->vartab;
 	char* dt = vh->val;
 	fprintf(stderr,"  vartab       nxtvar    gltab     evar(val)\n");
-	fprintf(stderr,"   %9p %9d %9d %9d\n",vh->vartab
-		,(int)vh->nxtvar-(int)vt,(int)vh->gltab-(int)vt
-		,(int)vh->val-(int)vt);
+	fprintf(stderr,"   %9p %9zd %9zd %9zd\n",vh->vartab
+		,(ptrdiff_t)vh->nxtvar-(ptrdiff_t)vt,(ptrdiff_t)vh->gltab-(ptrdiff_t)vt
+		,(ptrdiff_t)vh->val-(ptrdiff_t)vt);
 	fprintf(stderr,"  val          used      endval\n");
-	fprintf(stderr,"   %9p %9d %9d\n",vh->val
-			,(int)vh->datused-(int)dt,(int)vh->endval-(int)dt);
+	fprintf(stderr,"   %9p %9zd %9zd\n",vh->val
+			,(ptrdiff_t)vh->datused-(ptrdiff_t)dt
+			,(ptrdiff_t)vh->endval-(ptrdiff_t)dt);
 	fprintf(stderr,"nxtvar,gltab are decimal sizes in vartab");
 	fprintf(stderr,"\nused,endval are decimal sizes in/of val");
 }
@@ -355,20 +356,20 @@ int checkBrackets(char *from, char *to) {
 
 int xxpass=0;
 
-/*	Pass one if vartab is NULL computes the needed sizes. Pass two does
- *	the actual link into vartab, which also has room for all values.
+/*	Pass one if varhdr is NULL computes the needed sizes. Pass two does
+ *	the actual link into varhdr, which also has room for all values.
  *	The logic here mimics classical void link().
  */
 void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 	char* cptr;
 	char* savedEndapp=endapp;
 	char* savedCursor=cursor;
-	struct var *vartab;
+//	struct var *vartab;
 	if(vh==NULL){
-		vartab=NULL;   // pass 1 
+//		vartab=NULL;   // pass 1 
 		xxpass=1;
 	} else {
-		vartab=vh->vartab;
+//		vartab=vh->vartab;
 		xxpass=2;
 		if(!newop)newfun(vh);
 	}
@@ -405,8 +406,9 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 				else eset(SYNXERR);
 			}
 			if(symName()) {     /* class name */
-				union stuff kursor;
-				kursor.up = cursor = lname+1;
+//				union stuff kursor;
+//				kursor.up = 
+				cursor = lname+1;
 				canon(&cname);
 				if(_lit(xextends)){
 					if(symName()){   // parent name
@@ -585,8 +587,9 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
  *	value references point to space in the same malloc.
  */
 void toclink() {
-	struct varhdr *vh;	
-	vh = lnlink(cursor,endapp,"__Globals__");
+//	struct varhdr *vh;	
+//	vh = lnlink(cursor,endapp,"__Globals__");
+	lnlink(cursor,endapp,"__Globals__");
 }
 
 #if 0

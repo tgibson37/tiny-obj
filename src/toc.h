@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+#include <stddef.h>
 
 /* Modified tc.h
  */
@@ -110,7 +111,7 @@ int quiet;
 /*	All tc data are ints or chars. Pointers are an int index into pr. 
  *	stuff is the typless holder of any value.
  */
-union stuff { char uc; int ui; void* up; };
+union stuff { char uc; ptrdiff_t ui; void* up; };
 
 typedef enum type {Err,Char,Int,CharStar} Type;
 
@@ -217,13 +218,13 @@ int iProperty(char* file, char* name, int *val, int _default);
 int sProperty(char* file, char* name, char* val, int vlen, char* _default);
 int typeToSize( int class, Type type );
 int topdiff();
-int toptoi();
+ptrdiff_t toptoi();
 struct stackentry* popst();
 void pushst( int class, int lvalue, Type type, union stuff *value );
-void pushk(int datum);
+void pushk(ptrdiff_t datum);
 void pushone();
 void pushzero();
-void pushPtr(int datum);
+void pushPtr(ptrdiff_t datum);
 void eset( int err );
 void ps(char* s);
 void pl(char* s);
@@ -253,8 +254,8 @@ void dumpHex( void* where, int len );
 void dumpState();
 void dumpName();
 void dumpft(char*,char*);
-void put_int(char *where, int datum);
-int  get_int(char *where);
+void put_int(char *where, ptrdiff_t datum);
+ptrdiff_t  get_int(char *where);
 void put_char(char *where, char datum);
 char get_char(char *where);
 int fileRead(char*filename, char* buffer, int bufflen);
@@ -278,8 +279,8 @@ void tcUsage();
 void br_hit(struct var *v);
 void pft(char *from, char *to );
   /* All these do is prevent warnings from compiler */
-int Mchrdy();
-int Mgch(int,int*);
+ptrdiff_t Mchrdy();
+ptrdiff_t Mgch(int,ptrdiff_t*);
 int _asgn();
 int _reln();
 int _expr();
@@ -294,7 +295,7 @@ int _lit(char*);
 void varalloc(Type type, union stuff *vpassed, struct varhdr *vh);
 int symName();
 int charIn(char c, char *choices );
-void pFmt(char *fmt, int *args);
+void pFmt(char *fmt, ptrdiff_t *args);
 int _skip(char l, char r);
 struct varhdr* lnlink(char *from, char *to, char *blobName);
 void* mymalloc(char *name, int size);

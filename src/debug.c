@@ -95,7 +95,7 @@ struct brk *find_b(char *sym) {
 
 /* print description and value of variable v */
 void printVar(struct var *v) {
-	printf("\n4~88\n var %p: %s %d %s %d ", (int)(v),
+	printf("\n4~88\n var %p: %s %d %s %d ", v,
 		(*v).name, (*v).vdcd.vd.class, typeToWord((*v).type), (*v).vdcd.vd.len );
 		print_val(v);
 }
@@ -339,7 +339,7 @@ void prdone(){}
 /* before exiting tc (and old pps) */
 void tcexit(){}
 
-/* breakpoint appstbegin to see JUST app statments. */
+/* breakpoint appstbegin to see JUST app statements. */
 int firstAppStmt = 1;
 void appstbegin(){
 //printf("\n~326 nx %d lev %d",db_next,db_rundepth);
@@ -349,7 +349,7 @@ void appstbegin(){
 	}
 	if(db_next && (db_next >= db_rundepth) ){
 		int lineno = countch(apr,cursor,'\n');
-		char* lc = lchar(cursor);
+//		char* lc = lchar(cursor);
 		printf("line %d cursor(pr[%d])->%.10s\n", lineno,(int)(cursor-pr),cursor);
 		db_next=0;
 		_dbCommands();

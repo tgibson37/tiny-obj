@@ -30,10 +30,10 @@ int typeToSize( int class, Type type ) {
  *	Effects the assignment. 
  */
 void _eq() {
-	int  iDatum;  /* memcpy into these from pr using val.stuff */
+	ptrdiff_t  iDatum;  /* memcpy into these from pr using val.stuff */
 	char cDatum;  /*  and val.size, giving needed cast */
 	void* pDatum;
-	void* where;
+//	void* where;
 	struct stackentry *val = &stack[nxtstack-1]; /* value (on top) */
 	struct stackentry *lval = &stack[nxtstack-2]; /* where to put it */
 	if(verbose[VE]){
@@ -43,7 +43,7 @@ void _eq() {
 		dumpStackEntry(nxtstack-1);
 	}
 	popst();popst();  
-	where = &((*lval).value.up);
+//	where = &((*lval).value.up);
 	int class = (*lval).class;
 	int type = (*lval).type;
 	if((*lval).lvalue != 'L') { 
@@ -62,7 +62,7 @@ void _eq() {
 	else if(class==1 && (*val).class==1) {
 		pDatum = (*val).value.up;
 		if( (*val).lvalue=='L' ){
-			pDatum = (char*)(*(int*)pDatum);   /* now its 'A' */
+			pDatum = (char*)(*(ptrdiff_t*)pDatum);   /* now its 'A' */
 		}
 		char **where = (*lval).value.up;
 		*where = (char*)pDatum;
@@ -91,9 +91,9 @@ void _eq() {
 		}
 		pDatum = (*val).value.up;
 		if( (*val).lvalue=='L' ){
-			pDatum = (char*)(*(int*)pDatum);   /* now its 'A' */
+			pDatum = (char*)(*(ptrdiff_t*)pDatum);   /* now its 'A' */
 		}
-		iDatum = (int)pDatum;
+		iDatum = (ptrdiff_t)pDatum;
 		put_int( (*lval).value.up, iDatum);
 		pushk(iDatum);
 	}
@@ -516,16 +516,16 @@ int _expr(){
 		if(_lit(xminus)){
 			_term();
 			rightclass = stack[nxtstack-1].class;
-			int b=toptoi();
-			int a=toptoi();
+			ptrdiff_t b=toptoi();
+			ptrdiff_t a=toptoi();
 			if( rightclass || leftclass) pushPtr(a-b);
 			else pushk(a-b);
 		}
 		else if(_lit(xplus)){
 			_term();
 			rightclass = stack[nxtstack-1].class;
-			int b=toptoi();
-			int a=toptoi();
+			ptrdiff_t b=toptoi();
+			ptrdiff_t a=toptoi();
 			if( rightclass || leftclass) pushPtr(a+b);
 			else pushk(a+b);
 		}
@@ -549,20 +549,20 @@ int _term() {
 				return 1;
 			}
 			_factor();
-			int denom = toptoi();
-			int numer = toptoi();
+			ptrdiff_t denom = toptoi();
+			ptrdiff_t numer = toptoi();
 			if(denom){
-				int div = numer/denom;
+				ptrdiff_t div = numer/denom;
 				if(!error)pushk(div);
 			}
 			else eset(DIVERR);
 		}
 		else if(_lit(xpcnt)){
 			_factor();
-			int b=toptoi();
-			int a=toptoi();
+			ptrdiff_t b=toptoi();
+			ptrdiff_t a=toptoi();
 			if(b){
-				int pct = a%b;
+				ptrdiff_t pct = a%b;
 				if(!error)pushk(pct);
 			}
 			else eset(DIVERR);
@@ -687,8 +687,8 @@ void _factor() {
 				return;
 			}
 		  	char* where = (*v).vdcd.vd.value.up;
-		  	int integer =  (*v).vdcd.vd.value.ui; 
-		  	int character = (*v).vdcd.vd.value.uc;
+//		  	int integer =  (*v).vdcd.vd.value.ui; 
+//		  	int character = (*v).vdcd.vd.value.uc;
 		  	int class=(*v).vdcd.vd.class; 
 	  		int type=(*v).type; 
 	  		int obsize = typeToSize(class,type);
@@ -777,7 +777,7 @@ int quit() {    // mod's lrb
 }
 #else
 int quit() {
-	int foo[]={0};  /* to avoid tcc error */
+//	int foo[]={0};  /* to avoid tcc error */
 	if(kbhit()==0x1b){
 		getch_(0);
 		return escKey();
@@ -793,7 +793,7 @@ int quit() {
  *  optional semi. 
  */
 int _decl(struct varhdr *vh) { 
-	Type t;
+//	Type t;
 	if( _lit(xchar) ) {
 		do {
 			varalloc( Char, 0, vh );  /* 2nd arg is vpassed */
@@ -1009,10 +1009,10 @@ void dumpName() {
 }
 
 /****  C tools to deal with typeless storage ****/
-void put_int(char *where, int datum) {
+void put_int(char *where, ptrdiff_t datum) {
 	memcpy( where, &datum, sizeof(datum) );
 }
-int get_int(char *where) {
+ptrdiff_t get_int(char *where) {
 	int datum;
 	memcpy( &datum, where, sizeof(datum));
 	return datum;

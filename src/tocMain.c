@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <dlfcn.h>
+#include <getopt.h>
 #include "toc.h"
 
 /*	main for the tc interpreter. Their are two mains. The other, test.c
@@ -111,7 +112,10 @@ void markEndlibrary() {
  *	the file. Return negative on error, else a count of loaded files.
  */
 int doIncludes(char* fname) {
-	int unit,len,lineno=0,libCount=0,loadCount=0;
+	int unit,len,lineno=0,libCount=0;
+#if 0
+	int loadCount=0;
+#endif
 	char buff[200];
 	unit = tcFopen(fname,"r");
 //	if(unit<0)return unit;
