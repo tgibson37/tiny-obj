@@ -202,6 +202,7 @@ main [
         buf_len = gs(buf)
         /* exit on empty lines
         if (buf_len == 0) break
+        if (buf(0) == 'x') break   // tag
 
         error = buf_p = 0
         getsym()

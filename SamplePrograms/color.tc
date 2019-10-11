@@ -53,7 +53,6 @@ foo
 				ilabel x,y,r,g,b
 				box r,g,b
 				b=b+255
-ps"~54";pn r;pn g;pn g
 			]
 			b=0;g=g+255
 		]
