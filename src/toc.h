@@ -105,6 +105,8 @@ int quiet;
 #define TMBLOBERR    31
 #define CLASSERR	 32
 #define WHERERR      33
+#define FREEZERR     96
+#define LIMITERR     97
 #define EXIT         98
 #define KILL         99
 

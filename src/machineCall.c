@@ -266,7 +266,7 @@ ptrdiff_t Mfputs(int nargs, ptrdiff_t *args) {
 ptrdiff_t Mfputc(int nargs, ptrdiff_t *args) {
 	if(nargs<2){ eset(ARGSERR); return -1; }
 	char c = (char)args[0];
-	int unit = args[1];
+	int unit = (int)args[1];
 	return tcFputc(c,unit);
 }
 

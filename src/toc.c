@@ -21,7 +21,7 @@ int typeToSize( int class, Type type ) {
 	if(type>='E')return 0;
 	if(type>='o')return 0;
 	if(type==Char)return 1;
-	else if(type==Int)return sizeof(int);
+	else if(type==Int)return sizeof(ptrdiff_t);
 	else eset(TYPEERR);
 	return 0; /* has to be one of the above */
 }
@@ -128,7 +128,7 @@ void eset( int err ){
 	if(!error){
 		error=err;
 		errat=cursor;
-//fprintf(stderr,"\ntoc~131\n");
+//fprintf(stderr,"\ntoc~131 cursor-apr %d\n",cursor-apr);
 //dumpft(fname,lname);
 //dumpBV(curobj);
 	}
@@ -809,12 +809,29 @@ int _decl(struct varhdr *vh) {
 	return 1;
 }
 
+int _limit = 0;
+char *prevcur = NULL;
 /* st(): interprets a possibly compound statement */
 void st() {
 	char *objt, *agin ;
 	brake=0;
 	struct var *isvar;
+if(cursor==prevcur){
+	eset(FREEZERR);
+	whatHappened();
+	exit(FREEZERR);
+}
+prevcur=cursor;
 
+#if 0
+fprintf(stderr,".");
+if(++_limit>10000)eset(LIMITERR);
+if(cursor==prevcur){
+fprintf(stderr,"cursor freeze");
+whatHappened();
+exit(1);
+}
+#endif
 	if(quit())return;
 	_rem();
 	stbegin();

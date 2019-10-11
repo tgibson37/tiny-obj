@@ -9,6 +9,9 @@ int countch(char *f, char *t, char c){
 void _errToWords(){
 	char *x;
 	switch(error){
+		default:x="UNKNOWN ERROR"; 
+			pn(error);
+			break; 
 		case 2: x="CURSERR, cursor out of range"; break;
 		case 3: x="SYMERR, decl needed"; break;
 		case 1: x="STATERR"; break;
@@ -33,6 +36,7 @@ void _errToWords(){
 		case 28: x="PTRERR"; break;
 		case 29: x="APPERR, app not found";break; // lrb
 		case 30: x="DIVERR, divide by zero";break;
+		case 97: x="LIMITERR, run exceeded statement limit"; break;
 		case 98: x="EXIT, stopped by exit call"; break;
 		case 99: x="KILL, stopped by user"; break;
 		case 1023: x="RBRCERR, ] required in -r "; break;

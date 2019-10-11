@@ -36,8 +36,10 @@ placement[
 		if( y==220) y=y+50
 	]
 ]
+foo[]
 // intense colors (0 or 255)
 icolors [
+foo
 	int r,g,b
 	r=g=b=0
 	moveto 20,30
@@ -51,7 +53,7 @@ icolors [
 				ilabel x,y,r,g,b
 				box r,g,b
 				b=b+255
-//ps"~54";pn r;pn g;pn g
+ps"~54";pn r;pn g;pn g
 			]
 			b=0;g=g+255
 		]

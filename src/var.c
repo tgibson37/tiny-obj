@@ -560,7 +560,7 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
 	        else break;
         }
         size = sizeof(struct varhdr) + lndata.nvars*sizeof(struct var) + lndata.valsize;
-        blob = mymalloc("blob", size);
+        blob = mymalloc("blob", size+10);
         vh = (struct varhdr*)blob;
         _newblob(blobName,blob);
 		memset(vh, 0, size);
@@ -587,8 +587,6 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
  *	value references point to space in the same malloc.
  */
 void toclink() {
-//	struct varhdr *vh;	
-//	vh = lnlink(cursor,endapp,"__Globals__");
 	lnlink(cursor,endapp,"__Globals__");
 }
 

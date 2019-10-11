@@ -88,7 +88,7 @@ int fileWrite(char* name, char* buff, int bufflen){
 int tcFopen(char* name, char* mode){
 	if(nxtUnit>MAX_UNIT)return -9;
 	FILE* file = fopen(name,mode);
-//fprintf(stderr,"~91 %s %c %d",name,mode,file);
+//fprintf(stderr,"\n~91 %s -- %x -- %d",name,*mode,file);
 	if(file==NULL)return -1;
 	fileUnit[nxtUnit] = file;
 	return nxtUnit++;
@@ -108,6 +108,7 @@ int tcFputs(char* str, int unit) {
  *	-9 unit not open, -8 bad unit, -3 fputc error. 
  */
 int tcFputc(char c, int unit) {
+//fprintf(stderr,"\n--- %s %d --- unit %d\n",__FILE__,__LINE__,unit);
 	if( (unit<0) || (unit>MAX_UNIT) )return -8;
 	if(fileUnit[unit]==NULL)return -9;
  	if( fputc(c,fileUnit[unit]) != 0){
