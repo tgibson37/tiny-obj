@@ -644,12 +644,16 @@ void _factor() {
 			to = cursor-1;
 			cursor=temp;
 // link the body, return blob address
+			char *save_fn = fname;  // need class name later
+			char *save_ln = lname;
 			struct varhdr *vh;
 			vh = lnlink(from, to, isclvar->name);
 			if(error){
 				whatHappened();
 				exit(1);
 			}
+			fname = save_fn;
+			lname = save_ln;
 // call constructor (enter) if exist
 			struct var *con = _addrval(isclvar->name,vh->vartab,(vh->nxtvar)-1);
 			if(con){

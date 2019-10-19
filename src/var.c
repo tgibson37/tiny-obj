@@ -2,9 +2,60 @@
 
 int newop;
 
+/*  fetch a value and type given its var. On success return len
+ *  (or 1 for obj-ref) else 0. Details...
+ *    Full retrieval into struct *stuff s for char or int.
+ *    Pointer into val space for char* or int*.
+ *    Pointer to blob for object ref.
+ *  Used only for data, not for type 'E'  
+ */
+int fetchVal(struct var *v, union stuff *s){
+    void *where = v->vdcd.vd.value.up;
+	if(v->type == 1){
+		s->uc = get_char(where);
+		return v->vdcd.vd.len;
+	}
+	else if(v->type == 2){
+		s->ui = get_int(where);
+		return v->vdcd.vd.len;
+	}
+	else if(v->type == 'o'){
+		s->up = v->vdcd.od.blob;
+		return 1;
+	}
+	return 0;
+}
+
+/*	Print the value (a brief excerpt for arrays) described by *v.
+ */
+void dumpVal_v(struct var *v){
+	union stuff s;
+	int len = fetchVal(v, &s);
+	if(v->type == 1){
+		if(len>1)fprintf(stderr,"[%c, %c, ...]",s.uc,(s.uc)+1);
+		else fprintf(stderr,"%c",s.uc);
+	}
+	else if(v->type == 2){
+		if(len>1)fprintf(stderr,"[%d, %d, ...]",s.uc,(s.uc)+1);
+		else fprintf(stderr,"%lld",(long long)s.ui);
+	}
+	else if(v->type == 'o'){
+		struct varhdr *vh = s.up;
+		struct blob *b;
+		for(b=blobtab; b<nxtblob; ++b) {
+			if(b->varhdr == vh->vartab->vdcd.od.blob) break;
+		}
+		if(b<nxtblob) fprintf(stderr,"%s",b->name);
+		else fprintf(stderr,"Object type");
+	}
+	else fprintf(stderr,"Unknown type");
+}
+
 /* SITUATION: Function call parsed PLUS two calls during linking.
 	Open new var and value frames for library, globals, and function locals.
  */
+void dumpDots(int n){while(n--)fprintf(stderr,".");}
+
 void newfun(struct varhdr *vh) {
 	if(++curfun>efun){
 		eset(TMFUERR);
@@ -13,9 +64,12 @@ void newfun(struct varhdr *vh) {
 		curfun->fvar = curfun->evar = vh->nxtvar;
 		curfun->datused = vh->datused;
 	}
-	if(verbose[VV]){
+//fprintf(stderr,"\nrep run %d %d  ",db_report_depth, db_rundepth);
+	if(verbose[VF] && db_report_depth <= db_rundepth){
 		fflush(stdout);
-		fprintf(stderr,"\nnewfun %s",fcnName);
+		fprintf(stderr,"\n");
+		dumpDots(fcnDepth());
+		fprintf(stderr,"calling: %s		",fcnName);
 	}
 }
 
@@ -26,10 +80,14 @@ void fundone() {
 	locals->nxtvar=curfun->fvar;
 	locals->datused=curfun->datused;
 	--curfun;
-	if(verbose[VV]){
+#if 0
+	if(verbose[VF] && db_report_depth < db_rundepth){
 		fflush(stdout);
-		fprintf(stderr,"\nfundone %s",fcnName);
+		fprintf(stderr,"\n");
+		dumpDots(fcnDepth());
+		fprintf(stderr,"fundone");
 	}
+#endif
 }
 
 /*********** var tools ****************/
@@ -243,21 +301,39 @@ void dumpFun() {
 	}
 }
 
+char *__typwrd_0__ = "Actual";
+char *__typwrd_1__ = "Pointer";
+char *__typwrd_o__ = "Object";
+char *__typwrd_E__ = "Function";
+char *__typwrd_Uk__ = "Unknown Type";
+
+char* classToWord(struct var *v){
+	switch((*v).vdcd.vd.class) {
+		case 0: return __typwrd_0__;
+		case 1: return __typwrd_1__;
+		case 0x6f: return __typwrd_o__;
+		case 0x45: return __typwrd_E__;
+		default: return __typwrd_Uk__;
+	}
+}
+
 void dumpVar(struct var *v) {
 	if(v->type=='A' || v->type=='C') {
-		fprintf(stderr,"\n class %s type %c",v->name, v->type);
-		if(*(v->vdcd.cd.parent))fprintf(stderr," extends %s", v->vdcd.cd.parent);
+		fprintf(stderr,"\n class %s type %c ",v->name, v->type);
+		if(*(v->vdcd.cd.parent))fprintf(stderr,"extends %s ", v->vdcd.cd.parent);
 	}
-	if(v->type=='o') {
-		fprintf(stderr,"\n oref: %s type %c classvar %p (%s) blob %p"
+	else if(v->type=='o') {
+		fprintf(stderr,"\n oref: %s type %c classvar %p (%s) blob %p "
 				,v->name, v->type,v->vdcd.od.cls, v->vdcd.od.cls->name
 				,v->vdcd.od.blob);
 	}
-	else
-		fprintf(stderr,"\n var %p: %s %d %s %d %zd %p"
-			, v, (*v).name, (*v).vdcd.vd.class, typeToWord((*v).type)
+	else {
+		fprintf(stderr,"\n var %p: %s %s %s len %d %zd %p "
+			, v, (*v).name, classToWord(v), typeToWord((*v).type)
 			, (*v).vdcd.vd.len, (*v).vdcd.vd.value.ui
 			, (*v).vdcd.vd.value.up );
+	}
+	dumpVal_v(v);
 }
 
 void dumpVarTab(struct varhdr *vh) {
@@ -333,6 +409,10 @@ struct varhdr* getblob(){
   struct var sym;
   canon( &sym );
   return _getblob(sym.name);
+}
+
+void getBlobName(struct varhdr *vh){
+
 }
 
 /*	Checks for balanced brackets, from *from to *to.

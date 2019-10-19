@@ -11,5 +11,5 @@ main[
 	while(k<10)[
 		runlimit(3)
 	]
-	ps"THIS SHOULD NOT PRINT runhits =";pn runhits
+	ps"THIS LINE SHOULD NOT PRINT runhits =";pn runhits
 ]

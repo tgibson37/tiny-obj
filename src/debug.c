@@ -7,7 +7,6 @@
 int db_running = 0;
 int db_next = 0;
 int db_skiplib = 1;
-int db_rundepth = 1;
 struct brk {
 	struct var* var;
 	int enabled;
@@ -219,7 +218,8 @@ void db_verbose(char* param) {
 	case 's': bit=VS; break;
 	case 'p': bit=VP; break;
 	case 'v': bit=VV; break;
-	default: printf("v needs e, l, s, p, or v parameter"); return;
+	case 'f': bit=VF; break;
+	default: printf("v needs e, l, s, p, v, or f parameter"); return;
 	}
 	verbose[bit] = 1-verbose[bit];
 }
@@ -344,6 +344,9 @@ int firstAppStmt = 1;
 void appstbegin(){
 //printf("\n~326 nx %d lev %d",db_next,db_rundepth);
 	if(firstAppStmt){
+fprintf(stderr,"\ndebug~347");
+		db_rundepth = 1;
+		db_report_depth = 99;
 		firstAppStmt = 0;
 		_dbCommands();
 	}
@@ -376,11 +379,20 @@ void br_hit(struct var *v) {
 	}
 }
 
-/* called from enter when entering/leaving functions */
-void fcn_enter() {
+/*	called from enter when entering/leaving non-MC functions.
+ *	For verbose fcn (vf) report_depth trims lib calls.
+ */
+void fcn_enter(char* where) {
+	struct var fn;
+	canon(&fn);
+	strcpy(fcnName,fn.name);
 	++db_rundepth;
+	if(where>=apr)db_report_depth = db_rundepth;
 }
 void fcn_leave() {
 	--db_rundepth;
+	*fcnName=0;
 }
+/* public function */
+int fcnDepth() {return db_rundepth;}
 

@@ -23,7 +23,8 @@ CFLAGS   = -g -std=c99 -Wall -I.
 
 LINKER   = gcc
 # linking flags here
-LFLAGS   = -Wall -I. -L/usr/lib/x86_64-linux-gnu -ldl -lm
+#LFLAGS   = -Wall -I. -L/usr/lib/x86_64-linux-gnu -ldl -lm
+LFLAGS   = -Wall -I. -L/usr/lib/x86_64-linux-gnu -lm
 
 # change these to proper directories where each file should be
 SRCDIR   = src

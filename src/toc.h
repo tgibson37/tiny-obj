@@ -73,7 +73,10 @@
 #define VS 2
 #define VP 3
 #define VV 4
+#define VF 5
 char verbose[8];
+int db_rundepth;
+int db_report_depth;
 int debug;
 int quiet;
 
@@ -308,4 +311,4 @@ void newref(struct var *cls, struct varhdr *vh);
 char* _mustFind( char *from, char *upto, char c, int err );
 void toclink();
 void _newblob(char* name, void* blob);
-
+int fcnDepth();

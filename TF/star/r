@@ -1,0 +1,19 @@
+***  TINY-C 8080 VERSION 1.0,  COPYRIGHT 1977, T A GIBSON  ***
+        This C version copyright 2017, T A Gibson
+
+star.tc - 4/1/18 - lrb
+
+Count your lucky stars! How many points does your star have? 
+
+Press Enter for no details, anything else to see details. Details? 
+
+
+1. skip = 1 n = 6
+2. skip = 2 n = 4
+3. skip = 3 n = 3
+4. skip = 4 n = 5
+5. skip = 5 n = 2
+
+5 unique 13-point star(s) found.
+
+done
