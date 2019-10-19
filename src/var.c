@@ -193,11 +193,14 @@ char* _canon(char* first, char* l, char* buff) {
 void canon(struct var *v) {
 	_canon(fname,lname,(*v).name);
 }
-/*	if *cursor is alphanum find end of sym and canon into buff
+/*	if *cursor is alphanum find end of sym and canon into buff. 
+ *	Set f/lname to matched symbol. 
  */
 int canonIf(char* buff){
-	char *c=cursor;
+	char *c = cursor;
 	while(isalnum(*c)||*c=='_')++c;
+	if(c==cursor)return 0;  // not a symbol
+	fname=cursor; lname=c-1;
 	_canon(cursor,c-1,buff);
 	return (c-cursor);
 }
