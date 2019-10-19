@@ -193,9 +193,10 @@ void db_usage() {
 	printf("	p <symbol>    print the value of symbol\n");
 	printf("	t <symbol>    print the type of symbol\n");
 	printf("	g             enter your C debugger (see setup notes)\n");
-	printf("	v [e|p|s|v]     toggle verbose mode for one of:\n");
+	printf("	v [e|p|s|f|v]     toggle verbose mode for one of:\n");
 	printf("	                e assignment, p parsed symbol,\n");
 	printf("	                s stack push/pops, v variables\n");
+	printf("	                f function calls\n");
 	printf("	d [f|v]       dump function or variable table\n");
 	printf("	default       print this usage\n");
 	printf("	x,q           exit tiny-C\n");
@@ -344,7 +345,6 @@ int firstAppStmt = 1;
 void appstbegin(){
 //printf("\n~326 nx %d lev %d",db_next,db_rundepth);
 	if(firstAppStmt){
-fprintf(stderr,"\ndebug~347");
 		db_rundepth = 1;
 		db_report_depth = 99;
 		firstAppStmt = 0;
