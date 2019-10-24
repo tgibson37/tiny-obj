@@ -633,6 +633,7 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
         char* savedendapp=endapp;
         lndata.nvars = lndata.valsize = 0;
         char *f; char *t;
+
         f=from; t=to;
 		strncpy(par_buf,blobName,VLEN+1);
         while(f){

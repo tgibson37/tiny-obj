@@ -113,12 +113,8 @@ void markEndlibrary() {
  */
 int doIncludes(char* fname) {
 	int unit,len,lineno=0,libCount=0;
-#if 0
-	int loadCount=0;
-#endif
 	char buff[200];
 	unit = tcFopen(fname,"r");
-//	if(unit<0)return unit;
 	if(unit<0){eset(APPERR);_errToWords();exit(unit);} // lrb
 	while(1){
 		len = tcFgets(buff,sizeof(buff),unit);
@@ -137,12 +133,12 @@ int doIncludes(char* fname) {
 			loadCode(buff+9);  // exit(1) on failure
 			++libCount;
 		}
-#if 0
-		else if(!strncmp(buff,"#loadMC ",8)) {
-			loadMC(buff+8);  // exit(1) on failure
-			++loadCount;
-		}
-#endif
+-#if 0
+-               else if(!strncmp(buff,"#loadMC ",8)) {
+-                       loadMC(buff+8);  // exit(1) on failure
+-                       ++loadCount;
+-               }
+-#endif
 		else{
 			break;
 		}
@@ -315,7 +311,13 @@ int main(int argc, char *argv[]) {
 void* mymalloc(char *name, int size){
 	void *m;
 	m=malloc(size);
+#if 0
 	if(dump_mallocs)fprintf(stderr,
-			"\nMALLOC %s size %d at %p-%p",name,size,m,m+size);
+			"\nMALLOC %s size %d at %td..%td (%p..%p)"
+			,name,size, (ptrdiff_t)m,(ptrdiff_t)m+size, m,m+size);
+#else
+	if(dump_mallocs)fprintf(stderr,
+ 			"\nMALLOC %s size %d at %p-%p",name,size,m,m+size);
+#endif
 	return m;
 }

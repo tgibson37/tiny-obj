@@ -165,6 +165,7 @@ struct var{
 
 /* blob header */
 struct varhdr {
+	char name[VLEN+1];
 	struct var *vartab; struct var *gltab; struct var *nxtvar; 
 	char *val; char *endval; char *datused; 
 };
