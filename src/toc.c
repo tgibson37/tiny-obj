@@ -158,7 +158,7 @@ int skip_tool(char l, char r, char* from, char* to){
   int counter = 1;
    while( counter>0 && from<endapp ) {
     if(*from==l)++counter;
-    if(*from==r)--counter;
+    else if(*from==r)--counter;
     ++from;
   };
   if( counter )return -1;   //bad
