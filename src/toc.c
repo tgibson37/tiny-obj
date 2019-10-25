@@ -151,6 +151,32 @@ int _lit(char *s){
 /* skips balance l-r assuming left is matched. 
  *	Returns 0 on OK, else count of missing ]'s.
  */
+/*  skip tool, does not change state, just examines 
+ */
+int skip_tool(char l, char r, char* from, char* to){
+  char *_from = from;
+  int counter = 1;
+   while( counter>0 && from<endapp ) {
+    if(*from==l)++counter;
+    if(*from==r)--counter;
+    ++from;
+  };
+  if( counter )return -1;   //bad
+  return from-_from;   //good, return delta from
+}
+
+/*  convenience skip for parsing, changes state, returns boolean.
+ *	True means problem, 0 means ok and state change. That is the
+ *	old 8080 definition.
+ */
+int _skip(char l, char r) {
+  int s = skip_tool(l,r,cursor,endapp);
+  if(s<0)return 1;
+  cursor += s;
+  return 0;
+}
+#if 0
+// old parse version
 int _skip(char l, char r) {
 	int counter = 1;
 	 while( counter>0 && cursor<endapp ) {
@@ -161,6 +187,7 @@ int _skip(char l, char r) {
 	if( counter )return counter;
 	return 0;
 }
+#endif
 
 /* Parse a symbol defining fname, lname. ret: true if symbol.
  *	Advances the cursor to but not over the symbol,

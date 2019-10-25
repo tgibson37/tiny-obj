@@ -313,3 +313,4 @@ char* _mustFind( char *from, char *upto, char c, int err );
 void toclink();
 void _newblob(char* name, void* blob);
 int fcnDepth();
+int skip_tool(char l, char r, char* from, char* to);

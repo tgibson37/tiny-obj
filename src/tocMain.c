@@ -133,12 +133,12 @@ int doIncludes(char* fname) {
 			loadCode(buff+9);  // exit(1) on failure
 			++libCount;
 		}
--#if 0
--               else if(!strncmp(buff,"#loadMC ",8)) {
--                       loadMC(buff+8);  // exit(1) on failure
--                       ++loadCount;
--               }
--#endif
+#if 0
+               else if(!strncmp(buff,"#loadMC ",8)) {
+                       loadMC(buff+8);  // exit(1) on failure
+                       ++loadCount;
+               }
+#endif
 		else{
 			break;
 		}

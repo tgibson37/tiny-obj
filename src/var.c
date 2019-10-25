@@ -421,6 +421,21 @@ void getBlobName(struct varhdr *vh){
 /*	Checks for balanced brackets, from *from to *to.
  */
 int checkBrackets(char *from, char *to) {
+  int s;
+  while(from<to) {
+    while(*(from++) != '[' && from<to) ;
+    if(from<to) {
+    	s=skip_tool('[',']',from,to);
+    	if(s<0)return s;   //bad
+    }
+  }
+  return 0;   //good
+}
+#if 0
+/*	old lazy coding version, turns a parser into a non-state-changing tool.
+ *	This technique is hazardous, and not recommended for general practice.
+ */
+int checkBrackets(char *from, char *to) {
 	int err;
 	char* savedCursor=cursor;
 	char* savedEndapp=endapp;
@@ -436,7 +451,7 @@ int checkBrackets(char *from, char *to) {
 	endapp = savedEndapp;
 	return 0;
 }
-
+#endif
 int xxpass=0;
 
 /*	Pass one if varhdr is NULL computes the needed sizes. Pass two does
