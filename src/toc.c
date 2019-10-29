@@ -986,14 +986,6 @@ exit(1);
 }
 
 /*********** a variety of dumps for debugging **********/
-char* typeToWord(Type t){
-	switch(t) {
-		case Char:     return "Char";
-		case Int:      return "Int";
-		default:       return " NOT A TYPE ";
-	}
-}
-
 void dumpHex( void* where, int len ) {
 	void* w=where;
 	fflush(stdout);

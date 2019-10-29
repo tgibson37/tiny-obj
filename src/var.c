@@ -267,9 +267,9 @@ struct var* _isClassName() {
 	return NULL;
 }
 
-/*	prints a value given its description taken from a struct stackEntry */
-void dumpVal(Type t, int class, union stuff *val, char lval){
-	fprintf(stderr,"pr[%d]",(int)((*val).up-(void*)pr));
+#if 0
+void dumpVal_s(Type t, int class, union stuff *val, char lval){
+//	fprintf(stderr," at pr[%d]",(int)((*val).up-(void*)pr));
 	if(class==1 && t==Char ){
 		char sval[30];
 		strncpy(sval, (char*)((*val).up), 30);
@@ -281,14 +281,15 @@ void dumpVal(Type t, int class, union stuff *val, char lval){
 			if(x)fprintf(stderr,"->%c<-", x );
 			else fprintf(stderr,"->NULL<-");
 		}
-//		else fprintf(stderr,"->%d<-", (*val).ui );
-		else fprintf(stderr,"->%d<-", *(int*)((*val).up) );
+		else fprintf(stderr,"->%td<-", (*val).ui );
+//		else fprintf(stderr,"->%d<-", *(int*)((*val).up) );
 	}
 /*
 	else if(t==Char) fprintf(stderr,"%c",(*val).uc);
 	else fprintf(stderr,"%d",(*val).ui);
 */
 }
+#endif
 
 void dumpFunEntry( int e ) {
 	fprintf(stderr,"\n fun entry at %d:  %p %p %p", e,
@@ -304,6 +305,10 @@ void dumpFun() {
 	}
 }
 
+char* classToWord_v(struct var *v){
+	return classToWord((*v).vdcd.vd.class);
+}
+#if 0
 char *__typwrd_0__ = "Actual";
 char *__typwrd_1__ = "Pointer";
 char *__typwrd_o__ = "Object";
@@ -311,7 +316,7 @@ char *__typwrd_E__ = "Function";
 char *__typwrd_Uk__ = "Unknown Type";
 
 char* classToWord(struct var *v){
-	switch((*v).vdcd.vd.class) {
+	switch((*v).vdcd.vd.class); {
 		case 0: return __typwrd_0__;
 		case 1: return __typwrd_1__;
 		case 0x6f: return __typwrd_o__;
@@ -319,6 +324,7 @@ char* classToWord(struct var *v){
 		default: return __typwrd_Uk__;
 	}
 }
+#endif
 
 void dumpVar(struct var *v) {
 	if(v->type=='A' || v->type=='C') {
@@ -332,7 +338,7 @@ void dumpVar(struct var *v) {
 	}
 	else {
 		fprintf(stderr,"\n var %p: %s %s %s len %d %zd %p "
-			, v, (*v).name, classToWord(v), typeToWord((*v).type)
+			, v, (*v).name, classToWord_v(v), typeToWord((*v).type)
 			, (*v).vdcd.vd.len, (*v).vdcd.vd.value.ui
 			, (*v).vdcd.vd.value.up );
 	}

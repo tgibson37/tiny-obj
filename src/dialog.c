@@ -1,10 +1,49 @@
 #include "toc.h"
 
+//dialog words, phrases
+char *dchar = "char";
+char *dint  = "int";
+char *dNotType = "not a type";
+char *ddatum = "datum";
+char *dptr = "ptr";
+char *dfcn = "fcn";
+char *dobj = "obj";
+char *dNotClass = "not a class";
+char *dlvalue = "lvalue";
+char *dactual = "actual";
+//char *d = "";
+
 int countch(char *f, char *t, char c){
 	int k=1;   /* start on line 1 */
 	while( f++ <= t) if(*f==c) ++k;
 	return k;
 }
+char* typeToWord(Type t){
+	switch(t) {
+		case Char:     return dchar;
+		case Int:      return dint;
+		default:       return dNotType;
+	}
+}
+char* classToWord(int c) {
+	switch(c) {
+		case 0:      return ddatum;
+		case 1:      return dptr;
+		case 'E':      return dfcn;
+		case 'o':      return dobj;
+		default:       return dNotClass;
+	}
+}
+char* lvalToWord(char c){
+	switch(c) {
+		case 'L':      return dlvalue;
+		case 'A':      return dactual;
+		default:       return dNotClass;
+	}
+}
+
+
+
 
 void _errToWords(){
 	char *x;

@@ -1,13 +1,35 @@
 #include "toc.h"
 
+/*	prints a value given its description taken from a struct stackEntry
+ */
+void dumpVal_s(Type t, int class, union stuff *val, char lval){
+  if(class==1 && t==Char ){           // string
+    char sval[30];
+    strncpy(sval, (char*)(val->up), 30);
+    fprintf(stderr,"->%s<-", sval);
+  }
+  else if(class==1 || lval=='L'){     // pointer
+  	void *ptr=val->up;
+//fprintf(stderr,"\n           stack~13, %d %d",pr<=(char*)ptr, (char*)ptr<EPR);
+//fprintf(stderr,"\n           stack~14, %p %p %p",pr, (char*)ptr, EPR);
+    if(pr<=(char*)ptr && (char*)ptr<EPR) {
+      int p = (void*)pr-val->up;
+      fprintf(stderr,"pr[%d]",p);
+    }
+    else fprintf(stderr,"ptr");
+  }
+  else if(t==Char) fprintf(stderr,"%c",val->uc);   // actual datum
+  else fprintf(stderr,"%td",val->ui);
+}
+
 void dumpStackEntry(int e){
 	fflush(stdout);
 	if( 0<=e && e<=nxtstack ) {
-		fprintf(stderr,"\n stack entry at %d: %d %c %d %p",
-			e, stack[e].class, 
-			stack[e].lvalue, stack[e].type,
-			stack[e].value.up );
-		if(verbose[VS])dumpVal(stack[e].type, stack[e].class, 
+		int rel = nxtstack-e-1;  // 0 is top
+		fprintf(stderr,"\n stack (0 is top) entry at %d: %s %s %s value ",
+			rel, classToWord(stack[e].class), 
+			lvalToWord(stack[e].lvalue), typeToWord(stack[e].type) );
+			dumpVal_s(stack[e].type, stack[e].class, 
 				&stack[e].value,stack[e].lvalue);
 	}
 	else {
