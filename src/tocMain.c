@@ -112,6 +112,7 @@ void markEndlibrary() {
  *	the file. Return negative on error, else a count of loaded files.
  */
 int doIncludes(char* fname) {
+fprintf(stderr,"tocMain~115 %s\n",fname);
 	int unit,len,lineno=0,libCount=0;
 	char buff[200];
 	unit = tcFopen(fname,"r");
@@ -225,10 +226,11 @@ void allocStuff() {
 
 int main(int argc, char *argv[]) {
 	int opt,numIncs;
-	char *prused;   // end of seed
+	char *prused;   // end of program text
 	int optopt=0;
+	char *rArg=NULL;
 
-    while ((opt = getopt(argc, argv, "dlmqrv:")) != -1) {
+    while ((opt = getopt(argc, argv, "dlmqvr:")) != -1) {
         switch (opt) {
         case 'l':
         	loadMsg=1;
@@ -246,12 +248,16 @@ int main(int argc, char *argv[]) {
         	verbose[VL]=1; 
         	break;
         case 'r': 
+        	rArg=optarg;
+        	break;
+#if 0
         	*pr = '[';
         	strcpy(pr+1,optarg);
         	lpr = endapp = prused = pr+strlen(optarg)+3;
         	*(endapp-2) = ']';
         	*(endapp-1)='\n';
         	break;
+#endif
 	    case '?':
 	        if (optopt == 'r')
 	          fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -269,8 +275,13 @@ int main(int argc, char *argv[]) {
     }
 
 	allocStuff();
-	strcpy(pr,startSeed);
-	lpr = endapp = prused = pr+strlen(startSeed);
+	if(rArg){
+        	*pr = '[';
+        	strcpy(pr+1,rArg);
+        	strcat(pr,"]\n");
+	}
+	else strcpy(pr,startSeed);
+	lpr = endapp = prused = pr+strlen(pr);
 
 	if(loadMsg){
 		fprintf(stdout,"Sizes: of pr %d fun %d stack %d var %d\n", 

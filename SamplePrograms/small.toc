@@ -1,0 +1,17 @@
+
+class Small [
+    print [
+        pl "Small.print"
+    ]
+]
+
+main [
+    Small s
+    s = new Small
+
+    pl"main program: "
+    pl" "
+    s.print;
+    pl"good bye"
+]
+

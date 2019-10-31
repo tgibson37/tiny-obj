@@ -1,4 +1,4 @@
-#include lrblib.tc
+#include pps/lrblib.tc
 #include pps/library.tc
 
 // ver.tc - lrb - 8/30/18

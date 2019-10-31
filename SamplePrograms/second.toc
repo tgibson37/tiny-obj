@@ -1,0 +1,53 @@
+//FIRST test program
+//library needs pn,ps,pl,strcpy.
+
+abstract class Player [
+    int number
+    char name(20)
+    printNumber[
+        pn number
+    ]
+    printName[
+        ps name
+    ]
+]
+class Cannibal extends Player [
+    Cannibal int n [ 
+        number = n
+        strcpy name, "cannibal"
+        ps "Cannibal constructor: "
+        ps name; pn number
+    ]
+]
+class Nurse extends Player [
+    Nurse int n [
+        number = n
+        strcpy name, "nurse"
+    ]
+]
+
+class Game [
+    play Game[
+        pl "IN PLAY"
+    ]
+]
+
+main [
+    Cannibal can
+    can = new Cannibal 1
+    Nurse nur
+    nur = new Nurse 2
+
+    pl"main program: "
+    pl" "
+    can.printName
+    can.printNumber
+    pl" "
+    nur.printName
+    nur.printNumber
+
+    Game.play    //   <<==  subject under test
+
+    delete can
+    delete nur
+]

@@ -1,0 +1,37 @@
+// Calls functions 3 levels deep, does various assigns
+// Useful for playing with debug ve,vf,... commands.
+cccc [
+	pl""
+	pl "in cccc"
+	pl "  --  returning"
+]
+bbbb [
+	pl"";pl "in bbbb"
+	int a(1), b(0)
+	pl"     array assign"
+	a(0)=10;a(1)=11
+	pl"     ptr assign"
+	b=a;
+	pl"     print array"; pl""
+	pn a(0);pn a(1)
+	pl"     ditto via ptr"; pl""
+	pn b(0);pn b(1)
+	cccc
+	pl "  --  returning"
+]
+aaaa [
+	ps "in aaaa"
+	pl"     datum assigns"
+	int a,b,c
+	a=1
+	b=2
+	c=3
+	pn a;pn b;pn c
+	bbbb
+	pl "  --  returning"
+]
+main [
+//	bbbb
+	aaaa
+	pl"All done"
+]
