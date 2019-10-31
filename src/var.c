@@ -117,6 +117,9 @@ int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
  */
 int _allocSpace(struct var *v, int amount, struct varhdr *vh){
 	if( vh->datused+amount > vh->endval ) {
+fprintf(stderr,"var~120: allocSpace, need %d avail %d vh %x\n"
+			,amount, vh->endval-vh->datused, vh
+		);
 		eset(TMVLERR);
 		return TMVLERR;
 	}

@@ -1,5 +1,6 @@
-//FIRST test program
-//library needs pn,ps,pl,strcpy.
+//second test program
+// class Game added.
+// Goal is current obj restored after a function call
 
 abstract class Player [
     int number
@@ -33,6 +34,9 @@ class Game [
 ]
 
 main [
+    Game game = new Game
+    game.play    //   <<==  subject under test
+
     Cannibal can
     can = new Cannibal 1
     Nurse nur
@@ -45,8 +49,6 @@ main [
     pl" "
     nur.printName
     nur.printNumber
-
-    Game.play    //   <<==  subject under test
 
     delete can
     delete nur

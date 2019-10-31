@@ -1,4 +1,4 @@
-#include lrblib.tc
+#include pps/lrblib.tc
 #include pps/library.tc
 
 /* foo returns the number of double letters in word */
@@ -21,16 +21,16 @@ foo char word(0) [
 // if verbose is 1 all words are displayed
  
 double char fi(0);int verbose [
- int i,j,k,n,count,worda(2000),sl,newlines;char t(12000),lfs(1)
+ int i,j,k,n,count,worda(2000),sl,nwlines;char t(12000),lfs(1)
  lfs(0)=10
  k=readfile(fi,t,12000-1)
  pl ""
  ps "seconds to sleep betweeen words? ";sl=gn
  ps "your file is";pn k;ps " bytes long.";pl ""
  /* replace lfs w/ spaces */
- while (i=index(t,k,lfs,1)) [newlines=newlines+1;t(i-1)=32]
+ while (i=index(t,k,lfs,1)) [nwlines=nwlines+1;t(i-1)=32]
  n=split(worda,t," ")
- printf "%d word(s) %d newline(s) found%c",n-newlines+1,newlines,10
+ printf "%d word(s) %d newline(s) found%c",n-nwlines+1,nwlines,10
  while j<n [
   sleep sl
   count=foo(worda(j))
