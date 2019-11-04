@@ -18,7 +18,6 @@ main [
     ctr=ctr+1
     if (w) [pl "";MC ctr,14;ps ". skip =";pn skip;ps " n =";pn n]
     sleep 1
-ps"."
     break
     ]
    n=n+1

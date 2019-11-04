@@ -149,34 +149,38 @@ int _lit(char *s){
 }
 
 /* skips balance l-r assuming left is matched. 
- *	Returns 0 on OK, else count of missing ]'s.
+ *	Returns # chars examined (delta) on OK, else -1.
+ *  Does not change state, just examines.
  */
-/*  skip tool, does not change state, just examines 
- */
+//int skcnt=0;
 int skip_tool(char l, char r, char* from, char* to){
-  char *_from = from;
+//fprintf(stderr,"\ntoc~157 ");
+  char *bf = from;
   int counter = 1;
-   while( counter>0 && from<endapp ) {
+  while( counter>0 && from<endapp ) {
     if(*from==l)++counter;
     else if(*from==r)--counter;
     ++from;
   };
+  int delta = from-bf;
+//fprintf(stderr,"toc~165 %d: counter %d delta %d",++skcnt,counter,delta);
   if( counter )return -1;   //bad
-  return from-_from;   //good, return delta from
+  return delta;
 }
 
-/*  convenience skip for parsing, changes state, returns boolean.
- *	True means problem, 0 means ok and state change. That is the
- *	old 8080 definition.
+/*  convenience skip for parsing returning boolean 0/1.
+ *	True means problem, 0 means ok and cursor advanced. 
+ *	That is the old 8080 definition, returned CY bit unset/set.
  */
 int _skip(char l, char r) {
   int s = skip_tool(l,r,cursor,endapp);
-  if(s<0)return 1;
+  if(s<0)return 1;   //bad
   cursor += s;
-  return 0;
+  return 0;          //good
 }
+
 #if 0
-// old parse version
+// old parse version. NOte reversed meaning of returned boolean.
 int _skip(char l, char r) {
 	int counter = 1;
 	 while( counter>0 && cursor<endapp ) {

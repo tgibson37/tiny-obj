@@ -20,35 +20,26 @@ class Cannibal extends Player [
         ps name; pn number
     ]
 ]
-class Nurse extends Player [
-    Nurse int n [
-        number = n
-        strcpy name, "nurse"
-    ]
-]
 
 class Game [
-    play Game[
+    play [
         pl "IN PLAY"
     ]
 ]
 
+//Game game
 main [
-    Game game = new Game
-    game.play    //   <<==  subject under test
+//    game = new Game
+//    game.play
+    Game.play
 
     Cannibal can
     can = new Cannibal 1
-    Nurse nur
-    nur = new Nurse 2
 
     pl"main program: "
     pl" "
     can.printName
     can.printNumber
-    pl" "
-    nur.printName
-    nur.printNumber
 
     delete can
     delete nur

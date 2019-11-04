@@ -3,8 +3,7 @@
 #include <getopt.h>
 #include "toc.h"
 
-/*	main for the tc interpreter. Their are two mains. The other, test.c
- * 	loads a set regression tests which can be run individually or collectively.
+/*	main for the toc interpreter. 
  */
 int loadMsg=0;
 extern char* defaultLibrary;
@@ -92,7 +91,12 @@ int loadCode(char* file) {
 	}
 	else if(nread<0){
 		fprintf(stderr,"Err reading file: %s\n",file);
-		exit(1);
+		exit(2);
+	}
+	else if(nread>=EPR-endapp ){
+		fprintf(stderr,"File to big: %s, ",file);
+		fprintf(stderr,"available: %zd bytes\n",EPR-endapp);
+		exit(3);
 	}
 	else if(loadMsg){
 		printf("%s loaded\n",file);
@@ -112,7 +116,7 @@ void markEndlibrary() {
  *	the file. Return negative on error, else a count of loaded files.
  */
 int doIncludes(char* fname) {
-fprintf(stderr,"tocMain~115 %s\n",fname);
+//fprintf(stderr,"tocMain~115 %s\n",fname);
 	int unit,len,lineno=0,libCount=0;
 	char buff[200];
 	unit = tcFopen(fname,"r");
@@ -277,6 +281,7 @@ int main(int argc, char *argv[]) {
 	allocStuff();
 	if(rArg){
         	*pr = '[';
+        	*(pr+1) = 0;
         	strcpy(pr+1,rArg);
         	strcat(pr,"]\n");
 	}
