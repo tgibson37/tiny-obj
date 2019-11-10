@@ -19,7 +19,11 @@ void dumpVal_s(Type t, int class, union stuff *val, char lval){
     else fprintf(stderr,"ptr");
   }
   else if(t==Char) fprintf(stderr,"%c",val->uc);   // actual datum
+#if defined(_WIN32)
+  else fprintf(stderr,"%Id",val->ui);
+#else
   else fprintf(stderr,"%td",val->ui);
+#endif
 }
 
 void dumpStackEntry(int e){

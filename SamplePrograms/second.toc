@@ -27,10 +27,7 @@ class Game [
     ]
 ]
 
-//Game game
 main [
-//    game = new Game
-//    game.play
     Game.play
 
     Cannibal can

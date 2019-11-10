@@ -108,7 +108,11 @@ ptrdiff_t Mpc(int nargs, ptrdiff_t *args)
 
 ptrdiff_t Mpn(int nargs, ptrdiff_t *args)
 {
+  #if defined(_WIN32)
+    printf("%Id", *args);
+  #else
     printf("%td", *args);
+  #endif
 	return 0;
 }
 

@@ -256,6 +256,9 @@ struct var* addrval() {
  *	bump the cursor and return var entry
  */
 struct var* _isClassName() {
+	if(!symName())eset(SYNXERR);
+//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
+//dumpft(fname,lname);
 	char buf[VLEN+1];
 	int len = canonIf(buf);
 	if(len){
@@ -702,10 +705,10 @@ void toclink() {
 
 #if 0
 // useful code lines...
-if(newop){
-
+dumpft(fname,lname);
 fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 dumpBlobTab();
 dumpBlob(blob);
+if(newop){
 }
 #endif

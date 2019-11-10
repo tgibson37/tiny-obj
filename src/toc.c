@@ -16,10 +16,10 @@ int varargs = 0;
 
 /* stored size of one datum */
 int typeToSize( int class, Type type ) {
-	if(type>='A')return 0;
-	if(type>='C')return 0;
-	if(type>='E')return 0;
-	if(type>='o')return 0;
+	if(type=='A')return 0;
+	if(type=='C')return 0;
+	if(type=='E')return 0;
+	if(type=='o')return 0;
 	if(type==Char)return 1;
 	else if(type==Int)return sizeof(ptrdiff_t);
 	else eset(TYPEERR);
@@ -635,8 +635,9 @@ struct var* obsym(char* qual) {
     instead of a returned true/false. This varies from the rest of the expression 
     stack.
  */
+union stuff foo;
 void _factor() {
-	union stuff foo;
+	struct var *isvar;
 	Type type;
 	char* x;
 	if(_lit(xlpar)) {
@@ -663,7 +664,7 @@ void _factor() {
 		}
 	}
 	else if(_lit(xnew)){
-		_rem();
+//		_rem();
 		struct var *isclvar;
 		if((isclvar=_isClassName())){
 // scope body of cn
@@ -698,6 +699,17 @@ void _factor() {
 			pushst(0,'A','o',&value);
 		}
 		else eset(CLASSERR);
+	}
+	else if((isvar=_isClassName())) {      // Play.game
+		if(*cursor=='.'){
+fprintf(stderr,"toc~964, DOT");
+		}
+		else if(symName()) {   // decl of var of type 'o'
+fprintf(stderr,"toc~967, object DECL");
+			cursor = lname+1;
+			newref(isvar,locals);
+		}
+		else eset(SYMERR);
 	}
 	else if( symName() ) {
 		cursor = lname+1;
@@ -960,7 +972,11 @@ exit(1);
 		return;
 	}
 	else if((isvar=_isClassName())) {
-		if(symName()) {   // decl of var of type 'o'
+		if(*cursor=='.'){
+fprintf(stderr,"toc~964, DOT");
+		}
+		else if(symName()) {   // decl of var of type 'o'
+fprintf(stderr,"toc~967, object DECL");
 			cursor = lname+1;
 			newref(isvar,locals);
 		}
