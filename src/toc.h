@@ -146,7 +146,8 @@ struct funentry *curglbl, *curfun, *efun;
 //  but NOT before name or type.
 
 struct cd {
-  char parent[VLEN+1]; char child[VLEN+1]; int abst; char* where;
+  char parent[VLEN+1]; int abst; char* where; struct varhdr *blob;
+//  char parent[VLEN+1]; char child[VLEN+1]; int abst; char* where;
 };
 struct vd {
   int class; int len; int brkpt; union stuff value;
@@ -316,3 +317,4 @@ int fcnDepth();
 int skip_tool(char l, char r, char* from, char* to);
 char* classToWord(int c);
 char* lvalToWord(char c);
+void _eq();

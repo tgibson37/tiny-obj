@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cmd="./bin/toc"
+
 usage() {
   cat << EOF >&2
 Usage: ./test [-kdltC] [testname testname ...]
@@ -8,51 +10,71 @@ Usage: ./test [-kdltC] [testname testname ...]
   -l list: list -lt files
   -t tree: tree files
   -C clean: remove latest results
-  -S setup: instructions how to set up new tests
+  -I instructions: how to set up new tests
+  -S suite: set the default test suite
 EOF
   exit 1
 }
 
-setup() {
+# set the default suite (-S)
+set_suite() {
+echo $1 > "$TDS_FILE"
+exit
+}
+
+get_suite() {
+if test -e $TDS_FILE; then
+	TS=`cat $TDS_FILE`
+	echo "running test suite $TS"
+else 
+	echo "Use -S to set suite directory"
+	exit 1
+fi
+}
+
+instructions() {
   cat << EOF >&2
-Setup:
-	create a subdirectory (folder) in TF with the test name (tn)
+Setup:  To create a test suite...
+	create a directory, its name is the suite name (TS below)
+	create a subdirectory (folder) in TS with the test name <tn>
 	in that folder:
 		create a file of inputs, one line per input, named 'i'
 		create a file with tiny-c or tiny-obj code for the test 't'
 			[I use a soft link to the code stored elsewhere.]
-	run './test -l tn' from two folders above your sub using your test name
-	run './test tn' to do the test, then ./test -l tn again. 
+	run './test -l <tn>' from two folders above your sub using your 
+		test name
+	run './test <tn>' to do the test, then ./test -l <tn> again. 
 		that should produce the results files, r and d
 		r has results (printf(...)), d has dumps (fprintf(stderr,...))
 	Examine those two files. 
-		If they look good run './test -k tn', keep.
+		If they look good run './test -k <tn>', (k for keep).
 		Keep copies r and d to er and ed respectively, as expected results.
-	(Notice you can set up tests that are expected to fail, hence capturing dumps.)
+	(Notice you can set up tests that are expected to fail, hence capturing 
+		dumps.)
 EOF
   exit 1
 }
 
 # does one test
 dotest() {
-	bin/toc TF/$1/t <TF/$1/i >TF/$1/r 2>TF/$1/d
+	bin/toc $TS/$1/t <$TS/$1/i >$TS/$1/r 2>$TS/$1/d
 	echo TEST: $1 done
 }
 #does one keep
 dokeep() {
-	cp TF/$1/r TF/$1/er
-	cp TF/$1/d TF/$1/ed
+	cp $TS/$1/r $TS/$1/er
+	cp $TS/$1/d $TS/$1/ed
 	echo KEEP: $1 done
 }
 #does one diff
 dodiff() {
-	FILE=./TF/$1/r
+	FILE=./$TS/$1/r
 	echo ----this run \< ----expected \> ---- diff $1 
 	if [ -f $FILE ]; then
-		FILE=./TF/$1/er
+		FILE=./$TS/$1/er
 		if [ -f $FILE ]; then
-			diff TF/$1/r TF/$1/er
-			diff TF/$1/d TF/$1/ed
+			diff $TS/$1/r $TS/$1/er
+			diff $TS/$1/d $TS/$1/ed
 		else
 		   echo "File $FILE does not exist."
 		fi
@@ -63,16 +85,16 @@ dodiff() {
 }
 # removes d,r from one test
 doclean() {
-	rm -f TF/$1/r
-	rm -f TF/$1/d
+	rm -f $TS/$1/r
+	rm -f $TS/$1/d
 }
 # list files of one test
 dolist() {
-	ls -lt TF/$1
+	ls -lt $TS/$1
 }
 # tree files of one test
 dotree() {
-	tree TF/$1 --noreport
+	tree $TS/$1 --noreport
 }
 
 # does one argument: just diff, just keep, or test and diff
@@ -106,31 +128,31 @@ dospecific() {
 }
 doall(){
 #	echo ~42do all:
-	for tname in $( ls ./TF ); do
+	for tname in $( ls ./$TS ); do
 		doit $tname
 	done
 }
 
 #### MAIN ####
-
 kt=test
 diff=NO
 clean=NO
 list=NO
 tree=NO
-cmd="./bin/toc"
-while getopts kdltSC o; do
+TDS_FILE="testDefaultSuite"
+while getopts kdltISC o; do
   case $o in
     k) kt=KEEP;;
     d) diff=YES;;
 	l) list=YES;;
 	t) tree=YES;;
+	I) instructions;;
+	S) set_suite $2;;
 	C) clean=YES;;
-	S) setup;;
     *) usage;;
   esac
 done
-
+get_suite
 shift "$((OPTIND - 1))"
 
 if [ $# -gt 0 ]; then
