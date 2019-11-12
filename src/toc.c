@@ -355,29 +355,18 @@ int _decl(struct varhdr *vh) {
 	return 1;
 }
 
-int _limit = 0;
-char *prevcur = NULL;
 /* st(): interprets a possibly compound statement */
+char *prevcur = NULL;
 void st() {
 	char *objt, *agin ;
 	brake=0;
 	struct var *isvar;
-if(cursor==prevcur){
-	eset(FREEZERR);
-	whatHappened();
-	exit(FREEZERR);
-}
-prevcur=cursor;
-
-#if 0
-fprintf(stderr,".");
-if(++_limit>10000)eset(LIMITERR);
-if(cursor==prevcur){
-fprintf(stderr,"cursor freeze");
-whatHappened();
-exit(1);
-}
-#endif
+	if(cursor==prevcur){
+		eset(FREEZERR);
+		whatHappened();
+		exit(FREEZERR);
+	}
+	prevcur=cursor;
 	if(quit())return;
 	_rem();
 	stbegin();

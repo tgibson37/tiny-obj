@@ -256,7 +256,7 @@ struct var* addrval() {
  *	bump the cursor and return var entry
  */
 struct var* _isClassName() {
-	if(!symName())eset(SYNXERR);
+	if(!symName())return NULL;
 //fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 //dumpft(fname,lname);
 	char buf[VLEN+1];
@@ -701,6 +701,12 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
  */
 void toclink() {
 	lnlink(cursor,endapp,"__Globals__");
+}
+
+/* links a class given its *var
+ */
+classlink(){
+	
 }
 
 #if 0
