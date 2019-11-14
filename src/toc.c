@@ -16,7 +16,6 @@ struct varhdr *__temp_vh__;
 int typeToSize( int class, Type type ) {
 	if(type=='A')return 0;
 	if(type=='C')return 0;
-	if(type=='E')return 0;
 	if(type=='o')return 0;
 	if(type==Char)return 1;
 	else if(type==Int)return sizeof(ptrdiff_t);
@@ -459,12 +458,8 @@ void st() {
 		brake=1;
 		return;
 	}
-	else if((isvar=_isClassName())) {
-		if(*cursor=='.'){
-fprintf(stderr,"toc~964, DOT");
-		}
-		else if(symName()) {   // decl of var of type 'o'
-//fprintf(stderr,"toc~967, object DECL");
+	else if((isvar=_isClassName(NODOT))) {
+		if(symName()) {   // decl of var of type 'o'
 			cursor = lname+1;
 			newref(isvar,locals);
 		}

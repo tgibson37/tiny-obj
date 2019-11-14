@@ -1,6 +1,41 @@
 #include "toc.h"
 
 int varargs = 0;
+union stuff foo;
+
+void pushvar(struct var *v){
+		  	int class=v->vdcd.vd.class; 
+	  		int type=v->type; 
+	  		int obsize = typeToSize(class,type);
+		  	char* where = v->vdcd.vd.value.up;
+	  		int len=v->vdcd.vd.len;
+				if( _lit(xlpar) ) {		       /* is dimensioned */
+			  		if( !class ) {   /* must be class>0 */
+						eset(CLASERR);
+			  		} else {  /* dereference the lvalue */
+			  			/* reduce the class and recompute obsize */
+	  					obsize = typeToSize(--class,type);
+			  			/* increment where by subscript*obsize */
+		        		_asgn(); if( error )return;
+		        		_lit(xrpar);
+			      		int subscript = toptoi();
+						if(len-1)if( subscript<0 || subscript>=len )eset(RANGERR); 
+						where += subscript * obsize;
+						foo.up = where;
+						pushst( class, 'L', type, &foo);
+						return;
+					}
+				} else {	
+				/* is simple. Must push as 'L', &storagePlace. */
+					if(class==1){
+						foo.up = &((*v).vdcd.vd.value.up);
+					}
+					else{
+						foo.up = where;
+					}
+			  		pushst( class, 'L', type, &foo);
+				}
+}
 
 /* return true if symname matches arg, no state change */
 int symNameIs(char* name){
@@ -361,7 +396,6 @@ struct var* obsym(char* qual) {
     instead of a returned true/false. This varies from the rest of the expression 
     stack.
  */
-union stuff foo;
 void _factor() {
 	struct var *isvar;
 	Type type;
@@ -392,26 +426,9 @@ void _factor() {
 	else if(_lit(xnew)){
 //		_rem();
 		struct var *isclvar;
-		if((isclvar=_isClassName())){
-// scope body of cn
-			char *from, *to;
-			from = isclvar->vdcd.cd.where+1;
-			char *temp = cursor;
-			cursor=from;
-			if(_skip('[',']'))eset(LBRCERR);
-			to = cursor-1;
-			cursor=temp;
-// link the body, return blob address
-			char *save_fn = fname;  // need class name later
-			char *save_ln = lname;
+		if((isclvar=_isClassName(NODOT))){
 			struct varhdr *vh;
-			vh = lnlink(from, to, isclvar->name);
-			if(error){
-				whatHappened();
-				exit(1);
-			}
-			fname = save_fn;
-			lname = save_ln;
+			vh = classlink(isclvar);
 // call constructor (enter) if exist
 			struct var *con = _addrval(isclvar->name,vh->vartab,(vh->nxtvar)-1);
 			if(con){
@@ -426,12 +443,30 @@ void _factor() {
 		}
 		else eset(CLASSERR);
 	}
-	else if((isvar=_isClassName())) {      // Play.game
-		if(*cursor=='.'){
-fprintf(stderr,"toc~964, DOT");
+	else if((isvar=_isClassName(YESDOT))) {
+		if(*cursor=='.'){              // Game.play
+			struct varhdr *vh;
+			if(isvar->vdcd.cd.blob==NULL){
+				isvar->vdcd.cd.blob = vh = classlink(isvar);
+			}
+			++cursor;
+			if(symName()){
+				cursor=lname+1;
+				struct var *v;
+				v = addr_obj(vh);
+				if(!v){eset(SYMERR);return;}
+				//enter or push the value
+			  	char* where = v->vdcd.vd.value.up;
+				if(v->vdcd.vd.class=='E'){
+					_enter(where);
+				}
+				else {
+					pushvar(v);
+				}
+			}
+			else eset(SYMERR);
 		}
-		else if(symName()) {   // decl of var of type 'o'
-//fprintf(stderr,"toc~967, object DECL");
+		else if(symName()) {           // decl of var of type 'o'
 			cursor = lname+1;
 			newref(isvar,locals);
 		}
@@ -439,7 +474,6 @@ fprintf(stderr,"toc~964, DOT");
 	}
 	else if( symName() ) {
 		cursor = lname+1;
-//		int where, len, class, obsize, stuff;
 		if( symNameIs("MC") ) { 
 			_enter(0); return;
 		} 
@@ -460,41 +494,9 @@ fprintf(stderr,"toc~964, DOT");
 				return;
 			}
 		  	char* where = (*v).vdcd.vd.value.up;
-//		  	int integer =  (*v).vdcd.vd.value.ui; 
-//		  	int character = (*v).vdcd.vd.value.uc;
 		  	int class=(*v).vdcd.vd.class; 
-	  		int type=(*v).type; 
-	  		int obsize = typeToSize(class,type);
-	  		int len=(*v).vdcd.vd.len;
 		  	if( class=='E' ) _enter(where);  /* fcn call */
-			else {   /* is var name */
-				if( _lit(xlpar) ) {		       /* is dimensioned */
-			  		if( !class ) {   /* must be class>0 */
-						eset(CLASERR);
-			  		} else {  /* dereference the lvalue */
-			  			/* reduce the class and recompute obsize */
-	  					obsize = typeToSize(--class,type);
-			  			/* increment where by subscript*obsize */
-		        		_asgn(); if( error )return;
-		        		_lit(xrpar);
-			      		int subscript = toptoi();
-						if(len-1)if( subscript<0 || subscript>=len )eset(RANGERR); 
-						where += subscript * obsize;
-						foo.up = where;
-						pushst( class, 'L', type, &foo);
-						return;
-					}
-				} else {	
-				/* is simple. Must push as 'L', &storagePlace. */
-					if(class==1){
-						foo.up = &((*v).vdcd.vd.value.up);
-					}
-					else{
-						foo.up = where;
-					}
-			  		pushst( class, 'L', type, &foo);
-				}
-			}
+		  	else pushvar(v);
 		}
 	}
 	else {

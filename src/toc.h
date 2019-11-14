@@ -66,6 +66,8 @@
 #define MAX_UNIT 10
 #define LOCNUMVARS 100
 #define LOCDATLEN 1000
+#define NODOT 1
+#define YESDOT 0
 
 /* debug and verbosity tags */
 #define VE 0
@@ -308,7 +310,7 @@ struct varhdr* lnlink(char *from, char *to, char *blobName);
 void* mymalloc(char *name, int size);
 int dump_mallocs;
 void stuffCopy( union stuff *to, union stuff *from );
-struct var* _isClassName();
+struct var* _isClassName(int nodot);
 void newref(struct var *cls, struct varhdr *vh);
 char* _mustFind( char *from, char *upto, char c, int err );
 void toclink();
@@ -318,3 +320,4 @@ int skip_tool(char l, char r, char* from, char* to);
 char* classToWord(int c);
 char* lvalToWord(char c);
 void _eq();
+struct varhdr* classlink(struct var *isclvar);

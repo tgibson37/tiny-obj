@@ -255,8 +255,9 @@ struct var* addrval() {
 /* cursor points to possible sym. If it is a class name
  *	bump the cursor and return var entry
  */
-struct var* _isClassName() {
+struct var* _isClassName(int nodot) {
 	if(!symName())return NULL;
+	if(nodot && (*(lname+1)=='.'))return NULL;
 //fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 //dumpft(fname,lname);
 	char buf[VLEN+1];
@@ -568,12 +569,6 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 	if(verbose[VL])dumpVarTab(vh);
 }
 
-/*	build its vartab, make entry into owner's vartab
- */
-void classlink(struct var *vh){
-	return;   // model for this in Resources link.c/h
-}
-
 /*	tools for accessing specific data in a *var. A var can be
  *	id'd two ways: ptr to the var entry (struct var *v), and
  *	symbol name used to install that entry. These use the former.
@@ -705,8 +700,27 @@ void toclink() {
 
 /* links a class given its *var
  */
-classlink(){
-	
+struct varhdr* classlink(struct var *isclvar){
+// scope body of cn
+	char *from, *to;
+	from = isclvar->vdcd.cd.where+1;
+	char *temp = cursor;
+	cursor=from;
+	if(_skip('[',']'))eset(LBRCERR);
+	to = cursor-1;
+	cursor=temp;
+// link the body, return blob address
+	char *save_fn = fname;  // need class name later
+	char *save_ln = lname;
+	struct varhdr *vh;
+	vh = lnlink(from, to, isclvar->name);
+	if(error){
+		whatHappened();
+		exit(1);
+	}
+	fname = save_fn;
+	lname = save_ln;
+	return vh;
 }
 
 #if 0
