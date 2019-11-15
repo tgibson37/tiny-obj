@@ -135,6 +135,7 @@ int nxtstack, stacklen;
 struct funentry {
 	struct var *fvar, *evar;
 	char *datused;
+	struct varhdr *obj;
 };
 /* fun table */
 struct funentry *fun;

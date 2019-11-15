@@ -132,10 +132,11 @@ void _enter( char* where) {
 /* ABOVE parses the call args, BELOW parses the called's arg decls.
  */
 	else {
-		char *localstcurs=stcurs, *localcurs=cursor;
-		cursor = where;
-		curobj = canobj;
 		newfun(locals);  
+		char *localstcurs=stcurs, *localcurs=cursor;
+		curfun->obj = curobj;
+		curobj = canobj;
+		cursor = where;
 		for(;;) {	  
 			_rem();
 			if(_lit(xint)) { 
@@ -176,6 +177,7 @@ void _enter( char* where) {
 		leave=0;
 		cursor=localcurs;
 		stcurs=localstcurs;
+		curobj = curfun->obj;
 		fundone();
 		fcn_leave();
 	}
@@ -449,6 +451,7 @@ void _factor() {
 			if(isvar->vdcd.cd.blob==NULL){
 				isvar->vdcd.cd.blob = vh = classlink(isvar);
 			}
+			else vh = isvar->vdcd.cd.blob;
 			++cursor;
 			if(symName()){
 				cursor=lname+1;
