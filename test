@@ -4,14 +4,17 @@ cmd="./bin/toc"
 
 usage() {
   cat << EOF >&2
-Usage: ./test [-kdltC] [testname testname ...]
-  -k keep: copy latest results to expected
-  -d diff: show differences between latest results and expected
-  -l list: list -lt files
-  -t tree: tree files
-  -C clean: remove latest results
-  -I instructions: how to set up new tests
-  -S suite: set the default test suite
+Usage: ./test [-kdltCI?] [testname testname ...]
+       ./test [-s] suitename
+       ./test
+  no options: run the default suite
+  -k (keep): copy latest results to expected
+  -d (diff): show differences between latest results and expected
+  -l (list): list -lt files
+  -t (tree): tree files
+  -C (clean): remove latest results
+  -I (instructions): how to set up new tests
+  -s (suite): set suitename as default, then run
 EOF
   exit 1
 }
@@ -19,7 +22,8 @@ EOF
 # set the default suite (-S)
 set_suite() {
 echo $1 > "$TDS_FILE"
-exit
+#exit 0
+return
 }
 
 get_suite() {
@@ -140,16 +144,16 @@ clean=NO
 list=NO
 tree=NO
 TDS_FILE="testDefaultSuite"
-while getopts kdltISC o; do
+while getopts kdltIs:C? o; do
   case $o in
     k) kt=KEEP;;
     d) diff=YES;;
 	l) list=YES;;
 	t) tree=YES;;
 	I) instructions;;
-	S) set_suite $2;;
+	s) set_suite $2;;
 	C) clean=YES;;
-    *) usage;;
+    ?) usage;;
   esac
 done
 get_suite
