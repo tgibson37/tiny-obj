@@ -1,0 +1,3 @@
+#! /bin/sh
+bash ./test -s testGraphics
+bash ./test -s testobj
