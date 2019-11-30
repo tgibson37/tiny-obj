@@ -17,11 +17,6 @@
 #define xreturn "return"
 #define xbreak "break"
 #define xendlib "endlibrary"
-#define xclass "class"
-#define xabstract "abstract"
-#define xextends "extends"
-#define xnew "new"
-#define xdelete "delete"
 #define xr "r"
 #define xg "g"
 #define xlb "["
@@ -47,6 +42,12 @@
 #define xle "<="
 #define xnl "\n"
 #define xvarargs "..."
+#define xclass "class"
+#define xabstract "abstract"
+#define xextends "extends"
+#define xnew "new"
+#define xdelete "delete"
+#define xthis "this"
 
 
 
@@ -147,17 +148,17 @@ struct funentry *curglbl, *curfun, *efun;
 //};
 //  MUST add after -> or ). before value/class/etc    vdcd.vd.
 //  but NOT before name or type.
-
+//STUDY
 struct cd {
   char parent[VLEN+1]; int abst; char* where; struct varhdr *blob;
-//  char parent[VLEN+1]; char child[VLEN+1]; int abst; char* where;
 };
 struct vd {
   int class; int len; int brkpt; union stuff value;
 };
 struct od {
-  struct var *cls; struct varhdr *blob;
+  int class; int len; struct var *ocl; struct varhdr *blob;
 };
+//SKIP
 union vdcd {
   struct vd vd; struct cd cd; struct od od;
 };
@@ -243,7 +244,8 @@ void pc(char c);
 char* find( char *from, char *upto, char c);
 void newfun(struct varhdr *vh);
 void fundone();
-void newvar(int class, Type type, int len, union stuff *passed, struct varhdr *vh );
+void newvar( int class, Type type, int len, struct var *objclass,
+			union stuff *passed, struct varhdr *vh );
 struct var* addrval();
 void canon(struct var *v);
 int quit();
@@ -302,7 +304,8 @@ void allocStuff();
 void _rem();
 int _decl(struct varhdr *vh);
 int _lit(char*);
-void varalloc(Type type, union stuff *vpassed, struct varhdr *vh);
+void varalloc(Type type, struct var *varobj
+		, union stuff *vpassed, struct varhdr *vh);
 int symName();
 int charIn(char c, char *choices );
 void pFmt(char *fmt, ptrdiff_t *args);
@@ -322,3 +325,4 @@ char* classToWord(int c);
 char* lvalToWord(char c);
 void _eq();
 struct varhdr* classlink(struct var *isclvar);
+void _enter( char* where);

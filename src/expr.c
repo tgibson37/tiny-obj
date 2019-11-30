@@ -3,75 +3,13 @@
 int varargs = 0;
 union stuff foo;
 
-void pushvar(struct var *v){
-		  	int class=v->vdcd.vd.class; 
-	  		int type=v->type; 
-	  		int obsize = typeToSize(class,type);
-		  	char* where = v->vdcd.vd.value.up;
-	  		int len=v->vdcd.vd.len;
-				if( _lit(xlpar) ) {		       /* is dimensioned */
-			  		if( !class ) {   /* must be class>0 */
-						eset(CLASERR);
-			  		} else {  /* dereference the lvalue */
-			  			/* reduce the class and recompute obsize */
-	  					obsize = typeToSize(--class,type);
-			  			/* increment where by subscript*obsize */
-		        		_asgn(); if( error )return;
-		        		_lit(xrpar);
-			      		int subscript = toptoi();
-						if(len-1)if( subscript<0 || subscript>=len )eset(RANGERR); 
-						where += subscript * obsize;
-						foo.up = where;
-						pushst( class, 'L', type, &foo);
-						return;
-					}
-				} else {	
-				/* is simple. Must push as 'L', &storagePlace. */
-					if(class==1){
-						foo.up = &((*v).vdcd.vd.value.up);
-					}
-					else{
-						foo.up = where;
-					}
-			  		pushst( class, 'L', type, &foo);
-				}
-}
-
-/* return true if symname matches arg, no state change */
-int symNameIs(char* name){
-	int x = strncmp(fname, name, lname-fname+1);
-	return( !x );
-}
-
-/* converts fname..lname inclusive to integer
- */
-int _atoi() {
-	char* x = fname;
-	int val = 0;
-	int sign = *x=='-' ? -1 : 1;
-	if( *x=='-' || *x=='+' ) ++x;
-	do{ 
-		val = 10*val+*x-'0'; 
-	} while( ++x <= lname );
-	return sign*val;
-}
-
-/* special find for end of string */
-char* _findEOS( char* x ) {
-	while( x<endapp) {
-		if( *x==0 || *x==0x22 ) return x;
-		++x;
-	}
-	eset(CURSERR);
-	return 0;
-}
-
 /* Situation: parsing argument declarations, passed values are on the stack.
  * arg points into stack to an argument of type. 
  * Gets actual value of arg, calls valloc which parses and sets
  * up local with the passed value.
  */ 
-void _setArg( Type type, struct stackentry *arg, struct varhdr *locals ) {
+void _setArg( Type type, struct stackentry *arg, 
+				struct varhdr *locals ) {
 	union stuff vpassed  = (*arg).value;
 	char* where;
 	int class = (*arg).class;
@@ -86,7 +24,7 @@ void _setArg( Type type, struct stackentry *arg, struct varhdr *locals ) {
 		else if( stacktype==Char) vpassed.ui = get_char(where);
 			/* ui to clear high order byte */
 	}
-	varalloc( type, &vpassed, locals);
+	varalloc( type, NULL, &vpassed, locals);
 }
 
 /*	SITUATION: Just parsed symbol with class 'E', or special symbol MC.
@@ -181,57 +119,6 @@ void _enter( char* where) {
 		fundone();
 		fcn_leave();
 	}
-}
-
-/*	parses constant defining fname..lname which brackets trimmed constant. 
- *	Cursor moved just beyond constant. Returns Type: 
- */
-Type _konst() {
-	char* x;
-	while(*cursor==' ')++cursor;
-	char c = *cursor;
-	if( c=='+' || c=='-' || (c>='0'&&c<='9') ) {
-		fname = cursor;
-		do{
-			++cursor; c=*cursor;
-		} while(c>='0'&&c<='9');
-		lname=cursor-1;
-		if(verbose[VP]){
-			fprintf(stderr,"\nparsed ");
-			dumpft(fname,lname);
-		}
-		return Int;
-
-	} else if(_lit("\"")) {
-		fname=cursor;
-		/* set lname = last char, cursor = lname+2 (past the quote) */
-		if( (x = _findEOS(fname)) ) {
-			lname = x-1; /*before the quote */
-			cursor = x+1; /*after the quote */
-			*x = 0;
-		}
-		else { eset(CURSERR); return Err; }
-		if(verbose[VP]){
-			fprintf(stderr,"\nparsed ");
-			dumpft(fname,lname);
-		}
-		return CharStar;
-
-	} else if(_lit("\'")) {
-		fname=cursor;
-		/* lname = last char, cursor = lname+2 (past the quote) */
-		if( (x=_mustFind(fname+1,fname+2,'\'',CURSERR)) ) {
-			lname = x-1; 
-			cursor = x+1;
-		}
-		else { eset(CURSERR); return -1; }
-		if(verbose[VP]){
-			fprintf(stderr,"\nparsed ");
-			dumpft(fname,lname);
-		}
-		return Char;
-	
-	} else return Err;  /* no match, Err==0 */
 }
 
 /* An asgn is a reln or an lvalue = asgn. Note that
@@ -366,143 +253,3 @@ int _term() {
 	return 0;
 }
 
-/*	Parse a required symname. Return its required entry in vh.
- *	Else appropriate error. Set curobj to qual's vh.
- */
-struct var* obsym(char* qual) {
-	struct var *qvar;
-	struct varhdr *qvh;
-	struct var *ovar;
-	qvar = addrval_all(qual);
-	if(!qvar){
-		eset(SYMERR);
-		return NULL;
-	}
-//fprintf(stderr,"\ntoc~587 qvar: %x",qvar);
-//dumpVar(qvar);
-	canobj = qvh = (struct varhdr*)qvar->vdcd.od.blob;
-//fprintf(stderr,"\ntoc~590 qualifiers blob, %p",qvh);
-//dumpBV(qvh);
-	if(symName()){
-		ovar = addr_obj(qvh);
-		cursor = lname+1;
-		if(!ovar) eset(SYMERR);
-		return ovar;
-	}
-	else eset(SYNXERR);
-	return NULL;
-}   //was ~578
-
-/* a FACTOR is a ( asgn ), or a constant, or a variable reference, or a function
-    reference. NOTE: factor must succeed or it esets SYNXERR. Callers test error
-    instead of a returned true/false. This varies from the rest of the expression 
-    stack.
- */
-void _factor() {
-	struct var *isvar;
-	Type type;
-	char* x;
-	if(_lit(xlpar)) {
-		_asgn();
-		if( (x=_mustFind( cursor, cursor+5, ')' , RPARERR )) ) {
-			cursor = x+1; /*after the paren */
-		}
-	} 
-	else if( (type=_konst()) ) {
-	/* Defines fname,lname. Returns Type. */
-		switch(type){
-		case Int: 
-			pushk( _atoi() );  /* integer, use private _atoi */
-			break;
-		case Char:
-			foo.uc = *fname;
-			pushst( 0, 'A', type, &foo );
-			break;
-		case CharStar:		/* special type used ONLY here */
-			foo.up = fname;
-			pushst( 1, 'A', Char, &foo );
-		case Err:
-			return;
-		}
-	}
-	else if(_lit(xnew)){
-//		_rem();
-		struct var *isclvar;
-		if((isclvar=_isClassName(NODOT))){
-			struct varhdr *vh;
-			vh = classlink(isclvar);
-// call constructor (enter) if exist
-			struct var *con = _addrval(isclvar->name,vh->vartab,(vh->nxtvar)-1);
-			if(con){
-				char *where = con->vdcd.vd.value.up;
-				canobj = vh;   // enable instance variable search
-				_enter(where);
-				popst();      // pop constructor returned value
-			}
-			union stuff value;
-			value.up = vh;
-			pushst(0,'A','o',&value);
-		}
-		else eset(CLASSERR);
-	}
-	else if((isvar=_isClassName(YESDOT))) {
-		if(*cursor=='.'){              // Game.play
-			struct varhdr *vh;
-			if(isvar->vdcd.cd.blob==NULL){
-				isvar->vdcd.cd.blob = vh = classlink(isvar);
-			}
-			else vh = isvar->vdcd.cd.blob;
-			++cursor;
-			if(symName()){
-				cursor=lname+1;
-				struct var *v;
-				v = addr_obj(vh);
-				if(!v){eset(SYMERR);return;}
-				//enter or push the value
-			  	char* where = v->vdcd.vd.value.up;
-				if(v->vdcd.vd.class=='E'){
-					_enter(where);
-				}
-				else {
-					pushvar(v);
-				}
-			}
-			else eset(SYMERR);
-		}
-		else if(symName()) {           // decl of var of type 'o'
-			cursor = lname+1;
-			newref(isvar,locals);
-		}
-		else eset(SYMERR);
-	}
-	else if( symName() ) {
-		cursor = lname+1;
-		if( symNameIs("MC") ) { 
-			_enter(0); return;
-		} 
-		else {
-			struct var *v;
-			if( *(lname+1)=='.' ) {  // obj qualifier
-				struct var qual;
-				canon(&qual);
-				cursor = lname+2;
-				v = obsym(qual.name);  /* looks up symbol */
-			}
-			else v = addrval();  /* looks up symbol */
-			if( !v ){ eset(SYMERR); return; } /* no decl */
-			if(v->type=='o'){  //object ref
-				union stuff value;
-				value.up = &(v->vdcd.od.blob);
-				pushst(0,'L','o',&value);
-				return;
-			}
-		  	char* where = (*v).vdcd.vd.value.up;
-		  	int class=(*v).vdcd.vd.class; 
-		  	if( class=='E' ) _enter(where);  /* fcn call */
-		  	else pushvar(v);
-		}
-	}
-	else {
-		eset(SYNXERR);
-	}
-}

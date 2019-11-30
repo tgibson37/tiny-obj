@@ -39,7 +39,7 @@ void _eq() {
 		fprintf(stderr,"\neq: val");
 		dumpStackEntry(nxtstack-1);
 	}
-	popst();popst();  
+	popst();popst();
 //	where = &((*lval).value.up);
 	int class = (*lval).class;
 	int type = (*lval).type;
@@ -249,7 +249,8 @@ void _rem() {
 /* 	SITUATION: int or char is parsed.
  *	Parses one variable. Makes allocation and symbol entry.
  */
-void varalloc(Type type, union stuff *vpassed, struct varhdr *vh) {
+void varalloc(Type type, struct var *varobj
+		, union stuff *vpassed, struct varhdr *vh) {
 	if( !symName() ) {		/*defines fname,lname. True is match.*/
 		eset(SYMERR);
 		return;
@@ -268,7 +269,7 @@ void varalloc(Type type, union stuff *vpassed, struct varhdr *vh) {
 		vclass = 0;
 		alen = 1;
 	}
-	newvar(vclass, type, alen, vpassed, vh);
+	newvar(vclass, type, alen, varobj, vpassed, vh);
 }
 
 
@@ -337,17 +338,18 @@ int quit() {
  *	if not a declaration statement, true if it is. Leaves cursor just past
  *  optional semi. 
  */
-int _decl(struct varhdr *vh) { 
-//	Type t;
+int _decl(struct varhdr *vh) {
 	if( _lit(xchar) ) {
 		do {
-			varalloc( Char, 0, vh );  /* 2nd arg is vpassed */
+			varalloc( Char, NULL, NULL, vh );
 		} while( _lit(xcomma) );
-	} else if( _lit(xint) ) {
+	} 
+	else if( _lit(xint) ) {
 		do {
-			varalloc( Int, 0, vh );  /* 2nd arg is vpassed */
+			varalloc( Int, NULL, NULL, vh );
 		} while( _lit(xcomma) );
-	} else {
+	} 
+	else {
 		return 0;  /* not decl */
 	}
 	_lit(xsemi);    /* is decl */
@@ -357,9 +359,9 @@ int _decl(struct varhdr *vh) {
 /* st(): interprets a possibly compound statement */
 char *prevcur = NULL;
 void st() {
+	struct var *isvar;
 	char *objt, *agin ;
 	brake=0;
-	struct var *isvar;
 	if(cursor==prevcur){
 		eset(FREEZERR);
 		whatHappened();
@@ -460,11 +462,21 @@ void st() {
 	}
 	else if((isvar=_isClassName(NODOT))) {
 		if(symName()) {   // decl of var of type 'o'
+			do {
+				varalloc( 'o', isvar, NULL, locals );
+			} while( _lit(xcomma) );
+		}
+//dumpVarTab(locals);
+	}
+#if 0
+	else if((isvar=_isClassName(NODOT))) {
+		if(symName()) {   // decl of var of type 'o'
 			cursor = lname+1;
 			newref(isvar,locals);
 		}
 		else eset(SYMERR);
 	}
+#endif
 	else if(_lit(xdelete)){
 		if(symName()){
 //			char sym[VLEN+1];

@@ -13,7 +13,7 @@ Usage: ./test [-kdltCI?] [testname testname ...]
   -l (list): list -lt files
   -t (tree): tree files
   -C (clean): remove latest results
-  -I (instructions): how to set up new tests
+  -I (instructions): how to set up test suites
   -s (suite): set suitename as default, then run
 EOF
   exit 1
@@ -31,7 +31,7 @@ if test -e $TDS_FILE; then
 	TS=`cat $TDS_FILE`
 	echo "running test suite $TS"
 else 
-	echo "Use -S to set suite directory"
+	echo "Use -s to set suite directory"
 	exit 1
 fi
 }
@@ -39,19 +39,31 @@ fi
 instructions() {
   cat << EOF >&2
 Setup:  To create a test suite...
-	create a directory, its name is the suite name (TS below)
-	create a subdirectory (folder) in TS with the test name <tn>
+	put this bash script (test) in your development directory
+	edit line 3 to your system under test.
+	create a directory, its name is the suite name (<suite> below)
+	create a subdirectory (folder) in <suite> with the test name <tn>
 	in that folder:
 		create a file of inputs, one line per input, named 'i'
 		create a file with tiny-c or tiny-obj code for the test 't'
 			[I use a soft link to the code stored elsewhere.]
-	run './test -l <tn>' from two folders above your sub using your 
-		test name
-	run './test <tn>' to do the test, then ./test -l <tn> again. 
-		that should produce the results files, r and d
+	from the development directory (two levels above the test files)...
+	run ./test -l, also try ./test -t
+		you will get a listing or tree of your test suites and their 
+		test files
+	run ./test -s <suite> to run an entire suite. -s also sets that
+		suite as default. Run ./test without options or args to run
+		the suite again. 
+	The first run of a new test will have a large diff. The r file is 
+		diffed against an empty or nonexistent er (expected results)
+		file. Review that diff and if it is a good run use 
+		./test -k <tn> to copy r to er. Another run should show no 
+		difference.
+	to do one test use ./test <tn>, no options. The test name <tn> must 
+		be in the default suite. That produces the results files, r and d
 		r has results (printf(...)), d has dumps (fprintf(stderr,...))
 	Examine those two files. 
-		If they look good run './test -k <tn>', (k for keep).
+		If they look good run ./test -k <tn>, (k for keep).
 		Keep copies r and d to er and ed respectively, as expected results.
 	(Notice you can set up tests that are expected to fail, hence capturing 
 		dumps.)
@@ -61,7 +73,7 @@ EOF
 
 # does one test
 dotest() {
-	bin/toc $TS/$1/t <$TS/$1/i >$TS/$1/r 2>$TS/$1/d
+	$cmd $TS/$1/t <$TS/$1/i >$TS/$1/r 2>$TS/$1/d
 	echo TEST: $1 done
 }
 #does one keep

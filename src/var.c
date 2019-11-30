@@ -135,7 +135,8 @@ fprintf(stderr,"var~120: allocSpace, need %d avail %d vh %x\n"
  *	allocated, i.e. pointer to passed data. Copy passed data into allocation.
  *	NOTE: signifantly refactored.
  */
-void newvar( int class, Type type, int len, union stuff *passed, struct varhdr *vh ) {
+void newvar( int class, Type type, int len, struct var *objclass,
+			union stuff *passed, struct varhdr *vh ) {
 	int obsize = typeToSize(class,type);
 	if(vh==NULL){
 		lndata.nvars += 1;
@@ -145,17 +146,26 @@ void newvar( int class, Type type, int len, union stuff *passed, struct varhdr *
 	struct var *v = vh->nxtvar;
 	struct var *evar = (struct var*)vh->val;
 	canon(v);    /* sets the canon'd name into v */
-	(*v).vdcd.vd.class = class;
 	(*v).type = type;
-	(*v).vdcd.vd.len = len;
-	(*v).vdcd.vd.brkpt = 0;
-	if(_allocSpace(v,len*obsize,vh)) return;  /* true is bad, eset done */
+	if(type=='o'){
+		v->vdcd.od.class = class;
+		v->vdcd.od.len = len;
+		v->vdcd.od.ocl = objclass;
+		v->vdcd.od.blob = NULL;  // filled in when known
+	}
+	else{
+		(*v).vdcd.vd.class = class;
+		(*v).vdcd.vd.len = len;
+		(*v).vdcd.vd.brkpt = 0;
+	}
+	if(_allocSpace(v,len*obsize,vh)) return;  /* eset done if true */
 	if(passed) _copyArgValue( v, class, type, passed);
 	if(curfun>=fun) curfun->evar = vh->nxtvar;
 	if( vh->nxtvar++ >= evar )eset(TMVRERR);
 	if(verbose[VV])dumpVar(v);
 	return;
 }
+
 void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, char* where){
 //dumpBlob(vh);
 	struct var *c = vh->nxtvar++;
@@ -170,11 +180,11 @@ void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, char* where){
  *  details: class entry (cls), blob to referenced object's blob (NULL) 
  *  to be filled in when known.
  */
-void newref(struct var *cls, struct varhdr *vh) {
+void newref(struct var *ocls, struct varhdr *vh) {
   struct var *r = vh->nxtvar;
   canon(r);
   r->type = 'o';
-  r->vdcd.od.cls = cls;
+  r->vdcd.od.ocl = ocls;
   r->vdcd.od.blob=NULL;
   vh->nxtvar++;
 }
@@ -342,7 +352,7 @@ void dumpVar(struct var *v) {
 	}
 	else if(v->type=='o') {
 		fprintf(stderr,"\n oref: %s type %c classvar %p (%s) blob %p "
-				,v->name, v->type,v->vdcd.od.cls, v->vdcd.od.cls->name
+				,v->name, v->type,v->vdcd.od.ocl, v->vdcd.od.ocl->name
 				,v->vdcd.od.blob);
 	}
 	else {
@@ -351,10 +361,14 @@ void dumpVar(struct var *v) {
 			, (*v).vdcd.vd.len, (*v).vdcd.vd.value.ui
 			, (*v).vdcd.vd.value.up );
 	}
-	dumpVal_v(v);
+//	dumpVal_v(v);
 }
 
 void dumpVarTab(struct varhdr *vh) {
+	if(!vh || !vh->vartab){
+		fprintf(stderr,"\nVar Table: not built yet");
+		return;
+	}
 	int pos = 0;
 	fprintf(stderr
 			,"\nVar Table: name class type len value (as int and ptr)");
@@ -490,11 +504,23 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 	if(error){ whatHappened(); exit(1); }
 	cursor=from;
 	endapp=to;
+//fprintf(stderr,"\n~507 %d",xxpass);
 	while(cursor<endapp && !error){
+//fprintf(stderr,".");
 		char* lastcur = cursor;
 		_rem();
 		if(_lit(xlb)) _skip('[',']');
 		else if( _decl(vh) ) ;
+#if 0
+		else if(newop) {
+			struct var *isvar = _isClassName(NODOT);
+			if(isvar) {
+				do {
+					varalloc('o',isvar,0,vh);
+				} while( _lit(xcomma) );
+			}
+		}
+#endif
 		else if( _lit(xendlib) ){
 			if(vh != NULL){     //  <<==  PASS TWO endlibrary
 				if(curfun==fun) {   /* 1st endlib, assume app globals follow */
@@ -549,7 +575,7 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 			cursor = lname+1;
 			_rem();
 			kursor.up = cursor;
-			newvar('E',2,0,&kursor,vh);
+			newvar('E',2,0,NULL,&kursor,vh);
 			if( (cptr=_mustFind(cursor, endapp, '[',LBRCERR)) ) {
 				cursor=cptr+1;
 				_skip('[',']');
