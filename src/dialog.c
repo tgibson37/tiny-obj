@@ -1,56 +1,16 @@
-#include "toc.h"
-
-//dialog words, phrases
-char *dchar = "char";
-char *dint  = "int";
-char *dNotType = "not a type";
-char *ddatum = "datum";
-char *dptr = "ptr";
-char *dfcn = "fcn";
-char *dobj = "obj";
-char *dNotClass = "not a class";
-char *dlvalue = "lvalue";
-char *dactual = "actual";
-//char *d = "";
+#include "dialog.h"
+#include "var.h"
+#include "tc.h"
 
 int countch(char *f, char *t, char c){
 	int k=1;   /* start on line 1 */
 	while( f++ <= t) if(*f==c) ++k;
 	return k;
 }
-char* typeToWord(Type t){
-	switch(t) {
-		case Char:     return dchar;
-		case Int:      return dint;
-		default:       return dNotType;
-	}
-}
-char* classToWord(int c) {
-	switch(c) {
-		case 0:      return ddatum;
-		case 1:      return dptr;
-		case 'E':      return dfcn;
-		case 'o':      return dobj;
-		default:       return dNotClass;
-	}
-}
-char* lvalToWord(char c){
-	switch(c) {
-		case 'L':      return dlvalue;
-		case 'A':      return dactual;
-		default:       return dNotClass;
-	}
-}
 
-
-
-
-void _errToWords(){
+void errToWords(){
 	char *x;
 	switch(error){
-		default:x="UNKNOWN ERROR"; 
-			pn(error);
-			break; 
 		case 2: x="CURSERR, cursor out of range"; break;
 		case 3: x="SYMERR, decl needed"; break;
 		case 1: x="STATERR"; break;
@@ -75,7 +35,6 @@ void _errToWords(){
 		case 28: x="PTRERR"; break;
 		case 29: x="APPERR, app not found";break; // lrb
 		case 30: x="DIVERR, divide by zero";break;
-		case 97: x="LIMITERR, run exceeded statement limit"; break;
 		case 98: x="EXIT, stopped by exit call"; break;
 		case 99: x="KILL, stopped by user"; break;
 		case 1023: x="RBRCERR, ] required in -r "; break;
@@ -106,40 +65,37 @@ char* lchar(char* k){
  *	line with error and carot under.
  */
 void whatHappened() {
-	if(error==KILL) _errToWords();
+	if(error==KILL) errToWords();
 	else if(error){
 		char *fc, *lc;
 		int firstSignif=0, blanks, lineno;
-		if(errat){
-			if(*errat==0x0a||*errat==0x0d)--errat;
-			if(errat<lpr){
-				printf("\nseed ");
-				lineno=0;
-			}
-			else if(errat<apr){
-				lineno = countch(lpr,errat,0x0a);
-				if(!lineno)lineno = countch(pr,errat,0x0d);
-				printf("\nlib ");
-			}
-			else {
-				lineno = countch(apr,errat,0x0a);
-				if(!lineno)lineno = countch(apr,errat,0x0d);
-				printf("\napp ");
-			}
-			printf("line %d (cursor pr[%d])", lineno,(int)(errat-pr));
-			_errToWords();
-			fc=fchar(errat);
-			while((*(fc+firstSignif))==' ' ||(*(fc+firstSignif))=='\t' )
-				 ++firstSignif;
-			lc=lchar(errat);
-			if(lc>endapp)lc=endapp;
-			pft(fc,lc);
-			printf("\n");
-			pft(fc,fc+firstSignif-1);        /* leading whitespace */
-			blanks=errat-fc-firstSignif-1;   /* blanks to carot */
-			while(--blanks >= 0) printf(" ");
-			printf("^\n");
+		if(*errat==0x0a||*errat==0x0d)--errat;
+		if(errat<lpr){
+			printf("\nseed ");
+			lineno=0;
 		}
+		else if(errat<apr){
+			lineno = countch(lpr,errat,0x0a);
+			if(!lineno)lineno = countch(pr,errat,0x0d);
+			printf("\nlib ");
+		}
+		else {
+			lineno = countch(apr,errat,0x0a);
+			if(!lineno)lineno = countch(apr,errat,0x0d);
+			printf("\napp ");
+		}
+		printf("line %d (cursor pr[%d])", lineno,(int)(errat-pr));
+		errToWords();
+		fc=fchar(errat);
+		while((*(fc+firstSignif))==' ' ||(*(fc+firstSignif))=='\t' )
+			 ++firstSignif;
+		lc=lchar(errat);
+		pft(fc,lc);
+		printf("\n");
+		pft(fc,fc+firstSignif-1);        /* leading whitespace */
+		blanks=errat-fc-firstSignif-1;   /* blanks to carot */
+		while(--blanks >= 0) printf(" ");
+		printf("^\n");
 	}
 	else {
 		if(!quiet)printf("\ndone");
@@ -163,7 +119,7 @@ void pc(char c)  {printf("%c", c);}
 void logo() {
 	if(quiet)return;
 	printf(
-"***  TINY-C 8080 VERSION 1.0,  COPYRIGHT 1977, T A GIBSON  ***\n"
+"***  TINY-C VERSION 1.0,  COPYRIGHT 1977, T A GIBSON  ***\n"
 		);
 	printf(
 "        This C version copyright 2017, T A Gibson\n"

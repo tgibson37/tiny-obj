@@ -1,6 +1,5 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
+#include "platform.h"
+#include "tc.h"
 
 /*************  Platform stuff ************/
 /* INSTALLERS/PORTERS may need to redefine these functions.

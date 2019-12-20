@@ -1,75 +1,22 @@
-#include "toc.h"
+#include "var.h"
+#include "tc.h"
 
-int newop;
-
-/*  fetch a value and type given its var. On success return len
- *  (or 1 for obj-ref) else 0. Details...
- *    Full retrieval into struct *stuff s for char or int.
- *    Pointer into val space for char* or int*.
- *    Pointer to blob for object ref.
- *  Used only for data, not for type 'E'  
+/* SITUATION: Function call parsed. 
+	Open new var and value frames for the functions locals.
  */
-int fetchVal(struct var *v, union stuff *s){
-    void *where = v->vdcd.vd.value.up;
-	if(v->type == 1){
-		s->uc = get_char(where);
-		return v->vdcd.vd.len;
-	}
-	else if(v->type == 2){
-		s->ui = get_int(where);
-		return v->vdcd.vd.len;
-	}
-	else if(v->type == 'o'){
-		s->up = v->vdcd.od.blob;
-		return 1;
-	}
-	return 0;
-}
-
-/*	Print the value (a brief excerpt for arrays) described by *v.
- */
-void dumpVal_v(struct var *v){
-	union stuff s;
-	int len = fetchVal(v, &s);
-	if(v->type == 1){
-		if(len>1)fprintf(stderr,"[%c, %c, ...]",s.uc,(s.uc)+1);
-		else fprintf(stderr,"%c",s.uc);
-	}
-	else if(v->type == 2){
-		if(len>1)fprintf(stderr,"[%d, %d, ...]",s.uc,(s.uc)+1);
-		else fprintf(stderr,"%lld",(long long)s.ui);
-	}
-	else if(v->type == 'o'){
-		struct varhdr *vh = s.up;
-		struct blob *b;
-		for(b=blobtab; b<nxtblob; ++b) {
-			if(b->varhdr == vh->vartab->vdcd.od.blob) break;
-		}
-		if(b<nxtblob) fprintf(stderr,"%s",b->name);
-		else fprintf(stderr,"Object type");
-	}
-	else fprintf(stderr,"Unknown type");
-}
-
-/* SITUATION: Function call parsed PLUS two calls during linking.
-	Open new var and value frames for library, globals, and function locals.
- */
-void dumpDots(int n){while(n--)fprintf(stderr,".");}
-
-void newfun(struct varhdr *vh) {
+void newfun() {
+//fprintf(stderr,"\nvar~7: curfun,efun %d %d",curfun-fun,efun-fun);
 	if(++curfun>efun){
 		eset(TMFUERR);
 	} 
 	else {
-		curfun->fvar = curfun->evar = vh->nxtvar;
-		curfun->datused = vh->datused;
+		(*curfun).fvar = nxtvar;
+		(*curfun).lvar = nxtvar-1;
+		(*curfun).prused = prused;
 	}
-//fprintf(stderr,"\nrep run %d %d  ",db_report_depth, db_rundepth);
-	if(verbose[VF] && db_report_depth <= db_rundepth){
+	if(verbose[VV]){
 		fflush(stdout);
-		fprintf(stderr,"\n");
-		dumpDots(fcnDepth());
-		fprintf(stderr,"calling: %s		",fcnName);
+		fprintf(stderr,"\nnewfun %s",fcnName);
 	}
 }
 
@@ -77,33 +24,29 @@ void newfun(struct varhdr *vh) {
  *	Close its var and value frames.
  */
 void fundone() {
-	locals->nxtvar=curfun->fvar;
-	locals->datused=curfun->datused;
+	nxtvar=(*curfun).fvar;
+	prused=(*curfun).prused;
 	--curfun;
-#if 0
-	if(verbose[VF] && db_report_depth < db_rundepth){
+	if(verbose[VV]){
 		fflush(stdout);
-		fprintf(stderr,"\n");
-		dumpDots(fcnDepth());
-		fprintf(stderr,"fundone");
+		fprintf(stderr,"\nfundone %s",fcnName);
 	}
-#endif
 }
 
 /*********** var tools ****************/
 
-/*	copy the argument value into the new local place.
+/*	copy the v's value into *passed.
  */
 int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
 	if(passed && class){   					/* passed pointer */
-		(*v).vdcd.vd.value.up = (*passed).up;
+		(*v).value.up = (*passed).up;
 	} else if( passed && !class ) {			/* passed datum */
 		switch(type){
 		case Int:
-			put_int( (*v).vdcd.vd.value.up, (*passed).ui );
+			put_int( (*v).value.up, (*passed).ui );
 			break;
 		case Char:
-			put_char( (*v).vdcd.vd.value.up, (*passed).uc );
+			put_char( (*v).value.up, (*passed).uc );
 			break;
 		default:
 			eset(TYPEERR);
@@ -115,84 +58,45 @@ int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
 
 /* allocates memory for value of v, return 0 on success, else !0
  */
-int _allocSpace(struct var *v, int amount, struct varhdr *vh){
-	if( vh->datused+amount > vh->endval ) {
-#if 0
-fprintf(stderr,"var~120: allocSpace, need %d avail %d vh %x\n"
-			,amount, vh->endval-vh->datused, vh
-		);
-#endif
+int _allocSpace(struct var *v, int amount){
+	char* kf;
+	kf = prused+1;
+	(*v).value.up = prused+1;
+	prused += amount;
+	if( prused-EPR >=0 ) {
 		eset(TMVLERR);
 		return TMVLERR;
 	}
-	v->vdcd.vd.value.up = vh->datused;
-	memset( vh->datused, 0, amount );
-	vh->datused += amount;
+	memset( kf, 0, prused-kf+1 ); /* zero the reserved space */
 	return 0;
 }
+
 /* SITUATION: Declaration is parsed, and its descriptive data known.
  * 	Fill in the var with this data. Allocate value storage unless already
  *	allocated, i.e. pointer to passed data. Copy passed data into allocation.
  *	NOTE: signifantly refactored.
  */
-void newvar( int class, Type type, int len, struct var *objclass,
-			union stuff *passed, struct varhdr *vh ) {
-	int obsize = typeToSize(class,type);
-	if(vh==NULL){
-		lndata.nvars += 1;
-		lndata.valsize += len*obsize;
-		return;
-	}
-	struct var *v = vh->nxtvar;
-	struct var *evar = (struct var*)vh->val;
+void newvar( int class, Type type, int len, union stuff *passed ) {
+	struct var *v = &vartab[nxtvar];
 	canon(v);    /* sets the canon'd name into v */
+	(*v).class = class;
 	(*v).type = type;
-	if(type=='o'){
-		v->vdcd.od.class = class;
-		v->vdcd.od.len = len;
-		v->vdcd.od.ocl = objclass;
-		v->vdcd.od.blob = NULL;  // filled in when known
-	}
-	else{
-		(*v).vdcd.vd.class = class;
-		(*v).vdcd.vd.len = len;
-		(*v).vdcd.vd.brkpt = 0;
-	}
-	if(_allocSpace(v,len*obsize,vh)) return;  /* eset done if true */
+	(*v).len = len;
+	(*v).brkpt = 0;
+	int obsize = typeToSize(class,type);
+	if(_allocSpace(v,len*obsize)) return;  /* true is bad, eset done */
 	if(passed) _copyArgValue( v, class, type, passed);
-	if(curfun>=fun) curfun->evar = vh->nxtvar;
-	if( vh->nxtvar++ >= evar )eset(TMVRERR);
+	if(curfun>=fun) (*curfun).lvar = nxtvar;
+	if( ++nxtvar>vtablen )eset(TMVRERR);
 	if(verbose[VV])dumpVar(v);
 	return;
-}
-
-void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, char* where){
-//dumpBlob(vh);
-	struct var *c = vh->nxtvar++;
-	strcpy(c->name,cname);
-	c->type = abst?'A':'C';
-	strncpy(c->vdcd.cd.parent,ename,VLEN);
-	c->vdcd.cd.where = where;
-//dumpVar(c);
-}
-
-/*  Refenence to an object: refname (fname,lname), type 'o', 
- *  details: class entry (cls), blob to referenced object's blob (NULL) 
- *  to be filled in when known.
- */
-void newref(struct var *ocls, struct varhdr *vh) {
-  struct var *r = vh->nxtvar;
-  canon(r);
-  r->type = 'o';
-  r->vdcd.od.ocl = ocls;
-  r->vdcd.od.blob=NULL;
-  vh->nxtvar++;
 }
 
 /* Canonicalizes the name bracket by f,l inclusive into buff, and returns buff.
 	sizeOf buff must be at least VLEN+1.
  */
-char* _canon(char* first, char* l, char* buff) {
+
+char* canon_buff(char* first, char* l, char* buff) {
 	int i=0; 
 	char* f=first;
 	while(f<=l && i<VLEN-1) buff[i++]=*(f++);
@@ -202,53 +106,49 @@ char* _canon(char* first, char* l, char* buff) {
 }
 
 /* 	fname..lname is full name. Puts canonicalized name into v. If short
- *	enough same as name. If ptrdiff_ter first VLEN-1 characters + last character.
+ *	enough same as name. If longer first VLEN-1 characters + last character.
  *	The last char has more info than middle chars.
  */
 void canon(struct var *v) {
-	_canon(fname,lname,(*v).name);
+	canon_buff(fname,lname,(*v).name);
 }
-/*	if *cursor is alphanum find end of sym and canon into buff. 
- *	Set f/lname to matched symbol. 
- */
-int canonIf(char* buff){
-	char *c = cursor;
-	while(isalnum(*c)||*c=='_')++c;
-	if(c==cursor)return 0;  // not a symbol
-	fname=cursor; lname=c-1;
-	_canon(cursor,c-1,buff);
-	return (c-cursor);
-}
-/*	returns var* defining current sym
- */
-struct var* addr_obj(struct varhdr *vh){
-	struct var sym;
-	canon(&sym);
-	return _addrval(sym.name,vh->vartab, vh->nxtvar-1);
-}
+#if 0
+	char* n=(*v).name;
+	while( n < ((*v).name)+VLEN ) *n++ = 0;
+	int len = lname-fname+1;
+	len = len>VLEN ? VLEN : len;
+	/* zap name field of v */
+	strncpy( (*v).name, fname, len );  /* pads with nulls if short */
+	(*v).name[8] = 0;     /* so long name canonicalized as a string */
+	int length = lname-fname+1;
+	if(length>VLEN) {
+		(*v).name[VLEN-1] = *lname; 
+	} 
+#endif
+
+
 /* 	looks up a symbol at one level
  */
-struct var* _addrval(char *sym, struct var *first, struct var *last) {
-	struct var *pvar;
+struct var* _addrval(char *sym, struct funentry *level) {
+	int first = (*level).fvar;
+	int last  = (*level).lvar;
+	int pvar;
 	for(pvar=first; pvar<=last; ++pvar) {
-		if( !strcmp(pvar->name, sym) ) {
-			if( debug && (pvar->vdcd.vd.brkpt==1) )br_hit(pvar);
-			return pvar;
+		if( !strcmp(vartab[pvar].name, sym) ) {
+			if( debug && (vartab[pvar]).brkpt==1 )br_hit(&vartab[pvar]);
+			return &vartab[pvar];
 		}
 	}
-	return NULL;
+	return 0;
 }
 
-/* 	looks up a symbol at three levels via function table. 
- *	sym must be canonical.
+/* 	looks up a symbol at three levels
  */
 struct var* addrval_all(char *sym) {
 	struct var *v;
-	v = _addrval( sym, curfun->fvar, curfun->evar );  // locals
-	if(!v && curobj)                                  // instances
-			v = _addrval( sym, curobj->vartab, curobj->nxtvar-1);
-	if(!v) v = _addrval( sym, curglbl->fvar, curglbl->evar ); //globals
-	if(!v) v = _addrval( sym, fun->fvar,fun->evar );  //libs
+	v = _addrval( sym, curfun );
+	if(!v) v = _addrval( sym, curglbl );
+	if(!v) v = _addrval( sym, fun ); 
 	if(v)return v;
 	return 0;	
 }
@@ -259,36 +159,13 @@ struct var* addrval_all(char *sym) {
 struct var* addrval() {
 	struct var sym;
 	canon( &sym );
-	return addrval_all(sym.name);
+	struct var *av = addrval_all(sym.name);
+	return av;
 }
 
-/* cursor points to possible sym. If it is a class name
- *	bump the cursor and return var entry
- */
-struct var* _isClassName(int nodot) {
-	if(!symName())return NULL;
-	if(nodot && (*(lname+1)=='.'))return NULL;
-//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
-//dumpft(fname,lname);
-	char buf[VLEN+1];
-	int len = canonIf(buf);
-	if(len){
-		struct var *maybe = _addrval(buf,curglbl->fvar, curglbl->evar);
-		if(maybe){
-			int t = maybe->type;
-			if(t=='C' || t=='A') {
-				cursor += len;
-				return maybe;
-			}
-		}
-		return NULL;
-	}
-	return NULL;
-}
-
-#if 0
-void dumpVal_s(Type t, int class, union stuff *val, char lval){
-//	fprintf(stderr," at pr[%d]",(int)((*val).up-(void*)pr));
+/*	prints a value given its description taken from a struct stackEntry */
+void dumpVal(Type t, int class, union stuff *val, char lval){
+	fprintf(stderr,"pr[%d]",(int)((*val).up-(void*)pr));
 	if(class==1 && t==Char ){
 		char sval[30];
 		strncpy(sval, (char*)((*val).up), 30);
@@ -300,23 +177,22 @@ void dumpVal_s(Type t, int class, union stuff *val, char lval){
 			if(x)fprintf(stderr,"->%c<-", x );
 			else fprintf(stderr,"->NULL<-");
 		}
-		else fprintf(stderr,"->%td<-", (*val).ui );
-//		else fprintf(stderr,"->%d<-", *(int*)((*val).up) );
+//		else fprintf(stderr,"->%d<-", (*val).ui );
+		else fprintf(stderr,"->%d<-", *(int*)((*val).up) );
 	}
 /*
 	else if(t==Char) fprintf(stderr,"%c",(*val).uc);
 	else fprintf(stderr,"%d",(*val).ui);
 */
 }
-#endif
 
 void dumpFunEntry( int e ) {
-	fprintf(stderr,"\n fun entry at %d:  %p %p %p", e,
-		fun[e].fvar, fun[e].evar, fun[e].datused );
+	fprintf(stderr,"\n fun entry at %d:  %d %d %d", e,
+		fun[e].fvar, fun[e].lvar, (int)(fun[e].prused-pr) );
 }
 
 void dumpFun() {
-	fprintf(stderr,"\nfun table: fvar, evar, prused");
+	fprintf(stderr,"\nfun table: fvar, lvar, prused");
 	int i;
 	int num = curfun-fun;
 	for(i=0;i<=num;++i) {
@@ -324,437 +200,24 @@ void dumpFun() {
 	}
 }
 
-char* classToWord_v(struct var *v){
-	return classToWord((*v).vdcd.vd.class);
-}
-#if 0
-char *__typwrd_0__ = "Actual";
-char *__typwrd_1__ = "Pointer";
-char *__typwrd_o__ = "Object";
-char *__typwrd_E__ = "Function";
-char *__typwrd_Uk__ = "Unknown Type";
-
-char* classToWord(struct var *v){
-	switch((*v).vdcd.vd.class); {
-		case 0: return __typwrd_0__;
-		case 1: return __typwrd_1__;
-		case 0x6f: return __typwrd_o__;
-		case 0x45: return __typwrd_E__;
-		default: return __typwrd_Uk__;
-	}
-}
-#endif
-
 void dumpVar(struct var *v) {
-	if(v->type=='A' || v->type=='C') {
-		fprintf(stderr,"\n class %s type %c ",v->name, v->type);
-		if(*(v->vdcd.cd.parent))fprintf(stderr,"extends %s ", v->vdcd.cd.parent);
-	}
-	else if(v->type=='o') {
-		fprintf(stderr,"\n oref: %s type %c classvar %p (%s) blob %p "
-				,v->name, v->type,v->vdcd.od.ocl, v->vdcd.od.ocl->name
-				,v->vdcd.od.blob);
-	}
-	else {
-		fprintf(stderr,"\n var %p: %s %s %s len %d %zd %p "
-			, v, (*v).name, classToWord_v(v), typeToWord((*v).type)
-			, (*v).vdcd.vd.len, (*v).vdcd.vd.value.ui
-			, (*v).vdcd.vd.value.up );
-	}
-//	dumpVal_v(v);
+//fprintf(stderr,"\n~200V");
+	fprintf(stderr,"\n var %d: %s %d %s %d ", (int)(v-vartab),
+		(*v).name, (*v).class, typeToWord((*v).type), (*v).len );
+/*	if((*v).value.up) 
+		fprintf(stderr," ref to pr[%d]", (char*)((*v).value.up)-pr);
+*/
+		dumpVal( (*v).type, (*v).class, &((*v).value), 0 );
 }
 
-void dumpVarTab(struct varhdr *vh) {
-	if(!vh || !vh->vartab){
-		fprintf(stderr,"\nVar Table: not built yet");
-		return;
-	}
+void dumpVarTab() {
 	int pos = 0;
-	fprintf(stderr
-			,"\nVar Table: name class type len value (as int and ptr)");
-	struct var *v = vh->vartab;
-	while(v < vh->nxtvar) {
-		dumpVar(v++);
+	fprintf(stderr,"\nVar Table: name class type len (type)value");
+	struct var *v = vartab-1;
+	while(++v < &vartab[nxtvar]) {
+//fprintf(stderr,"\n~213V");
+		dumpVar(v);
 		++pos;
 	};
-	if( !pos )fprintf(stderr,"\nempty\n");
-	else fprintf(stderr,"\n");
+	if( !pos )fprintf(stderr," empty");
 }
-
-void dumpBlob(struct varhdr *vh){
-	fprintf(stderr,"\nBlob (aka varhdr) at %p \n",vh );
-	struct var *vt = vh->vartab;
-	char* dt = vh->val;
-	fprintf(stderr,"  vartab       nxtvar    gltab     evar(val)\n");
-	fprintf(stderr,"   %9p %9zd %9zd %9zd\n",vh->vartab
-		,(ptrdiff_t)vh->nxtvar-(ptrdiff_t)vt,(ptrdiff_t)vh->gltab-(ptrdiff_t)vt
-		,(ptrdiff_t)vh->val-(ptrdiff_t)vt);
-	fprintf(stderr,"  val          used      endval\n");
-	fprintf(stderr,"   %9p %9zd %9zd\n",vh->val
-			,(ptrdiff_t)vh->datused-(ptrdiff_t)dt
-			,(ptrdiff_t)vh->endval-(ptrdiff_t)dt);
-	fprintf(stderr,"nxtvar,gltab are decimal sizes in vartab");
-	fprintf(stderr,"\nused,endval are decimal sizes in/of val");
-}
-void dumpBlobTab() {
-	struct blob *b;
-	fprintf(stderr,"\nvvv blob table vvv\n");
-	for(b=blobtab; b<nxtblob; ++b) {
-		fprintf(stderr,"\n%s: ",b->name);
-		dumpBlob(b->varhdr);
-		fprintf(stderr,"\n");
-	}
-	fprintf(stderr,"\n^^^ blob table ^^^\n");
-}
-
-void dumpBV(struct varhdr *vh){ 
-	dumpBlob(vh); 
-	dumpVarTab(vh);
-}
-
-/*	_newblob,newblob,_getblob,getblob build and search the blob table
- */
-// Enters blob into blobtab. 
-void _newblob(char* name, void* blob){
-	if(nxtblob >= eblob){eset(TMBLOBERR);return;}
-	struct blob *b = nxtblob++;
-	strcpy(b->name,name);  //strlen(name) must be <= VLEN
-	b->varhdr = blob;
-}
-
-//Assumes sym is canonicalized
-struct varhdr* _getblob(char* sym){
-	struct blob *b;
-	for(b=blobtab; b<nxtblob; ++b) {
-    	if( !strcmp(b->name, sym) ) {
-    		return b->varhdr;
-    	}
-  	}
-  	return NULL;
-}
-
-/*	A class blob is named the same as the class whose vars it defines.
- *	Globals and locals are named __Globals__ and __Locals__ resp.
- *	Assumes symName() has just parsed and defined fname,lname.
- */
-struct varhdr* getblob(){
-  struct var sym;
-  canon( &sym );
-  return _getblob(sym.name);
-}
-
-void getBlobName(struct varhdr *vh){
-
-}
-
-/*	Checks for balanced brackets, from *from to *to.
- */
-int checkBrackets(char *from, char *to) {
-  int s;
-  while(from<to) {
-    while(*(from++) != '[' && from<to) ;
-    if(from<to) {
-    	s=skip_tool('[',']',from,to);
-    	if(s<0)return s;   //bad
-    }
-  }
-  return 0;   //good
-}
-#if 0
-/*	old lazy coding version, turns a parser into a non-state-changing tool.
- *	This technique is hazardous, and not recommended for general practice.
- */
-int checkBrackets(char *from, char *to) {
-	int err;
-	char* savedCursor=cursor;
-	char* savedEndapp=endapp;
-	cursor = from;
-	endapp = to;
-	while(cursor<endapp) {
-		while(*(cursor++) != '[' && cursor<endapp) ;
-		if(cursor<endapp) {
-			if( (err=_skip('[',']')) )return err;
-		}
-	}
-	cursor = savedCursor;
-	endapp = savedEndapp;
-	return 0;
-}
-#endif
-int xxpass=0;
-
-/*	Pass one if varhdr is NULL computes the needed sizes. Pass two does
- *	the actual link into varhdr, which also has room for all values.
- *	The logic here mimics classical void link().
- */
-void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
-	char* cptr;
-	char* savedEndapp=endapp;
-	char* savedCursor=cursor;
-//	struct var *vartab;
-	if(vh==NULL){
-//		vartab=NULL;   // pass 1 
-		xxpass=1;
-	} else {
-//		vartab=vh->vartab;
-		xxpass=2;
-		if(!newop)newfun(vh);
-	}
-	if(checkBrackets(from,to))eset(RBRCERR+1000);
-	if(error){ whatHappened(); exit(1); }
-	cursor=from;
-	endapp=to;
-//fprintf(stderr,"\n~507 %d",xxpass);
-	while(cursor<endapp && !error){
-//fprintf(stderr,".");
-		char* lastcur = cursor;
-		_rem();
-		if(_lit(xlb)) _skip('[',']');
-		else if( _decl(vh) ) ;
-#if 0
-		else if(newop) {
-			struct var *isvar = _isClassName(NODOT);
-			if(isvar) {
-				do {
-					varalloc('o',isvar,0,vh);
-				} while( _lit(xcomma) );
-			}
-		}
-#endif
-		else if( _lit(xendlib) ){
-			if(vh != NULL){     //  <<==  PASS TWO endlibrary
-				if(curfun==fun) {   /* 1st endlib, assume app globals follow */
-					if(!newop){
-						newfun(vh);
-						curglbl=curfun;
-					}
-				}
-				else {        // multiple endlib tolerance, undo the assumption
-					fun[0].evar = fun[1].fvar = vh->nxtvar;
-				}
-				vh->gltab = vh->nxtvar;  // start (or start over) on fun[1]
-			}
-		}
-		else if(_lit(xclass)||_lit(xabstract)){
-			struct var cname, ename;
-			int abst=0;
-			char *where;
-			if( *(cursor-1)=='t') {
-				abst=1;
-				if(_lit(xclass)) ;
-				else eset(SYNXERR);
-			}
-			if(symName()) {     /* class name */
-//				union stuff kursor;
-//				kursor.up = 
-				cursor = lname+1;
-				canon(&cname);
-				if(_lit(xextends)){
-					if(symName()){   // parent name
-						cursor=lname+1;
-						canon(&ename);
-					}
-					else eset(SYNXERR);
-				}
-				_rem();
-				where = cursor;
-			}
-			else {
-				eset(SYNXERR);
-				return;
-			}
-			if(xxpass==1){
-				lndata.nvars += 1;
-			}
-			else if(xxpass==2){
-				cls_dcl(abst,cname.name,ename.name,vh,where);
-			}
-		}
-		else if(symName()) {     /* fctn decl */
-			union stuff kursor;
-			cursor = lname+1;
-			_rem();
-			kursor.up = cursor;
-			newvar('E',2,0,NULL,&kursor,vh);
-			if( (cptr=_mustFind(cursor, endapp, '[',LBRCERR)) ) {
-				cursor=cptr+1;
-				_skip('[',']');
-			}
-		}
-		else if(*cursor=='#'){
-			while(++cursor<endapp) {
-				if( (*cursor==0x0d)||(*cursor=='\n') )break;
-			}
-		}
-		if(cursor==lastcur){
-			eset(LINKERR);
-		}
-	}
-	cursor = savedCursor;
-	endapp = savedEndapp;
-	if(verbose[VL])dumpVarTab(vh);
-}
-
-/*	tools for accessing specific data in a *var. A var can be
- *	id'd two ways: ptr to the var entry (struct var *v), and
- *	symbol name used to install that entry. These use the former.
- *	The latter requires	a search, and that search needs to know 
- *	what vartab to search. cname_to_var() searches globals for class name.
- */
-
-/*	Return var if name is a class, else NULL
- */
-struct var *visclass(char *name){
-	struct var* v = _addrval( name, curglbl->fvar, curglbl->evar );
-	if(!v)return NULL;
-	int t = v->type;
-	if(t=='C' || t=='A') return v;
-	return NULL;
-}
-char* vname(struct var *v) {
-	return v->name;
-}
-int vtype(struct var *v){
-	return (int)v->type;
-}
-/* v must be a class entry. Returns ptr to string, parent name. */
-char* vparent(struct var *v) {
-	return v->vdcd.cd.parent;
-}
-char* vwhere(struct var *v){
-	return v->vdcd.cd.where;
-}
-
-/*	return length of body of class definition,
- *	incl lead [, excl trail ]. So an empty body [] has length 1.
- *	Return NULL if bracket problem. Note that where MUST point to [.
- */
-int class_body(char* name){
-	char *f;
-	int len=0;
-	struct var *v = visclass(name);
-	char* saved_cursor = cursor;
-	f = cursor = vwhere(v);
-	if(*cursor != '[')eset(WHERERR);
-	++cursor;
-	if(_skip('[',']'))eset(RBRCERR);
-	else len = cursor-f-1;
-	cursor = saved_cursor;
-	if(error)return 0;
-	return len;
-}
-
-char par_buf[VLEN+2];
-
-/*	ascend is used by lnlink to climb one step up the
- *	inheritance chain and set from/to to the text of
- *	the parents body, inside the []'s. The new object's
- *	vartab thus includes all inherited declarations.
- *	Callers arg from==zero signals no parent to stop the loop.
- */
-void ascend(char *cname, char **from, char **to){
-	struct var *v = visclass(cname);
-	if(v){
-		strcpy(par_buf,vparent(v));
-		v = visclass(par_buf);
-		if(v){
-			*from = vwhere(v)+1;
-			int len = class_body(par_buf);
-			*to = *from+len-1;
-		}
-		else *from=0;
-	}
-	else *from=0;	
-}
-
-/*	Modified version of tclink() to parse and build class tables. 
- *	Links source text area from *from to *to in two passes. In pass one 
- *	vartab is NULL and computes the size of memory needed for both the 
- *	vartab and the value space. In pass two it builds the table. 
- *	Parse, var, and other services are supplied by whole unchanged tiny-c files.
- *	Uses lnpass12 as a service.
- */
-struct varhdr* lnlink(char *from, char *to, char *blobName){
-        newop = strcmp(blobName,"__Globals__"); // true iff doing new operator
-        int size;
-        char* blob;
-        struct varhdr *vh;
-        char* savedcursor=cursor;
-        char* savedendapp=endapp;
-        lndata.nvars = lndata.valsize = 0;
-        char *f; char *t;
-
-        f=from; t=to;
-		strncpy(par_buf,blobName,VLEN+1);
-        while(f){
-	        lnpass12(f,t,NULL,newop);    // PASS one
-	        if(newop){
-	        	ascend(par_buf,&f,&t);
-	        }
-	        else break;
-        }
-        size = sizeof(struct varhdr) + lndata.nvars*sizeof(struct var) + lndata.valsize;
-        blob = mymalloc("blob", size+10);
-        vh = (struct varhdr*)blob;
-        _newblob(blobName,blob);
-		memset(vh, 0, size);
-        vh->vartab = vh->nxtvar = vh->gltab = (struct var*)(vh+1);
-        vh->val = vh->datused = (char*)(vh->vartab+lndata.nvars);
-        vh->endval = blob + size;
-        f=from; t=to;
-		strncpy(par_buf,blobName,VLEN+1);
-        while(f){
-	        lnpass12(f,t,vh,newop);    // PASS two
-	        if(newop){
-	        	ascend(par_buf,&f,&t);
-	        }
-	        else break;
-        }
-		strncpy(par_buf,blobName,VLEN+1);  // just in case
-        cursor=savedcursor;
-        endapp=savedendapp;
-        return vh;
-}
-
-/* links the loaded program. Uses cursor and endapp globals 
- *	which are set by the loader. Returns pointer to vartab, whose
- *	value references point to space in the same malloc.
- */
-void toclink() {
-	lnlink(cursor,endapp,"__Globals__");
-}
-
-/* links a class given its *var
- */
-struct varhdr* classlink(struct var *isclvar){
-// scope body of cn
-	char *from, *to;
-	from = isclvar->vdcd.cd.where+1;
-	char *temp = cursor;
-	cursor=from;
-	if(_skip('[',']'))eset(LBRCERR);
-	to = cursor-1;
-	cursor=temp;
-// link the body, return blob address
-	char *save_fn = fname;  // need class name later
-	char *save_ln = lname;
-	struct varhdr *vh;
-	vh = lnlink(from, to, isclvar->name);
-	if(error){
-		whatHappened();
-		exit(1);
-	}
-	fname = save_fn;
-	lname = save_ln;
-	return vh;
-}
-
-#if 0
-// useful code lines...
-dumpft(fname,lname);
-fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
-dumpBlobTab();
-dumpBlob(blob);
-if(newop){
-}
-#endif

@@ -1,17 +1,16 @@
-#include "toc.h"
-#include <math.h>
+#include "machineCall.h"
+#include "tc.h"
 
-typedef ptrdiff_t (*McList)(int,ptrdiff_t*);
+typedef DATINT (*McList)(int,DATINT*);      // Entry in list
 //    type (*fun_ptr)(arg typ list) = &fun; 
-
-ptrdiff_t  (*piMC )(int,int,ptrdiff_t*) = NULL;
+DATINT  (*piMC )(int,int,DATINT*) = NULL;   //plug in MC pointer
 
 /*		MC9 ;scan for nth occurance of CH in a block. Args are
 		  first,last,CH,cnt address. Return pointer to nth
 		  occurance,if it exists, otherwise to last. Also
 		  cnt is reduced by one for every CH found.
  */
-ptrdiff_t scann( char *from, char *to, char c, int *n ) {
+DATINT scann( char *from, char *to, char c, int *n ) {
 	char *f = from;
 	for(;f<=to;++f) {
 		if(*f == c) {
@@ -22,13 +21,13 @@ ptrdiff_t scann( char *from, char *to, char c, int *n ) {
 	return f-from;
 }
 
-ptrdiff_t Mscann(int nargs, ptrdiff_t *args) {
+DATINT Mscann(int nargs, DATINT *args) {
 	char *from = (char*)args[0];
 	char *to   = (char*)args[1];
 	char c     = args[2];
 	int *starN = (int*)args[3];
 	int n = *starN;
-	int offset = scann(from,to,c,&n);
+	DATINT offset = scann(from,to,c,&n);
 	*starN = n;
 	return offset;
 }
@@ -54,9 +53,9 @@ void pft(char *from, char *to ) {
  *	either a %<char> or a block of chars excluding %. Recursive
  *	until whole fmt string consumed.
  */
-void pFmt(char *fmt, ptrdiff_t *args) {
+void pFmt(char *fmt, DATINT *args) {
 	char pct[9], *nxtpct;
-	ptrdiff_t datum;
+	DATINT datum;
 	if(!(*fmt))return;
 //printf("\n~69 %s<<--\n",fmt);
 	if(*fmt=='%'){
@@ -89,7 +88,7 @@ void pFmt(char *fmt, ptrdiff_t *args) {
 }
 
 /* new MC's with this implementation. A bit of modernization. */
-ptrdiff_t MprF(int nargs, ptrdiff_t *args)
+DATINT MprF(int nargs, DATINT *args)
 {
 /*
 printf("\n\n63: MprF: nargs %d args[0..3] %d %d %d %d",
@@ -100,24 +99,25 @@ printf("\n\n63: MprF: nargs %d args[0..3] %d %d %d %d",
 }
 
 /* original MC's */
-ptrdiff_t Mpc(int nargs, ptrdiff_t *args)
+DATINT Mpc(int nargs, DATINT *args)
 {
-    printf("%c", (char)*args);
+    printf("%c", (char)(*args) );
 	return *args;
 }
 
-ptrdiff_t Mpn(int nargs, ptrdiff_t *args)
+DATINT Mpn(int nargs, DATINT *args)
 {
   #if defined(_WIN32)
     printf("%Id", *args);
   #else
-    printf("%td", *args);
+// FMTINT matches DATINT type (choice in common.h)
+    printf(FMTINT, *args);
   #endif
-	return 0;
+  	return 0;
 }
 
 #if defined(_WIN32)
-ptrdiff_t Mgch(int nargs, ptrdiff_t *args)  // mod's lrb
+DATINT Mgch(int nargs, DATINT *args)  // mod's lrb
 {
  int loop=0;
  int x;
@@ -145,7 +145,7 @@ char escKey() {
 	return 0;   // to avoid compile warning
 }
 
-ptrdiff_t Mgch(int nargs, ptrdiff_t *args)
+DATINT Mgch(int nargs, DATINT *args)
 {
 	int x = getch_(ECHO);
 	if(x==0x1b)return escKey();
@@ -155,7 +155,7 @@ ptrdiff_t Mgch(int nargs, ptrdiff_t *args)
 }
 #endif
 
-ptrdiff_t Mpft(int nargs, ptrdiff_t *args) {
+DATINT Mpft(int nargs, DATINT *args) {
 	char *from = (char*)*args;
 	char *to = (char*)*(args+1);
 /*printf("\nMC 109: from to %d %d\n", from-pr, to-pr );*/
@@ -164,7 +164,7 @@ ptrdiff_t Mpft(int nargs, ptrdiff_t *args) {
 	return 0;   // to avoid compile warning
 }
 
-ptrdiff_t naf(int nargs, ptrdiff_t *args)
+DATINT naf(int nargs, DATINT *args)
 {
 	fprintf(stderr,"\nMC: no such number");
 	eset(MCERR);
@@ -172,7 +172,7 @@ ptrdiff_t naf(int nargs, ptrdiff_t *args)
 }
 
 /* args: a,b,dist. Block is [a..b] inclusive, distance is [+|-]dist */
-ptrdiff_t MmvBl(int nargs, ptrdiff_t *args)
+DATINT MmvBl(int nargs, DATINT *args)
 {
 	char *a, *b; int dist;
 	a=(char*)args[0]; b=(char*)args[1]; dist=args[2];
@@ -183,7 +183,7 @@ ptrdiff_t MmvBl(int nargs, ptrdiff_t *args)
 	return 0;   // to avoid compile warning
 }
 
-ptrdiff_t Mcountch(int nargs, ptrdiff_t *args) // lrb
+DATINT Mcountch(int nargs, DATINT *args) // lrb
 {
 	char *from, *to; int ch;
 	char *c;
@@ -195,64 +195,64 @@ ptrdiff_t Mcountch(int nargs, ptrdiff_t *args) // lrb
 }
 
 /* test if keyboard char ready, return copy if so, else 0 */
-ptrdiff_t Mchrdy()
+DATINT Mchrdy()
 {
 	return kbhit();
 }
 
 /* sleep for N seconds */
-ptrdiff_t Msleep(int nargs, ptrdiff_t *args)
+DATINT Msleep(int nargs, DATINT *argsv)
 {
-	int N = *args;
+	int N = *argsv;
 	sleep(N);
 	return 0;
 }
 
-ptrdiff_t Mfilrd(int nargs, ptrdiff_t *args) {
+DATINT Mfilrd(int nargs, DATINT *argsv) {
 	if(nargs<3){ eset(ARGSERR); return -1; }
-	char *name = (char*)args[0];
-	char *buff = (char*)args[1];
-	int bufflen = args[2];
+	char *name = (char*)argsv[0];
+	char *buff = (char*)argsv[1];
+	int bufflen = argsv[2];
 	return fileRead(name, buff, bufflen);
 }
 
-ptrdiff_t Mfilwt(int nargs, ptrdiff_t *args) {
+DATINT Mfilwt(int nargs, DATINT *argsv) {
 	if(nargs<3){ eset(ARGSERR); return -1; }
-	char *name = (char*)args[0];
-	char *buff = (char*)args[1];
-	int bufflen = args[2];
+	char *name = (char*)argsv[0];
+	char *buff = (char*)argsv[1];
+	int bufflen = argsv[2];
 	return fileWrite(name, buff, bufflen);
 }
 
-ptrdiff_t Mstrlen(int nargs,ptrdiff_t *args) {
+DATINT Mstrlen(int nargs,DATINT *argsv) {
 	if(nargs<1){ eset(ARGSERR); return -1; }
-	char* s=(char*)args[0];
+	char* s=(char*)argsv[0];
 	return strlen(s);
 }
 
-ptrdiff_t Mstrcat(int nargs, ptrdiff_t *args) {
+DATINT Mstrcat(int nargs, DATINT *argsv) {
 	if(nargs<2){ eset(ARGSERR); return -1; }
-	char* a=(char*)args[0];
-	char* b=(char*)args[1];
-	return (ptrdiff_t)strcat(a,b);
+	char* a=(char*)argsv[0];
+	char* b=(char*)argsv[1];
+	return (DATINT)strcat(a,b);
 }
 
-ptrdiff_t Mstrcpy(int nargs, ptrdiff_t *args) {
+DATINT Mstrcpy(int nargs, DATINT *argsv) {
 	if(nargs<2){ eset(ARGSERR); return -1; }
-	char* a=(char*)args[0];
-	char* b=(char*)args[1];
-	ptrdiff_t x = (ptrdiff_t)strcpy(a,b);
+	char* a=(char*)argsv[0];
+	char* b=(char*)argsv[1];
+	DATINT x = (DATINT)strcpy(a,b);
 	return x;
 }
 
-ptrdiff_t Mfopen(int nargs, ptrdiff_t *args) {
+DATINT Mfopen(int nargs, DATINT *args) {
 	if(nargs<2){ eset(ARGSERR); return -1; }
 	char *filename = (char*)args[0];
 	char *mode   = (char*)args[1];
 	return tcFopen(filename,mode);
 }
 
-ptrdiff_t Mfgets(int nargs, ptrdiff_t *args) {
+DATINT Mfgets(int nargs, DATINT *args) {
 	if(nargs<3){ eset(ARGSERR); return -1; }
 	char* buff = (char*)args[0];
 	int len = args[1];
@@ -260,38 +260,38 @@ ptrdiff_t Mfgets(int nargs, ptrdiff_t *args) {
 	return tcFgets(buff,len,unit);
 }
 
-ptrdiff_t Mfputs(int nargs, ptrdiff_t *args) {
+DATINT Mfputs(int nargs, DATINT *args) {
 	if(nargs<2){ eset(ARGSERR); return -1; }
 	char* str = (char*)args[0];
 	int unit = args[1];
 	return tcFputs(str,unit);
 }
 
-ptrdiff_t Mfputc(int nargs, ptrdiff_t *args) {
+DATINT Mfputc(int nargs, DATINT *args) {
 	if(nargs<2){ eset(ARGSERR); return -1; }
 	char c = (char)args[0];
-	int unit = (int)args[1];
+	int unit = args[1];
 	return tcFputc(c,unit);
 }
 
-ptrdiff_t Mfclose(int nargs, ptrdiff_t *args) {
+DATINT Mfclose(int nargs, DATINT *args) {
 	if(nargs<1){ eset(ARGSERR); return -1; }
 	int unit = args[0];
 	return tcFclose(unit);
 }
 
-ptrdiff_t Mexit(int nargs, ptrdiff_t *args) {
+DATINT Mexit(int nargs, DATINT *args) {
 	eset(EXIT);
 	return 0;   // to avoid compile warning
 }
 
-ptrdiff_t Mexitq (int nargs, ptrdiff_t *args) { // lrb
+DATINT Mexitq (int nargs, DATINT *args) { // lrb
 	exit(0);
 }
 
 /*	get value from property file returning in supplied buff.
  */
-ptrdiff_t Mgetprop(int nargs, ptrdiff_t *args) {
+DATINT Mgetprop(int nargs, DATINT *args) {
 	char* file = (char*)args[0];
 	char* name = (char*)args[1];
 	char* buff = (char*)args[2];
@@ -301,9 +301,9 @@ ptrdiff_t Mgetprop(int nargs, ptrdiff_t *args) {
 }
 
 // load current date and time into supplied buff
-ptrdiff_t Mcdate(int nargs, ptrdiff_t *args) {
+DATINT Mcdate(int nargs, DATINT *argsv) {
 	if(nargs<1){ eset(ARGSERR); return -1; }
-	char *buff = (char*)args[0];
+	char *buff = (char*)argsv[0];
 	time_t rawtime;
 	struct tm *info;
 	time( &rawtime );
@@ -312,20 +312,20 @@ ptrdiff_t Mcdate(int nargs, ptrdiff_t *args) {
 		info->tm_year-100+2000,info->tm_mon+1, \
 		info->tm_mday,info->tm_hour,info->tm_min, \
 		info->tm_sec);
-	return (ptrdiff_t)buff;
+	return (DATINT)buff;
 }
 
 // execute another process, hangs until process ends
-ptrdiff_t Msystem(int nargs, ptrdiff_t *args) {
+DATINT Msystem(int nargs, DATINT *argsv) {
 	if(nargs<1){ eset(ARGSERR); return -1; }
-	char *cmd = (char*)args[0];
+	char *cmd = (char*)argsv[0];
 	return system(cmd);
 }
 // Put an integer to an open file, no leading space
-ptrdiff_t Mfpn(int nargs, ptrdiff_t *args) {
+DATINT Mfpn(int nargs, DATINT *argsv) {
 	if(nargs<2){ eset(ARGSERR); return -1; }
-	int x = args[0];
-	int unit = args[1];
+	int x = argsv[0];
+	int unit = argsv[1];
 	char buf[12];
 
 	if( (unit<0)||(unit>MAX_UNIT) )return -8;
@@ -338,16 +338,16 @@ ptrdiff_t Mfpn(int nargs, ptrdiff_t *args) {
  	return -2;
 }
 // Approximate square root
-ptrdiff_t Msqrt(int nargs, ptrdiff_t *args) {
+DATINT Msqrt(int nargs, DATINT *argsv) {
 	if(nargs<1){ eset(ARGSERR); return -1; }
-	double x = (double)args[0];
+	double x = (double)argsv[0];
 	if(x<0.0){ eset(ARGSERR); return -1; }
 	return (int)(sqrt(x)+0.5);
 }
 // Approximate arctan
-ptrdiff_t Marctan(int nargs, ptrdiff_t *args) {
+DATINT Marctan(int nargs, DATINT *argsv) {
 	if(nargs<1){ eset(ARGSERR); return -1; }
-	double x = (double)args[0];
+	double x = (double)argsv[0];
 	x = x/1000.0;
 //printf("\n %f %f %f", x, x/1000, atan(x)*180/3.14159);
 	return (int)(atan(x)*180/3.14159 + (x>0?0.5:-0.5) );
@@ -379,7 +379,7 @@ McList userList[] =
  *	determines the MC number starting with 1, 101, 201.
  */
 
-void origMC(int mcno, int nargs, ptrdiff_t *args) {
+void origMC(int mcno, int nargs, DATINT *args) {
 	if(mcno<1 || mcno>(sizeof(origList)/sizeof(void*))) {
 		pushk(0); eset(ARGSERR);
 	}
@@ -389,7 +389,7 @@ void origMC(int mcno, int nargs, ptrdiff_t *args) {
 	}
 }
 
-void newMC(int mcno, int nargs, ptrdiff_t *args) {
+void newMC(int mcno, int nargs, DATINT *args) {
 	if(mcno<1 || mcno>(sizeof(newList)/sizeof(void*))) {
 		pushk(0); eset(ARGSERR);
 	}
@@ -399,7 +399,7 @@ void newMC(int mcno, int nargs, ptrdiff_t *args) {
 	}
 }
 
-void userMC(int mcno, int nargs, ptrdiff_t *args) { // lrb
+void userMC(int mcno, int nargs, DATINT *args) { // lrb
 	if(mcno<1 || mcno>(sizeof(userList)/sizeof(void*))) {
 		pushk(0); eset(ARGSERR);
 	}
@@ -409,7 +409,7 @@ void userMC(int mcno, int nargs, ptrdiff_t *args) { // lrb
 	}
 }
 
-ptrdiff_t plugInMC(int mcno, int nargs, ptrdiff_t *args) {
+DATINT plugInMC(int mcno, int nargs, DATINT *args) {
 //fprintf(stderr,"~355mc %d\n",piMC);
 	if(piMC==NULL) eset(ARGSERR);
 	else return (*piMC)(mcno, nargs, args);
@@ -418,8 +418,8 @@ ptrdiff_t plugInMC(int mcno, int nargs, ptrdiff_t *args) {
 
 void machinecall( int nargs ) {
 	int i;
-//	ptrdiff_t args[nargs-1];
-	ptrdiff_t args[10]; // lrb tcc complains ... wants a constant expression
+//	DATINT args[nargs-1];
+	DATINT args[10]; // lrb tcc complains ... wants a constant expression
 	int mcno = toptoi();
 	--nargs;
 	for(i=0; i<nargs; ++i){
