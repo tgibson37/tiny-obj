@@ -72,6 +72,42 @@ int _allocSpace(struct var *v, int amount){
 }
 
 /* SITUATION: Declaration is parsed, and its descriptive data known.
+ *  Fill in the var with this data. Allocate value storage unless already
+ *  allocated, i.e. pointer to passed data. Copy passed data into allocation.
+ *  NOTE: signifantly refactored.
+ */
+void newvar( int class, Type type, int len, struct var *objclass,
+      union stuff *passed, struct varhdr *vh ) {
+  int obsize = typeToSize(class,type);
+  if(vh==NULL){
+    lndata.nvars += 1;
+    lndata.valsize += len*obsize;
+    return;
+  }
+  struct var *v = vh->nxtvar;
+  struct var *evar = (struct var*)vh->val;
+  canon(v);    /* sets the canon'd name into v */
+  (*v).type = type;
+  if(type=='o'){
+    v->vdcd.od.class = class;
+    v->vdcd.od.len = len;
+    v->vdcd.od.ocl = objclass;
+    v->vdcd.od.blob = NULL;  // filled in when known
+  }
+  else{
+    (*v).vdcd.vd.class = class;
+    (*v).vdcd.vd.len = len;
+    (*v).vdcd.vd.brkpt = 0;
+  }
+  if(_allocSpace(v,len*obsize,vh)) return;  /* eset done if true */
+  if(passed) _copyArgValue( v, class, type, passed);
+  if(curfun>=fun) curfun->evar = vh->nxtvar;
+  if( vh->nxtvar++ >= evar )eset(TMVRERR);
+  if(verbose[VV])dumpVar(v);
+  return;
+}
+#if 0
+/* SITUATION: Declaration is parsed, and its descriptive data known.
  * 	Fill in the var with this data. Allocate value storage unless already
  *	allocated, i.e. pointer to passed data. Copy passed data into allocation.
  *	NOTE: signifantly refactored.
@@ -91,7 +127,7 @@ void newvar( int class, Type type, int len, union stuff *passed ) {
 	if(verbose[VV])dumpVar(v);
 	return;
 }
-
+#endif
 /* Canonicalizes the name bracket by f,l inclusive into buff, and returns buff.
 	sizeOf buff must be at least VLEN+1.
  */
