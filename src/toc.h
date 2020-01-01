@@ -215,7 +215,7 @@ int obsize, vclass, alen;
 int traceMode;
 extern char* ppsPath;
 
-FILE* fileUnit[MAX_UNIT];
+//FILE* fileUnit[MAX_UNIT];
 int tcFopen(char* name, char* mode);
 int tcFputs(char* str, int unit);
 int tcFputc(char c, int unit);

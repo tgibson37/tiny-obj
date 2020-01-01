@@ -1,8 +1,9 @@
 #include "toc.h"
 
-int varargs = 0;
 union stuff foo;
 
+#if 0
+//int varargs = 0;   //moved to factor.c
 /* Situation: parsing argument declarations, passed values are on the stack.
  * arg points into stack to an argument of type. 
  * Gets actual value of arg, calls valloc which parses and sets
@@ -120,6 +121,7 @@ void _enter( char* where) {
 		fcn_leave();
 	}
 }
+#endif
 
 /* An asgn is a reln or an lvalue = asgn. Note that
    reln can match an lvalue.
