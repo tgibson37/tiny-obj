@@ -1,3 +1,4 @@
+#include "stack.h"
 #include "toc.h"
 
 /*	prints a value given its description taken from a struct stackEntry
@@ -99,7 +100,7 @@ int topdiff() {
 
 /* pop the stack returning its int value, pointer 
 	resolved and cast to int if necessary. */
-ptrdiff_t toptoi() {
+DATINT toptoi() {
 	int datum;
 	union stuff *ptr;
 	if(verbose[VS]){
@@ -112,15 +113,15 @@ ptrdiff_t toptoi() {
 	if( (*top).class==1 ) {
 		if((*top).lvalue == 'L') {
 			ptr = (union stuff *)((*top).value.up);
-			datum=(ptrdiff_t)((*ptr).up);
+			datum=(DATINT)((*ptr).up);
 		}
-		else datum=(ptrdiff_t)((*top).value.up);
+		else datum=(DATINT)((*top).value.up);
 	}
 	else if((*top).lvalue == 'L') {
-		if((*top).type==Int ) datum = *((ptrdiff_t*)((*top).value.up));
+		if((*top).type==Int ) datum = *((DATINT*)((*top).value.up));
 		else if((*top).type==Char) datum = *((char*)((*top).value.up));
 		else if((*top).type == 'o') {
-			datum = (ptrdiff_t)(*top).value.up;
+			datum = (DATINT)(*top).value.up;
 		}
 		else eset(TYPEERR);
 	}
@@ -137,7 +138,7 @@ ptrdiff_t toptoi() {
 }
 
 /* push an int */
-void pushk(ptrdiff_t datum) {
+void pushk(DATINT datum) {
 	union stuff d;
 	d.ui = datum;
 	pushst( 0, 'A', Int, &d );
@@ -145,7 +146,7 @@ void pushk(ptrdiff_t datum) {
 }
 
 /* push an int as a class 1 */
-void pushPtr(ptrdiff_t datum) {
+void pushPtr(DATINT datum) {
 	union stuff d;
 	d.up = (void*)datum;
 	pushst( 1, 'A', Int, &d );

@@ -1,3 +1,7 @@
+#ifndef TOC_HDR
+#define TOC_HDR
+
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -41,7 +45,7 @@
 #define xge ">="
 #define xle "<="
 #define xnl "\n"
-#define xvarargs "..."
+//#define xvarargs "..."
 #define xclass "class"
 #define xabstract "abstract"
 #define xextends "extends"
@@ -116,10 +120,11 @@ int quiet;
 #define EXIT         98
 #define KILL         99
 
+#if 0
 /*	All tc data are ints or chars. Pointers are an int index into pr. 
  *	stuff is the typless holder of any value.
  */
-union stuff { char uc; ptrdiff_t ui; void* up; };
+union stuff { char uc; DATINT ui; void* up; };
 
 typedef enum type {Err,Char,Int,CharStar} Type;
 
@@ -131,13 +136,16 @@ struct stackentry {
 /* the stack */
 struct stackentry *stack;
 int nxtstack, stacklen;
+#endif
 
+#if 0
 /* a fun entry */
 struct funentry {
 	struct var *fvar, *evar;
 	char *datused;
 	struct varhdr *obj;
 };
+#endif
 /* fun table */
 struct funentry *fun;
 struct funentry *curglbl, *curfun, *efun;
@@ -148,7 +156,7 @@ struct funentry *curglbl, *curfun, *efun;
 //};
 //  MUST add after -> or ). before value/class/etc    vdcd.vd.
 //  but NOT before name or type.
-//STUDY
+#if 0
 struct cd {
   char parent[VLEN+1]; int abst; char* where; struct varhdr *blob;
 };
@@ -158,7 +166,6 @@ struct vd {
 struct od {
   int class; int len; struct var *ocl; struct varhdr *blob;
 };
-//SKIP
 union vdcd {
   struct vd vd; struct cd cd; struct od od;
 };
@@ -167,6 +174,7 @@ struct var{
 };
 // struct var *vt = vh->vartab;			// vh == blob
 // vt->var.vdcd.od.blob  				// <<== typical
+#endif
 
 /* blob header */
 struct varhdr {
@@ -179,7 +187,7 @@ struct varhdr {
  */
 struct varhdr *locals, *canobj, *curobj;
 /* sizes needed for each vartab, values area */
-struct lndata { int nvars; int valsize; } lndata;
+//struct lndata { int nvars; int valsize; } lndata;
 
 /* blob table, f,t scope the text for enter to set curclass */
 struct blob {
@@ -229,23 +237,23 @@ int iProperty(char* file, char* name, int *val, int _default);
 int sProperty(char* file, char* name, char* val, int vlen, char* _default);
 int typeToSize( int class, Type type );
 int topdiff();
-ptrdiff_t toptoi();
+DATINT toptoi();
 struct stackentry* popst();
 void pushst( int class, int lvalue, Type type, union stuff *value );
-void pushk(ptrdiff_t datum);
+void pushk(DATINT datum);
 void pushone();
 void pushzero();
-void pushPtr(ptrdiff_t datum);
+void pushPtr(DATINT datum);
 void eset( int err );
 void ps(char* s);
 void pl(char* s);
 int  pn(int n);
 void pc(char c);
 char* find( char *from, char *upto, char c);
-void newfun(struct varhdr *vh);
+//void newfun(struct varhdr *vh);
 void fundone();
-void newvar( int class, Type type, int len, struct var *objclass,
-			union stuff *passed, struct varhdr *vh );
+//void newvar( int class, Type type, int len, struct var *objclass,
+//			union stuff *passed, struct varhdr *vh );
 struct var* addrval();
 void canon(struct var *v);
 int quit();
@@ -266,8 +274,8 @@ void dumpHex( void* where, int len );
 void dumpState();
 void dumpName();
 void dumpft(char*,char*);
-void put_int(char *where, ptrdiff_t datum);
-ptrdiff_t  get_int(char *where);
+void put_int(char *where, DATINT datum);
+DATINT  get_int(char *where);
 void put_char(char *where, char datum);
 char get_char(char *where);
 int fileRead(char*filename, char* buffer, int bufflen);
@@ -291,8 +299,8 @@ void tcUsage();
 void br_hit(struct var *v);
 void pft(char *from, char *to );
   /* All these do is prevent warnings from compiler */
-ptrdiff_t Mchrdy();
-ptrdiff_t Mgch(int,ptrdiff_t*);
+DATINT Mchrdy();
+DATINT Mgch(int,DATINT*);
 int _asgn();
 int _reln();
 int _expr();
@@ -304,11 +312,11 @@ void allocStuff();
 void _rem();
 int _decl(struct varhdr *vh);
 int _lit(char*);
-void varalloc(Type type, struct var *varobj
+void varalloc(Type type, struct var *varparent
 		, union stuff *vpassed, struct varhdr *vh);
 int symName();
 int charIn(char c, char *choices );
-void pFmt(char *fmt, ptrdiff_t *args);
+void pFmt(char *fmt, DATINT *args);
 int _skip(char l, char r);
 struct varhdr* lnlink(char *from, char *to, char *blobName);
 void* mymalloc(char *name, int size);
@@ -326,3 +334,5 @@ char* lvalToWord(char c);
 void _eq();
 struct varhdr* classlink(struct var *isclvar);
 void _enter( char* where);
+
+#endif   // TOC_HDR

@@ -1,3 +1,8 @@
+#include "expr.h"
+#include "factor.h"
+#include "stack.h"
+#include "var.h"
+#include "platform.h"
 #include "toc.h"
 
 union stuff foo;

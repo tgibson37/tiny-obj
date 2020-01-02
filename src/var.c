@@ -1,3 +1,5 @@
+#include "var.h"
+#include "link.h"
 #include "toc.h"
 
 int newop;
@@ -166,6 +168,7 @@ void newvar( int class, Type type, int len, struct var *objclass,
 	return;
 }
 
+#if 0
 void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, char* where){
 //dumpBlob(vh);
 	struct var *c = vh->nxtvar++;
@@ -175,6 +178,7 @@ void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, char* where){
 	c->vdcd.cd.where = where;
 //dumpVar(c);
 }
+#endif
 
 /*  Refenence to an object: refname (fname,lname), type 'o', 
  *  details: class entry (cls), blob to referenced object's blob (NULL) 
@@ -480,7 +484,6 @@ int checkBrackets(char *from, char *to) {
 	endapp = savedEndapp;
 	return 0;
 }
-#endif
 int xxpass=0;
 
 /*	Pass one if varhdr is NULL computes the needed sizes. Pass two does
@@ -511,7 +514,7 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 		_rem();
 		if(_lit(xlb)) _skip('[',']');
 		else if( _decl(vh) ) ;
-#if 0
+//#if 0
 		else if(newop) {
 			struct var *isvar = _isClassName(NODOT);
 			if(isvar) {
@@ -520,7 +523,7 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 				} while( _lit(xcomma) );
 			}
 		}
-#endif
+//#endif
 		else if( _lit(xendlib) ){
 			if(vh != NULL){     //  <<==  PASS TWO endlibrary
 				if(curfun==fun) {   /* 1st endlib, assume app globals follow */
@@ -594,6 +597,7 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 	endapp = savedEndapp;
 	if(verbose[VL])dumpVarTab(vh);
 }
+#endif
 
 /*	tools for accessing specific data in a *var. A var can be
  *	id'd two ways: ptr to the var entry (struct var *v), and

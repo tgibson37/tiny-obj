@@ -1,4 +1,10 @@
 #include "toc.h"
+#include "expr.h"
+#include "stack.h"
+#include "var.h"
+#include "platform.h"
+#include "factor.h"
+
 struct varhdr *__temp_vh__;
 
 #if defined(_WIN32)
@@ -18,7 +24,7 @@ int typeToSize( int class, Type type ) {
 	if(type=='C')return 0;
 	if(type=='o')return 0;
 	if(type==Char)return 1;
-	else if(type==Int)return sizeof(ptrdiff_t);
+	else if(type==Int)return sizeof(DATINT);
 	else eset(TYPEERR);
 	return 0; /* has to be one of the above */
 }
@@ -27,7 +33,7 @@ int typeToSize( int class, Type type ) {
  *	Effects the assignment. 
  */
 void _eq() {
-	ptrdiff_t  iDatum;  /* memcpy into these from pr using val.stuff */
+	DATINT  iDatum;  /* memcpy into these from pr using val.stuff */
 	char cDatum;  /*  and val.size, giving needed cast */
 	void* pDatum;
 //	void* where;
@@ -59,7 +65,7 @@ void _eq() {
 	else if(class==1 && (*val).class==1) {
 		pDatum = (*val).value.up;
 		if( (*val).lvalue=='L' ){
-			pDatum = (char*)(*(ptrdiff_t*)pDatum);   /* now its 'A' */
+			pDatum = (char*)(*(DATINT*)pDatum);   /* now its 'A' */
 		}
 		char **where = (*lval).value.up;
 		*where = (char*)pDatum;
@@ -88,9 +94,9 @@ void _eq() {
 		}
 		pDatum = (*val).value.up;
 		if( (*val).lvalue=='L' ){
-			pDatum = (char*)(*(ptrdiff_t*)pDatum);   /* now its 'A' */
+			pDatum = (char*)(*(DATINT*)pDatum);   /* now its 'A' */
 		}
-		iDatum = (ptrdiff_t)pDatum;
+		iDatum = (DATINT)pDatum;
 		put_int( (*lval).value.up, iDatum);
 		pushk(iDatum);
 	}
@@ -249,7 +255,7 @@ void _rem() {
 /* 	SITUATION: int or char is parsed.
  *	Parses one variable. Makes allocation and symbol entry.
  */
-void varalloc(Type type, struct var *varobj
+void varalloc(Type type, struct var *varparent
 		, union stuff *vpassed, struct varhdr *vh) {
 	if( !symName() ) {		/*defines fname,lname. True is match.*/
 		eset(SYMERR);
@@ -269,7 +275,7 @@ void varalloc(Type type, struct var *varobj
 		vclass = 0;
 		alen = 1;
 	}
-	newvar(vclass, type, alen, varobj, vpassed, vh);
+	newvar(vclass, type, alen, varparent, vpassed, vh);
 }
 
 
@@ -564,10 +570,10 @@ void dumpName() {
 }
 
 /****  C tools to deal with typeless storage ****/
-void put_int(char *where, ptrdiff_t datum) {
+void put_int(char *where, DATINT datum) {
 	memcpy( where, &datum, sizeof(datum) );
 }
-ptrdiff_t get_int(char *where) {
+DATINT get_int(char *where) {
 	int datum;
 	memcpy( &datum, where, sizeof(datum));
 	return datum;
