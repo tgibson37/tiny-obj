@@ -140,7 +140,7 @@ void eset( int err ){
 /* Bump cursor over whitespace. Then return true on match and advance
    cursor beyond the literal else false and do not advance cursor
  */
-int _lit(char *s){
+int lit(char *s){
 	while( *cursor == ' ' 
 		|| *cursor == '\t' ) ++cursor;
 	int match = !strncmp(s,cursor, strlen(s));
@@ -171,11 +171,11 @@ int skip_tool(char l, char r, char* from, char* to){
   return delta;
 }
 
-/*  convenience skip for parsing returning boolean 0/1.
+/*  convenience skip for parsing. Returns boolean 0/1.
  *	True means problem, 0 means ok and cursor advanced. 
  *	That is the old 8080 definition, returned CY bit unset/set.
  */
-int _skip(char l, char r) {
+int skip(char l, char r) {
   int s = skip_tool(l,r,cursor,endapp);
   if(s<0)return 1;   //bad
   cursor += s;
@@ -184,7 +184,7 @@ int _skip(char l, char r) {
 
 #if 0
 // old parse version. NOte reversed meaning of returned boolean.
-int _skip(char l, char r) {
+int skipchar l, char r) {
 	int counter = 1;
 	 while( counter>0 && cursor<endapp ) {
 		if(*cursor==l)++counter;
@@ -239,14 +239,14 @@ char* _mustFind( char *from, char *upto, char c, int err ) {
 /* skip over comments and/or empty lines in any order, new version
 	tolerates 0x0d's, and implements // as well as old slash-star comments.
  */
-void _rem() {
+void rem() {
 	for(;;) {
 		while(    *cursor==0x0a
 				||*cursor==0x0d
 				||*cursor==' '
 				||*cursor=='\t'
 			  )++cursor;
-		if( !(_lit(xcmnt)||_lit(xcmnt2)) ) return;
+		if( !(lit(xcmnt)||lit(xcmnt2)) ) return;
 		while( *cursor != 0x0a && *cursor != 0x0d && cursor<endapp )
 			++cursor;
 	}
@@ -262,11 +262,11 @@ void varalloc(Type type, struct var *varparent
 		return;
 	}
 	cursor=lname+1;
-	if( _lit("(") ){
+	if( lit("(") ){
 		vclass = 1;		/* array or pointer */
 		char* fn=fname; /* localize globals that _asgn() may change */
 		char* ln=lname;
-		if( _asgn() ) alen=toptoi()+1;  /* dimension */
+		if( asgn() ) alen=toptoi()+1;  /* dimension */
 		fname=fn; 		/* restore the globals */
 		lname=ln;
 		char* x = _mustFind(cursor,cursor+5,')',RPARERR);
@@ -283,23 +283,23 @@ void varalloc(Type type, struct var *varparent
 
 /************ scan tools ******************/
 
-/*	skip a possibly compound statement. Shortcoming is brackets
+/*	skip( a possibly compound statement. Shortcoming is brackets
  *	in comments, they must be balanced.
  */
 void _skipSt() {
-	_rem();
-	if( _lit(xlb) ) {		/* compound */
-		_skip('[',']');
-		_rem();
+	rem();
+	if( lit(xlb) ) {		/* compound */
+		skip('[',']');
+		rem();
 		return;
 	}
-	else if( _lit(xif)||_lit(xwhile) ) {
-		_lit(xlpar);			/* optional left paren */
-		_skip('(',')');
+	else if( lit(xif)||lit(xwhile) ) {
+		lit(xlpar);			/* optional left paren */
+		skip('(',')');
 		_skipSt();
-		_rem();
-		if(_lit(xelse))_skipSt();
-		_rem();
+		rem();
+		if(lit(xelse))_skipSt();
+		rem();
 		return;
 	}
 	else {					/* simple statement, eol or semi ends */
@@ -307,7 +307,7 @@ void _skipSt() {
 			if( (*cursor==0x0d)||(*cursor=='\n')||(*cursor==';') )break;
 		}
 		++cursor;
-		_rem();
+		rem();
 	}
 }
 
@@ -344,21 +344,21 @@ int quit() {
  *	if not a declaration statement, true if it is. Leaves cursor just past
  *  optional semi. 
  */
-int _decl(struct varhdr *vh) {
-	if( _lit(xchar) ) {
+int decl(struct varhdr *vh) {
+	if( lit(xchar) ) {
 		do {
 			varalloc( Char, NULL, NULL, vh );
-		} while( _lit(xcomma) );
+		} while( lit(xcomma) );
 	} 
-	else if( _lit(xint) ) {
+	else if( lit(xint) ) {
 		do {
 			varalloc( Int, NULL, NULL, vh );
-		} while( _lit(xcomma) );
+		} while( lit(xcomma) );
 	} 
 	else {
 		return 0;  /* not decl */
 	}
-	_lit(xsemi);    /* is decl */
+	lit(xsemi);    /* is decl */
 	return 1;
 }
 
@@ -375,48 +375,48 @@ void st() {
 	}
 	prevcur=cursor;
 	if(quit())return;
-	_rem();
+	rem();
 	stbegin();
 	stcurs = cursor;
-	if(_decl(locals)){
-		_rem();
+	if(decl(locals)){
+		rem();
 		return;
 	}
-	else if( _lit(xlb) ){     /* compound statement */
+	else if( lit(xlb) ){     /* compound statement */
 		for(;;){
-			_rem();
+			rem();
 			if(leave||brake||error)return;
-			if(_lit(xrb)){
-				_rem();
+			if(lit(xrb)){
+				rem();
 				return;
 			}
 			st();
 		}
 	}
-	else if(_lit(xif)) {
-		if(_asgn()) {
+	else if(lit(xif)) {
+		if(asgn()) {
 			if(toptoi()) {
 				st();
-				_rem();
-				if(_lit(xelse)) {
+				rem();
+				if(lit(xelse)) {
 					_skipSt();
 				}
 			} 
 			else {
 				_skipSt();
-				_rem();
-				if(_lit(xelse)) {
+				rem();
+				if(lit(xelse)) {
 					st();
 				}
 			}
-			_rem();
+			rem();
 			return;
 		}
 	}
-	else if(_lit(xwhile)) {
-		_lit(xlpar);    /* optional left paren */
-		if( !_asgn() )return;   /* error */
-		_lit(xrpar);
+	else if(lit(xwhile)) {
+		lit(xlpar);    /* optional left paren */
+		if( !asgn() )return;   /* error */
+		lit(xrpar);
 		int condition = toptoi();
 		if( condition ) {
 /* prepare for repeating/skipping while (stcurs) 
@@ -440,11 +440,11 @@ void st() {
 			_skipSt();
 		}
 	}
-	else if(_lit(xsemi)) {
-		_rem();
+	else if(lit(xsemi)) {
+		rem();
 	}
-	else if(_lit(xreturn)) {
-		int eos = ( _lit(xrpar)
+	else if(lit(xreturn)) {
+		int eos = ( lit(xrpar)
 					 || *cursor==*xlb
 					 || *cursor==*xrb
 					 || *cursor==*xsemi
@@ -456,13 +456,13 @@ void st() {
 			pushzero(); /* default return value */
 		}
 		else {
-			_asgn();  /* specified return value */
+			asgn();  /* specified return value */
 		}
 		leave=1;		/* signal st() to leave the compound 
 						statement containing this return */
 		return;
 	}
-	else if(_lit(xbreak)) {
+	else if(lit(xbreak)) {
 		brake=1;
 		return;
 	}
@@ -470,7 +470,7 @@ void st() {
 		if(symName()) {   // decl of var of type 'o'
 			do {
 				varalloc( 'o', isvar, NULL, locals );
-			} while( _lit(xcomma) );
+			} while( lit(xcomma) );
 		}
 //dumpVarTab(locals);
 	}
@@ -483,7 +483,7 @@ void st() {
 		else eset(SYMERR);
 	}
 #endif
-	else if(_lit(xdelete)){
+	else if(lit(xdelete)){
 		if(symName()){
 //			char sym[VLEN+1];
 			struct var sym;
@@ -497,9 +497,9 @@ void st() {
 		}
 		else eset(SYNXERR);
 	}
-	else if( _asgn() ) {      /* if expression discard its value */
+	else if( asgn() ) {      /* if expression discard its value */
 		popst();
-        _lit(xsemi);
+        lit(xsemi);
 	}
 	else {
 		eset(STATERR);

@@ -301,7 +301,7 @@ void pft(char *from, char *to );
   /* All these do is prevent warnings from compiler */
 DATINT Mchrdy();
 DATINT Mgch(int,DATINT*);
-int _asgn();
+int asgn();
 int _reln();
 int _expr();
 int _term();
@@ -309,15 +309,15 @@ void _factor();
 char* _canon(char* first, char* l, char* buff);
 void _errToWords();
 void allocStuff();
-void _rem();
+void rem();
 int _decl(struct varhdr *vh);
-int _lit(char*);
+int lit(char*);
 void varalloc(Type type, struct var *varparent
 		, union stuff *vpassed, struct varhdr *vh);
 int symName();
 int charIn(char c, char *choices );
 void pFmt(char *fmt, DATINT *args);
-int _skip(char l, char r);
+int skip(char l, char r);
 struct varhdr* lnlink(char *from, char *to, char *blobName);
 void* mymalloc(char *name, int size);
 int dump_mallocs;

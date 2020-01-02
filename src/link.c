@@ -1,4 +1,5 @@
 #include "link.h"
+#include "var.h"
 #include "toc.h"
 
 int newop;
@@ -32,7 +33,7 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 		xxpass=2;
 		if(!newop)newfun(vh);
 	}
-	if(checkBrackets_ft(from,to))eset(RBRCERR+1000);
+	if(checkBrackets(from,to))eset(RBRCERR+1000);
 	if(error){ whatHappened(); exit(1); }
 	cursor=from;
 	endapp=to;
@@ -253,9 +254,9 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
  */
 void toclink() {
 	lnlink(cursor,endapp,"__Globals__");
-fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
-dumpBlobTab();
-exit(0);
+//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
+//dumpBlobTab();
+//exit(0);
 }
 
 /* links a class given its *var.

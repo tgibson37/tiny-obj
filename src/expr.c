@@ -46,8 +46,8 @@ void _enter( char* where) {
 	int nargs=0;
 	if(varargs>0) nargs=varargs-1;
 	if(where)fcn_enter();
-	_lit(xlpar); /* optional (   */
-	int haveArgs = ! (  _lit(xrpar)
+	lit(xlpar); /* optional (   */
+	int haveArgs = ! (  lit(xrpar)
 					 || *cursor==*xlb
 					 || *cursor==*xrb
 					 || *cursor==*xsemi
@@ -60,10 +60,10 @@ void _enter( char* where) {
 			if(error)return;
 			if( _asgn()) ++nargs;
 			else break;  /* break on error */
-		} while( _lit(xcomma) );
+		} while( lit(xcomma) );
 	}
 	if(error)return;
-	_lit(xrpar);   /* optional )   */
+	lit(xrpar);   /* optional )   */
 	_rem();
 	if(!where) {
 		if(nxtstack) {
@@ -83,21 +83,21 @@ void _enter( char* where) {
 		cursor = where;
 		for(;;) {	  
 			_rem();
-			if(_lit(xint)) { 
+			if(lit(xint)) { 
 				do {
 					_setArg(Int, &stack[arg],locals);
 					arg++;
-				} while(_lit(xcomma));
-				_lit(xsemi); /* optional */
+				} while(lit(xcomma));
+				lit(xsemi); /* optional */
 			} 
-			else if ( _lit(xchar)) {
+			else if ( lit(xchar)) {
 				do {
 					_setArg(Char, &stack[arg],locals);
 					arg++;
-				} while(_lit(xcomma));
-				_lit(xsemi);
+				} while(lit(xcomma));
+				lit(xsemi);
 			}
-			else if ( _lit(xvarargs) ){
+			else if ( lit(xvarargs) ){
 				varargs=nargs+1;
 				break;
 			}
@@ -131,10 +131,10 @@ void _enter( char* where) {
 /* An asgn is a reln or an lvalue = asgn. Note that
    reln can match an lvalue.
  */
-int _asgn(){ 
+int asgn(){ 
 	if(_reln()){
-		if(_lit(xeq)){
-			_asgn();
+		if(lit(xeq)){
+			asgn();
 			if(!error)_eq();
 		}
 	}
@@ -145,37 +145,37 @@ int _asgn(){
  */
 int _reln(){
 	if(_expr()){
-		if(_lit(xle)){
+		if(lit(xle)){
 			if(_expr()){
 				if(topdiff()<=0)pushone();
 				else pushzero();
 			}
 		}
-		else if(_lit(xge)){
+		else if(lit(xge)){
 			if(_expr()){
 				if(topdiff()>=0)pushone();
 				else pushzero();
 			}
 		}
-		else if(_lit(xeqeq)){
+		else if(lit(xeqeq)){
 			if(_expr()){
 				if(topdiff()==0)pushone();
 				else pushzero();
 			}
 		}
-		else if(_lit(xnoteq)){
+		else if(lit(xnoteq)){
 			if(_expr()){
 				if(topdiff()!=0)pushone();
 				else pushzero();
 			}
 		}
-		else if(_lit(xgt)){
+		else if(lit(xgt)){
 			if(_expr()){
 				if(topdiff()>0)pushone();
 				else pushzero();
 			}
 		}
-		else if(_lit(xlt)){
+		else if(lit(xlt)){
 			if(_expr()){
 				if(topdiff()<0)pushone();
 				else pushzero();
@@ -189,11 +189,11 @@ int _reln(){
 /* ;an EXPR is a term or sum (diff) of terms.
  */
 int _expr(){
-	if(_lit(xminus)){    /* unary minus */
+	if(lit(xminus)){    /* unary minus */
 		_term();
 		pushk(-toptoi());
 	}
-	else if(_lit(xplus)){
+	else if(lit(xplus)){
 		_term();
 		pushk(toptoi());
 	}
@@ -201,7 +201,7 @@ int _expr(){
 	while(!error){    /* rest of the terms */
 		int leftclass = stack[nxtstack-1].class;
 		int rightclass;
-		if(_lit(xminus)){
+		if(lit(xminus)){
 			_term();
 			rightclass = stack[nxtstack-1].class;
 			ptrdiff_t b=toptoi();
@@ -209,7 +209,7 @@ int _expr(){
 			if( rightclass || leftclass) pushPtr(a-b);
 			else pushk(a-b);
 		}
-		else if(_lit(xplus)){
+		else if(lit(xplus)){
 			_term();
 			rightclass = stack[nxtstack-1].class;
 			ptrdiff_t b=toptoi();
@@ -225,18 +225,18 @@ int _expr(){
 /* ;a term is a factor or a product of factors.
  */
 int _term() {
-	_factor();
+	factor();
 	while(!error) {
-		if(_lit(xstar)){
-			_factor();
+		if(lit(xstar)){
+			factor();
 			if(!error)pushk(toptoi()*toptoi());
 		}
-		else if(_lit(xslash)){
+		else if(lit(xslash)){
 			if(*cursor=='*' || *cursor=='/') {
 				--cursor;    /* opps, its a comment */
 				return 1;
 			}
-			_factor();
+			factor();
 			ptrdiff_t denom = toptoi();
 			ptrdiff_t numer = toptoi();
 			if(denom){
@@ -245,8 +245,8 @@ int _term() {
 			}
 			else eset(DIVERR);
 		}
-		else if(_lit(xpcnt)){
-			_factor();
+		else if(lit(xpcnt)){
+			factor();
 			ptrdiff_t b=toptoi();
 			ptrdiff_t a=toptoi();
 			if(b){

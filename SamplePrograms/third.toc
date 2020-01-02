@@ -1,0 +1,46 @@
+//third test program
+// class Game added.
+// Goal is current obj restored after a function call
+// Calls to Game, then Cannibal, then Game methods in main, line 32
+
+abstract class Player [
+    int number
+    char name(20)
+    printNumber[
+        pn number
+    ]
+    printName[
+        ps name
+    ]
+]
+class Cannibal extends Player [
+    Cannibal int n [ 
+        number = n
+        strcpy name, "cannibal"
+        pl "Cannibal constructor: "
+        ps name; pn number
+    ]
+]
+
+class Game [
+    play [
+        ps "          IN PLAY"
+//        pl"good!"
+    ]
+]
+
+main [
+    Game.play
+
+    Cannibal can
+    can = new Cannibal 1
+
+    pl"          main program: "
+    pl"          "
+    can.printName
+    can.printNumber
+    pl""
+    Game.play     // <<<==  subject of test 3
+    ps("      <<===   IN PLAY is good")
+    delete can
+]

@@ -597,7 +597,6 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 	endapp = savedEndapp;
 	if(verbose[VL])dumpVarTab(vh);
 }
-#endif
 
 /*	tools for accessing specific data in a *var. A var can be
  *	id'd two ways: ptr to the var entry (struct var *v), and
@@ -752,6 +751,9 @@ struct varhdr* classlink(struct var *isclvar){
 	lname = save_ln;
 	return vh;
 }
+#endif
+
+
 
 #if 0
 // useful code lines...
