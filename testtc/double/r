@@ -1,0 +1,30 @@
+***  TINY-C 8080 VERSION 1.0,  COPYRIGHT 1977, T A GIBSON  ***
+        This C version copyright 2017, T A Gibson
+
+double.tc - lrb - 11/5/19
+
+Enter the name of a text file to be read : 
+
+seconds to pause between words? 
+
+show all words (1) or just those with duplicate letters (0) 
+
+the file is 39 bytes long.
+
+8 word(s) and 3 newline(s) found
+
+Random
+sentence.
+foo
+foo 1
+
+bar
+
+baar
+baar 1
+
+cool
+cool 1
+
+
+done
