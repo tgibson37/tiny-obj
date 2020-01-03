@@ -8,7 +8,7 @@
 /*	Length of a canon'd symbol. varEntry adds one more byte to 
  *	make it a string. Multiple of 8 minus 1 recommended.*/
 
-#if 1
+#if 0
 #define DATINT int
 #define FMTINT "%d"
 #endif
@@ -18,11 +18,14 @@
 #define FMTINT "%ld"
 #endif
 
-#if 0
+#if 1
 #define DATINT ptrdiff_t
 #define FMTINT "%td"
 #endif
-/*	Choose one and only one of above for tc integer precision */
+/*	Choose one and only one of above for tc integer precision.
+ *	Some choices will generate warnings. ptrdiff_t is
+ *	recommended if it is supported by your platform. 
+ */
 
 union stuff { char uc; DATINT ui; void* up; };
 /*	All tc data are ints or chars. Pointers are an int index into pr. 

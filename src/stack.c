@@ -92,7 +92,7 @@ struct stackentry* popst() {
 
 /************ derived convenient pushers and poppers ************/
 
-int topdiff() {
+DATINT topdiff() {
 	int b = toptoi();
 	int a = toptoi();
 	return ( a-b );

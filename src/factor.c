@@ -2,7 +2,7 @@
 #include "expr.h"
 #include "stack.h"
 #include "var.h"
-#include "platform.h"
+//#include "platform.h"
 #include "toc.h"
 
 /* Situation: parsing argument declarations, passed values are on the stack.
@@ -249,15 +249,14 @@ void factor() {
 	}
 	else if( symName() ) {
 		cursor = lname+1;
-		int where, len, class, obsize, stuff;
 		if( symNameIs("MC") ) { 
-			_enter(0); return;
+			_enter(NULL); return;
 		} else {
 			struct var *v = addrval();  /* looks up symbol */
 			if( !v ){ eset(SYMERR); return; } /* no decl */
 		  	char* where = (*v).vdcd.vd.value.up;
-		  	int integer =  (*v).vdcd.vd.value.ui; 
-		  	int character = (*v).vdcd.vd.value.uc;
+//		  	int integer =  (*v).vdcd.vd.value.ui; 
+//		  	int character = (*v).vdcd.vd.value.uc;
 		  	int class=(*v).vdcd.vd.class; 
 	  		int type=(*v).type; 
 	  		int obsize = typeToSize(class,type);

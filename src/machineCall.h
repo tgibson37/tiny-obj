@@ -5,7 +5,7 @@
 #include "stack.h"
 #include "var.h"
 #include "fileRead.h"
-#include "platform.h"
+//#include "platform.h"
 #include "toc.h"
 #include <math.h>
 

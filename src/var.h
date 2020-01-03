@@ -60,6 +60,8 @@ struct varhdr {
 #endif
 
 /************ functions ************/
+int checkBrackets(char *from, char *to);
+
 //void newfun();
 void newfun(struct varhdr *vh);
 /*	opens a new vartab frame */

@@ -236,7 +236,7 @@ char escKey();
 int iProperty(char* file, char* name, int *val, int _default);
 int sProperty(char* file, char* name, char* val, int vlen, char* _default);
 int typeToSize( int class, Type type );
-int topdiff();
+//DATINT topdiff();
 DATINT toptoi();
 struct stackentry* popst();
 void pushst( int class, int lvalue, Type type, union stuff *value );
@@ -310,7 +310,7 @@ char* _canon(char* first, char* l, char* buff);
 void _errToWords();
 void allocStuff();
 void rem();
-int _decl(struct varhdr *vh);
+int decl(struct varhdr *vh);
 int lit(char*);
 void varalloc(Type type, struct var *varparent
 		, union stuff *vpassed, struct varhdr *vh);
