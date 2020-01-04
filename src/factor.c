@@ -5,6 +5,75 @@
 #include "link.h"
 #include "toc.h"
 
+/*	Situation: An object qualifier including its dot is parsed.
+ *	Action: Parse the required symname. Return its struct var.
+ *	Else appropriate error. Set curobj to qual's vh.
+ */
+struct var* obsym(char* qual) {
+	struct var *qvar;
+	struct varhdr *qvh;
+	struct var *ovar;
+	qvar = addrval_all(qual);
+	if(!qvar){
+		eset(SYMERR);
+		return NULL;
+	}
+//fprintf(stderr,"\ntoc~587 qvar: %x",qvar);
+//dumpVar(qvar);
+	canobj = qvh = (struct varhdr*)qvar->vdcd.od.blob;
+//fprintf(stderr,"\ntoc~590 qualifiers blob, %p",qvh);
+//dumpBV(qvh);
+	if(symName()){
+		ovar = addr_obj(qvh);
+		cursor = lname+1;
+		if(!ovar) eset(SYMERR);
+		return ovar;
+	}
+	else eset(SYNXERR);
+	return NULL;
+}   //was ~578
+
+
+/*	Situation: v describes a variable to be pushed as an 
+ *	lvalue onto the stack. Only the name is parsed. 
+ *	Action: If subscripted finish parsing and resolve to 
+ *	a specific element. Push as an lvalue.
+ */ 
+void _pushvar(struct var *v){
+	union stuff foo;
+	int class=v->vdcd.vd.class; 
+	int type=v->type; 
+	int obsize = typeToSize(class,type);
+	char* where = v->vdcd.vd.value.up;
+	int len=v->vdcd.vd.len;
+	if( lit(xlpar) ) {		       /* is dimensioned */
+  		if( !class ) {   /* must be class>0 */
+			eset(CLASERR);
+  		} else {  /* dereference the lvalue */
+  			/* reduce the class and recompute obsize */
+				obsize = typeToSize(--class,type);
+  			/* increment where by subscript*obsize */
+    		asgn(); if( error )return;
+    		lit(xrpar);
+      		int subscript = toptoi();
+			if(len-1)if( subscript<0 || subscript>=len )eset(RANGERR); 
+			where += subscript * obsize;
+			foo.up = where;
+			pushst( class, 'L', type, &foo);
+			return;
+		}
+	} else {	
+	/* is simple. Must push as 'L', &storagePlace. */
+		if(class==1){
+			foo.up = &((*v).vdcd.vd.value.up);
+		}
+		else{
+			foo.up = where;
+		}
+  		pushst( class, 'L', type, &foo);
+	}
+}
+
 /* Situation: parsing argument declarations, passed values are on the stack.
  * arg points into stack to an argument of type. 
  * Gets actual value of arg, calls valloc which parses and sets
@@ -221,7 +290,10 @@ Type _konst() {
     instead of a returned true/false. This varies from the rest of the expression 
     stack.
  */
+//int dmy=0;
+//int foobar(){return 0;}
 void factor() {
+//if((++dmy)==73) dmy=foobar();
 	union stuff foo;
 	Type type;
 	char* x;
@@ -273,6 +345,38 @@ void factor() {
 		}
 		else eset(CLASSERR);
 	}
+        else if( symName() ) {
+                cursor = lname+1;
+                if( symNameIs("MC") ) { 
+                        _enter(0); return;
+                } 
+                else {
+                        struct var *v;
+                        if( *(lname+1)=='.' ) {  // obj qualifier
+                                struct var qual;
+                                canon(&qual);
+                                cursor = lname+2;
+                                v = obsym(qual.name);  /* looks up symbol */
+                        }
+                        else v = addrval();  /* looks up symbol */
+                        if( !v ){ eset(SYMERR); return; } /* no decl */
+                        if(v->type=='o'){  //object ref
+                                union stuff value;
+                                value.up = &(v->vdcd.od.blob);
+                                pushst(0,'L','o',&value);
+                                return;
+                        }
+                        char* where = (*v).vdcd.vd.value.up;
+                        int class=(*v).vdcd.vd.class; 
+                        if( class=='E' ) _enter(where);  /* fcn call */
+                        else _pushvar(v);
+                }
+        }
+	else {
+		eset(SYNXERR);
+	}
+}
+
 #if 0
 	else if((isvar=_isClassName(MAYBEDOT))) {
 		if(*cursor=='.'){              // Game.play
@@ -293,7 +397,7 @@ void factor() {
 					_enter(where);
 				}
 				else {
-					pushvar(v);
+					_pushvar(v);
 				}
 			}
 			else eset(SYMERR);
@@ -304,7 +408,6 @@ void factor() {
 		}
 		else eset(SYMERR);
 	}
-#endif
 	else if( symName() ) {
 		cursor = lname+1;
 		if( symNameIs("MC") ) { 
@@ -350,7 +453,4 @@ void factor() {
 			}
 		}
 	}
-	else {
-		eset(SYNXERR);
-	}
-}
+#endif
