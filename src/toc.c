@@ -474,15 +474,6 @@ void st() {
 		}
 //dumpVarTab(locals);
 	}
-#if 0
-	else if((isvar=_isClassName(NODOT))) {
-		if(symName()) {   // decl of var of type 'o'
-			cursor = lname+1;
-			newref(isvar,locals);
-		}
-		else eset(SYMERR);
-	}
-#endif
 	else if(lit(xdelete)){
 		if(symName()){
 //			char sym[VLEN+1];

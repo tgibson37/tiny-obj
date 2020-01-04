@@ -253,10 +253,15 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
  *	which are set by the loader. 
  */
 void toclink() {
-	lnlink(cursor,endapp,"__Globals__");
-//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
-//dumpBlobTab();
-//exit(0);
+	struct varhdr *vh;
+	vh = lnlink(cursor,endapp,"__Globals__");
+#if 0
+fprintf(stderr,"\n--- %s %d --- dumps, then intentional exit\n",
+	__FILE__,__LINE__);
+dumpBlobTab();
+dumpVarTab(vh);
+exit(0);
+#endif
 }
 
 /* links a class given its *var.

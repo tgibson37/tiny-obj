@@ -3,11 +3,11 @@
 #include "var.h"
 #include "fileRead.h"
 #include <dlfcn.h>
+#include <getopt.h>
 
 #if 0
 #include <unistd.h>
 #include <dlfcn.h>
-#include <getopt.h>
 #include "toc.h"
 #endif
 

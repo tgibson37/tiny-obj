@@ -72,7 +72,7 @@
 #define LOCNUMVARS 100
 #define LOCDATLEN 1000
 #define NODOT 1
-#define YESDOT 0
+#define MAYBEDOT 0
 
 /* debug and verbosity tags */
 #define VE 0
@@ -332,7 +332,7 @@ int skip_tool(char l, char r, char* from, char* to);
 char* classToWord(int c);
 char* lvalToWord(char c);
 void _eq();
-struct varhdr* classlink(struct var *isclvar);
+//struct varhdr* classlink(struct var *isclvar);
 void _enter( char* where);
 
 #endif   // TOC_HDR

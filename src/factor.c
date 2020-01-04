@@ -2,7 +2,7 @@
 #include "expr.h"
 #include "stack.h"
 #include "var.h"
-//#include "platform.h"
+#include "link.h"
 #include "toc.h"
 
 /* Situation: parsing argument declarations, passed values are on the stack.
@@ -76,9 +76,11 @@ void _enter( char* where) {
 	}
 	else {   /* ABOVE parses the call args, BELOW parses the called's arg decls */
 //fprintf(stderr,"\n~342E BELOW: va %d na %d",varargs,nargs);
-		char *localstcurs=stcurs, *localcurs=cursor;
-		cursor = where;
 		newfun(locals);
+		char *localstcurs=stcurs, *localcurs=cursor;
+		curfun->obj = curobj;
+		curobj = canobj;
+		cursor = where;
 		for(;;) {	  
 			rem();
 			if(lit(xint)) { 
@@ -121,6 +123,7 @@ void _enter( char* where) {
 		leave=0;
 		cursor=localcurs;
 		stcurs=localstcurs;
+		curobj = curfun->obj;
 		fundone();
 		fcn_leave();
 	}
@@ -247,6 +250,61 @@ void factor() {
 			return;
 		}
 	}
+	else if(lit(xnew)){
+//		_rem();
+		struct var *isclvar;
+		if((isclvar=_isClassName(NODOT))){
+			struct varhdr *vh;
+			vh = classlink(isclvar);
+//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
+//dumpVarTab(vh);
+
+// call constructor (enter) if exist
+			struct var *con = _addrval(isclvar->name,vh->vartab,(vh->nxtvar)-1);
+			if(con){
+				char *where = con->vdcd.vd.value.up;
+				canobj = vh;   // enable instance variable search
+				_enter(where);
+				popst();      // pop constructor returned value
+			}
+			union stuff value;
+			value.up = vh;
+			pushst(0,'A','o',&value);
+		}
+		else eset(CLASSERR);
+	}
+#if 0
+	else if((isvar=_isClassName(MAYBEDOT))) {
+		if(*cursor=='.'){              // Game.play
+			struct varhdr *vh;
+			if(isvar->vdcd.cd.blob==NULL){
+				isvar->vdcd.cd.blob = vh = classlink(isvar);
+			}
+			else vh = isvar->vdcd.cd.blob;
+			++cursor;
+			if(symName()){
+				cursor=lname+1;
+				struct var *v;
+				v = addr_obj(vh);
+				if(!v){eset(SYMERR);return;}
+				//enter or push the value
+			  	char* where = v->vdcd.vd.value.up;
+				if(v->vdcd.vd.class=='E'){
+					_enter(where);
+				}
+				else {
+					pushvar(v);
+				}
+			}
+			else eset(SYMERR);
+		}
+		else if(symName()) {           // decl of var of type 'o'
+			cursor = lname+1;
+			newref(isvar,locals);
+		}
+		else eset(SYMERR);
+	}
+#endif
 	else if( symName() ) {
 		cursor = lname+1;
 		if( symNameIs("MC") ) { 
