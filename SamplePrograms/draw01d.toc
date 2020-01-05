@@ -1,0 +1,31 @@
+#include pps/pyGraphicsLib.tc
+#include pps/library.tc
+
+// Draw tools, just draw a few things
+
+class Line [
+	int fx,fy,tx,ty;
+	char label(0)
+	Line int x0, y0, x1, y1 [
+		fx=x0;fy=y0;tx=x1;ty=y1;
+	]
+	render int dx,dy [ moveto fx+dx,fy+dy; lineto tx+dx,ty+dy ]
+	setLabel char l(0) [label=l]
+	print [
+		ps label; 
+		ps": from"; pn fx; pn fy; ps", "; 
+		ps" to"; pn tx; pn ty; ps" "; 
+	]
+]
+
+main [
+	Line lines(9)
+	lines(0) = new Line 0,0,80,0
+	lines(1) = new Line 0,0,0,80
+	lines(0).print
+	lines(1).print
+	start "firstLine",615,490
+	lines(0).render 10,10
+	lines(1).render 10,10
+	show
+]

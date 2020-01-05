@@ -1,5 +1,10 @@
 #include "var.h"
+<<<<<<< HEAD
 #include "tc.h"
+=======
+#include "link.h"
+#include "toc.h"
+>>>>>>> newbase
 
 /* SITUATION: Function call parsed. 
 	Open new var and value frames for the functions locals.
@@ -127,7 +132,36 @@ void newvar( int class, Type type, int len, union stuff *passed ) {
 	if(verbose[VV])dumpVar(v);
 	return;
 }
+<<<<<<< HEAD
 #endif
+=======
+
+#if 0
+void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, char* where){
+//dumpBlob(vh);
+	struct var *c = vh->nxtvar++;
+	strcpy(c->name,cname);
+	c->type = abst?'A':'C';
+	strncpy(c->vdcd.cd.parent,ename,VLEN);
+	c->vdcd.cd.where = where;
+//dumpVar(c);
+}
+#endif
+
+/*  Refenence to an object: refname (fname,lname), type 'o', 
+ *  details: class entry (cls), blob to referenced object's blob (NULL) 
+ *  to be filled in when known.
+ */
+void newref(struct var *ocls, struct varhdr *vh) {
+  struct var *r = vh->nxtvar;
+  canon(r);
+  r->type = 'o';
+  r->vdcd.od.ocl = ocls;
+  r->vdcd.od.blob=NULL;
+  vh->nxtvar++;
+}
+
+>>>>>>> newbase
 /* Canonicalizes the name bracket by f,l inclusive into buff, and returns buff.
 	sizeOf buff must be at least VLEN+1.
  */
@@ -257,3 +291,97 @@ void dumpVarTab() {
 	};
 	if( !pos )fprintf(stderr," empty");
 }
+<<<<<<< HEAD
+=======
+
+void dumpBlob(struct varhdr *vh){
+	fprintf(stderr,"\nBlob (aka varhdr) at %p \n",vh );
+	struct var *vt = vh->vartab;
+	char* dt = vh->val;
+	fprintf(stderr,"  vartab       nxtvar    gltab     evar(val)\n");
+	fprintf(stderr,"   %9p %9zd %9zd %9zd\n",vh->vartab
+		,(ptrdiff_t)vh->nxtvar-(ptrdiff_t)vt,(ptrdiff_t)vh->gltab-(ptrdiff_t)vt
+		,(ptrdiff_t)vh->val-(ptrdiff_t)vt);
+	fprintf(stderr,"  val          used      endval\n");
+	fprintf(stderr,"   %9p %9zd %9zd\n",vh->val
+			,(ptrdiff_t)vh->datused-(ptrdiff_t)dt
+			,(ptrdiff_t)vh->endval-(ptrdiff_t)dt);
+	fprintf(stderr,"nxtvar,gltab are decimal sizes in vartab");
+	fprintf(stderr,"\nused,endval are decimal sizes in/of val");
+}
+void dumpBlobTab() {
+	struct blob *b;
+	fprintf(stderr,"\nvvv blob table vvv\n");
+	for(b=blobtab; b<nxtblob; ++b) {
+		fprintf(stderr,"\n%s: ",b->name);
+		dumpBlob(b->varhdr);
+		fprintf(stderr,"\n");
+	}
+	fprintf(stderr,"\n^^^ blob table ^^^\n");
+}
+
+void dumpBV(struct varhdr *vh){ 
+	dumpBlob(vh); 
+	dumpVarTab(vh);
+}
+
+/*	_newblob,newblob,_getblob,getblob build and search the blob table
+ */
+// Enters blob into blobtab. 
+void _newblob(char* name, void* blob){
+	if(nxtblob >= eblob){eset(TMBLOBERR);return;}
+	struct blob *b = nxtblob++;
+	strcpy(b->name,name);  //strlen(name) must be <= VLEN
+	b->varhdr = blob;
+}
+
+//Assumes sym is canonicalized
+struct varhdr* _getblob(char* sym){
+	struct blob *b;
+	for(b=blobtab; b<nxtblob; ++b) {
+    	if( !strcmp(b->name, sym) ) {
+    		return b->varhdr;
+    	}
+  	}
+  	return NULL;
+}
+
+/*	A class blob is named the same as the class whose vars it defines.
+ *	Globals and locals are named __Globals__ and __Locals__ resp.
+ *	Assumes symName() has just parsed and defined fname,lname.
+ */
+struct varhdr* getblob(){
+  struct var sym;
+  canon( &sym );
+  return _getblob(sym.name);
+}
+
+void getBlobName(struct varhdr *vh){
+
+}
+
+/*	Checks for balanced brackets, from *from to *to.
+ */
+int checkBrackets(char *from, char *to) {
+  int s;
+  while(from<to) {
+    while(*(from++) != '[' && from<to) ;
+    if(from<to) {
+    	s=skip_tool('[',']',from,to);
+    	if(s<0)return s;   //bad
+    }
+  }
+  return 0;   //good
+}
+
+
+#if 0
+// useful code lines...
+dumpft(fname,lname);
+fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
+dumpBlobTab();
+dumpBlob(blob);
+if(newop){
+}
+#endif
+>>>>>>> newbase

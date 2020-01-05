@@ -1,5 +1,35 @@
 #include "stack.h"
+<<<<<<< HEAD
 #include "tc.h"
+=======
+#include "toc.h"
+
+/*	prints a value given its description taken from a struct stackEntry
+ */
+void dumpVal_s(Type t, int class, union stuff *val, char lval){
+  if(class==1 && t==Char ){           // string
+    char sval[30];
+    strncpy(sval, (char*)(val->up), 30);
+    fprintf(stderr,"->%s<-", sval);
+  }
+  else if(class==1 || lval=='L'){     // pointer
+  	void *ptr=val->up;
+//fprintf(stderr,"\n           stack~13, %d %d",pr<=(char*)ptr, (char*)ptr<EPR);
+//fprintf(stderr,"\n           stack~14, %p %p %p",pr, (char*)ptr, EPR);
+    if(pr<=(char*)ptr && (char*)ptr<EPR) {
+      int p = (void*)pr-val->up;
+      fprintf(stderr,"pr[%d]",p);
+    }
+    else fprintf(stderr,"ptr");
+  }
+  else if(t==Char) fprintf(stderr,"%c",val->uc);   // actual datum
+#if defined(_WIN32)
+  else fprintf(stderr,"%Id",val->ui);
+#else
+  else fprintf(stderr,"%td",val->ui);
+#endif
+}
+>>>>>>> newbase
 
 void dumpStackEntry(int e){
 	fflush(stdout);
@@ -63,6 +93,7 @@ struct stackentry* popst() {
 /************ derived convenient pushers and poppers ************/
 
 DATINT topdiff() {
+<<<<<<< HEAD
 	DATINT b = toptoi();
 	DATINT a = toptoi();
 	return ( a-b );
@@ -72,6 +103,17 @@ DATINT topdiff() {
 	resolved and cast if necessary. */
 DATINT toptoi() {
 	DATINT datum;
+=======
+	int b = toptoi();
+	int a = toptoi();
+	return ( a-b );
+}
+
+/* pop the stack returning its int value, pointer 
+	resolved and cast to int if necessary. */
+DATINT toptoi() {
+	int datum;
+>>>>>>> newbase
 	union stuff *ptr;
 	if(verbose[VS]){
 		fprintf(stderr,"\ntoptoi pop: ");
@@ -89,6 +131,12 @@ DATINT toptoi() {
 	else if((*top).lvalue == 'L') {
 		if((*top).type==Int ) datum = *((DATINT*)((*top).value.up));
 		else if((*top).type==Char) datum = *((char*)((*top).value.up));
+<<<<<<< HEAD
+=======
+		else if((*top).type == 'o') {
+			datum = (DATINT)(*top).value.up;
+		}
+>>>>>>> newbase
 		else eset(TYPEERR);
 	}
 	else if((*top).lvalue == 'A') {

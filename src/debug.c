@@ -1,11 +1,21 @@
 #include "debug.h"
+<<<<<<< HEAD
 #include "tc.h"
+=======
+#include "toc.h"
+
+#define BTABSIZE 10
+#define BUF_SIZE 80
+>>>>>>> newbase
 
 /********* globals *****************/
 int db_running = 0;
 int db_next = 0;
 int db_skiplib = 1;
+<<<<<<< HEAD
 int db_rundepth = 1;
+=======
+>>>>>>> newbase
 #if 0
 struct brk {
 	struct var* var;
