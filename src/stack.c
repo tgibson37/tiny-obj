@@ -1,7 +1,4 @@
 #include "stack.h"
-<<<<<<< HEAD
-#include "tc.h"
-=======
 #include "toc.h"
 
 /*	prints a value given its description taken from a struct stackEntry
@@ -29,14 +26,15 @@ void dumpVal_s(Type t, int class, union stuff *val, char lval){
   else fprintf(stderr,"%td",val->ui);
 #endif
 }
->>>>>>> newbase
 
 void dumpStackEntry(int e){
 	fflush(stdout);
 	if( 0<=e && e<=nxtstack ) {
-		fprintf(stderr,"\n stack entry at %d: %d %c %d ", e, stack[e].class, 
-			stack[e].lvalue, stack[e].type );
-		if(verbose[VS])dumpVal(stack[e].type, stack[e].class, 
+		int rel = nxtstack-e-1;  // 0 is top
+		fprintf(stderr,"\n stack (0 is top) entry at %d: %s %s %s value ",
+			rel, classToWord(stack[e].class), 
+			lvalToWord(stack[e].lvalue), typeToWord(stack[e].type) );
+			dumpVal_s(stack[e].type, stack[e].class, 
 				&stack[e].value,stack[e].lvalue);
 	}
 	else {
@@ -62,11 +60,13 @@ void dumpTop() {
 }
 
 void stuffCopy( union stuff *to, union stuff *from ) {
+//fprintf(stderr,"\n%d %d",to,from);
 	memcpy( to, from, sizeof(*to));
 }
 
 /* basic pusher */
 void pushst( int class, int lvalue, Type type, union stuff *value ) {
+//fprintf(stderr,"\npushst~40 class,lvalue,type,value %d %d %d %d",class,lvalue,type,value);
 	if( nxtstack > stacklen) { error = PUSHERR; return; }
 	stack[nxtstack].class = class;
 	stack[nxtstack].lvalue = lvalue;
@@ -81,7 +81,7 @@ void pushst( int class, int lvalue, Type type, union stuff *value ) {
 
 /* basic popper, entry stays accessible until pushed over */
 struct stackentry* popst() {
-	if( nxtstack-1 < 0 ) { error = POPERR; return NULL; }
+	if( nxtstack-1 < 0 ) { eset(POPERR); return NULL; }
 	if(verbose[VS]){
 		fprintf(stderr,"\nstack pop: ");
 		dumpStackEntry(nxtstack-1);
@@ -93,17 +93,6 @@ struct stackentry* popst() {
 /************ derived convenient pushers and poppers ************/
 
 DATINT topdiff() {
-<<<<<<< HEAD
-	DATINT b = toptoi();
-	DATINT a = toptoi();
-	return ( a-b );
-}
-
-/* pop the stack returning its integer value, pointer 
-	resolved and cast if necessary. */
-DATINT toptoi() {
-	DATINT datum;
-=======
 	int b = toptoi();
 	int a = toptoi();
 	return ( a-b );
@@ -113,12 +102,12 @@ DATINT toptoi() {
 	resolved and cast to int if necessary. */
 DATINT toptoi() {
 	int datum;
->>>>>>> newbase
 	union stuff *ptr;
 	if(verbose[VS]){
 		fprintf(stderr,"\ntoptoi pop: ");
 		dumpStackEntry(nxtstack-1);
 	}
+//fprintf(stderr,"\ntoptoi ~82");
 
 	struct stackentry *top = &stack[--nxtstack];
 	if( (*top).class==1 ) {
@@ -131,12 +120,9 @@ DATINT toptoi() {
 	else if((*top).lvalue == 'L') {
 		if((*top).type==Int ) datum = *((DATINT*)((*top).value.up));
 		else if((*top).type==Char) datum = *((char*)((*top).value.up));
-<<<<<<< HEAD
-=======
 		else if((*top).type == 'o') {
 			datum = (DATINT)(*top).value.up;
 		}
->>>>>>> newbase
 		else eset(TYPEERR);
 	}
 	else if((*top).lvalue == 'A') {
@@ -144,11 +130,9 @@ DATINT toptoi() {
 		else if((*top).type==Int) datum  = ((*top).value.ui);
 		else eset(TYPEERR);
 	}
-	else { eset(LVALERR); }
+	else { eset(TYPEERR); }
 	if(verbose[VS]){
-		fprintf(stderr," -- toptoi ");
-// format FMTINT matches DATINT type (choice in common.h)
-		fprintf(stderr,FMTINT, datum);
+		fprintf(stderr," -- toptoi %d", datum);
 	}
 	return datum;
 }

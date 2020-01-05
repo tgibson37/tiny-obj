@@ -1,21 +1,13 @@
 #include "debug.h"
-<<<<<<< HEAD
-#include "tc.h"
-=======
 #include "toc.h"
 
 #define BTABSIZE 10
 #define BUF_SIZE 80
->>>>>>> newbase
 
 /********* globals *****************/
 int db_running = 0;
 int db_next = 0;
 int db_skiplib = 1;
-<<<<<<< HEAD
-int db_rundepth = 1;
-=======
->>>>>>> newbase
 #if 0
 struct brk {
 	struct var* var;
@@ -105,10 +97,9 @@ struct brk *find_b(char *sym) {
 
 /* print description and value of variable v */
 void printVar(struct var *v) {
-	printf("\n4~88\n var %d: %s %d %s %d ", 
-		(int)(v-vartab), (*v).name, (*v).vdcd.vd.class, 
-		typeToWord((*v).type), (*v).vdcd.vd.len );
-	print_val(v);
+	printf("\n4~88\n var %p: %s %d %s %d ", v,
+		(*v).name, (*v).vdcd.vd.class, typeToWord((*v).type), (*v).vdcd.vd.len );
+		print_val(v);
 }
 
 /********* command code *****************/
@@ -142,8 +133,10 @@ void db_brkset(char *sym) {
 void db_dump(char* param) {
 	int kase=*param;
 	switch(kase){
-	case 'f': dumpFun(); printf("\n"); break;
-	case 'v': dumpVarTab(); printf("\n"); break;
+	case 'f': dumpFun(); printf("\n"); 
+		break;
+	case 'v': //dumpVarTab(vartab); printf("\n"); 
+		break;
 	default: printf("d needs f (fcn table) or v (var table) parameter");
 	break;
 	}
@@ -167,7 +160,7 @@ void db_info() {
 void db_print(char* param) {
 	if(*param) {
 		struct var *found;
-		canon_buff( param, param+strlen(param)-1, buf );
+		_canon( param, param+strlen(param)-1, buf );
 		found = addrval_nohit(buf);
 		if(!found) printf("no such symbol\n");
 		else{
@@ -184,7 +177,7 @@ void db_print(char* param) {
 /* t <sym> */
 void db_type(char* param) {
 	struct var *found;
-	canon_buff( param, param+strlen(param)-1, buf );
+	_canon( param, param+strlen(param)-1, buf );
 	found = addrval_nohit(buf);
 	if(!found) printf("no such symbol\n");
 	else {
@@ -203,9 +196,10 @@ void db_usage() {
 	printf("	p <symbol>    print the value of symbol\n");
 	printf("	t <symbol>    print the type of symbol\n");
 	printf("	g             enter your C debugger (see setup notes)\n");
-	printf("	v [e|p|s|v]     toggle verbose mode for one of:\n");
+	printf("	v [e|p|s|f|v]     toggle verbose mode for one of:\n");
 	printf("	                e assignment, p parsed symbol,\n");
 	printf("	                s stack push/pops, v variables\n");
+	printf("	                f function calls\n");
 	printf("	d [f|v]       dump function or variable table\n");
 	printf("	default       print this usage\n");
 	printf("	x,q           exit tiny-C\n");
@@ -228,7 +222,8 @@ void db_verbose(char* param) {
 	case 's': bit=VS; break;
 	case 'p': bit=VP; break;
 	case 'v': bit=VV; break;
-	default: printf("v needs e, l, s, p, or v parameter"); return;
+	case 'f': bit=VF; break;
+	default: printf("v needs e, l, s, p, v, or f parameter"); return;
 	}
 	verbose[bit] = 1-verbose[bit];
 }
@@ -348,19 +343,21 @@ void prdone(){}
 /* before exiting tc (and old pps) */
 void tcexit(){}
 
-/* breakpoint appstbegin to see JUST app statments. */
+/* breakpoint appstbegin to see JUST app statements. */
 int firstAppStmt = 1;
 void appstbegin(){
 //printf("\n~326 nx %d lev %d",db_next,db_rundepth);
 	if(firstAppStmt){
+		db_rundepth = 1;
+		db_report_depth = 99;
 		firstAppStmt = 0;
 		_dbCommands();
 	}
 	if(db_next && (db_next >= db_rundepth) ){
 		int lineno = countch(apr,cursor,'\n');
 //		char* lc = lchar(cursor);
-		printf("line %d cursor(pr[%d])->%.10s\n", 
-				lineno,(int)(cursor-pr),cursor);
+		printf("line %d cursor(pr[%d])->%.30s\n"
+			, lineno,(int)(cursor-pr),cursor);
 		db_next=0;
 		_dbCommands();
 	}
@@ -386,11 +383,20 @@ void br_hit(struct var *v) {
 	}
 }
 
-/* called from enter when entering/leaving functions */
-void fcn_enter() {
+/*	called from enter when entering/leaving non-MC functions.
+ *	For verbose fcn (vf) report_depth trims lib calls.
+ */
+void fcn_enter(char* where) {
+	struct var fn;
+	canon(&fn);
+	strcpy(fcnName,fn.name);
 	++db_rundepth;
+	if(where>=apr)db_report_depth = db_rundepth;
 }
 void fcn_leave() {
 	--db_rundepth;
+	*fcnName=0;
 }
+/* public function */
+int fcnDepth() {return db_rundepth;}
 

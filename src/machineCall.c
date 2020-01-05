@@ -1,18 +1,10 @@
 #include "machineCall.h"
-<<<<<<< HEAD
-#include "tc.h"
-
-typedef DATINT (*McList)(int,DATINT*);      // Entry in list
-//    type (*fun_ptr)(arg typ list) = &fun; 
-DATINT  (*piMC )(int,int,DATINT*) = NULL;   //plug in MC pointer
-=======
 #include "toc.h"
 
 typedef DATINT (*McList)(int,DATINT*);
 //    type (*fun_ptr)(arg typ list) = &fun; 
 
 DATINT  (*piMC )(int,int,DATINT*) = NULL;
->>>>>>> newbase
 
 /*		MC9 ;scan for nth occurance of CH in a block. Args are
 		  first,last,CH,cnt address. Return pointer to nth
@@ -36,7 +28,7 @@ DATINT Mscann(int nargs, DATINT *args) {
 	char c     = args[2];
 	int *starN = (int*)args[3];
 	int n = *starN;
-	DATINT offset = scann(from,to,c,&n);
+	int offset = scann(from,to,c,&n);
 	*starN = n;
 	return offset;
 }
@@ -110,7 +102,7 @@ printf("\n\n63: MprF: nargs %d args[0..3] %d %d %d %d",
 /* original MC's */
 DATINT Mpc(int nargs, DATINT *args)
 {
-    printf("%c", (char)(*args) );
+    printf("%c", (char)*args);
 	return *args;
 }
 
@@ -119,10 +111,9 @@ DATINT Mpn(int nargs, DATINT *args)
   #if defined(_WIN32)
     printf("%Id", *args);
   #else
-// FMTINT matches DATINT type (choice in common.h)
-    printf(FMTINT, *args);
+    printf("%td", *args);
   #endif
-  	return 0;
+	return 0;
 }
 
 #if defined(_WIN32)
@@ -210,64 +201,35 @@ DATINT Mchrdy()
 }
 
 /* sleep for N seconds */
-<<<<<<< HEAD
-DATINT Msleep(int nargs, DATINT *argsv)
-=======
 DATINT Msleep(int nargs, DATINT *args)
->>>>>>> newbase
 {
-	int N = *argsv;
+	int N = *args;
 	sleep(N);
 	return 0;
 }
 
-<<<<<<< HEAD
-DATINT Mfilrd(int nargs, DATINT *argsv) {
-=======
 DATINT Mfilrd(int nargs, DATINT *args) {
->>>>>>> newbase
 	if(nargs<3){ eset(ARGSERR); return -1; }
-	char *name = (char*)argsv[0];
-	char *buff = (char*)argsv[1];
-	int bufflen = argsv[2];
+	char *name = (char*)args[0];
+	char *buff = (char*)args[1];
+	int bufflen = args[2];
 	return fileRead(name, buff, bufflen);
 }
 
-<<<<<<< HEAD
-DATINT Mfilwt(int nargs, DATINT *argsv) {
-=======
 DATINT Mfilwt(int nargs, DATINT *args) {
->>>>>>> newbase
 	if(nargs<3){ eset(ARGSERR); return -1; }
-	char *name = (char*)argsv[0];
-	char *buff = (char*)argsv[1];
-	int bufflen = argsv[2];
+	char *name = (char*)args[0];
+	char *buff = (char*)args[1];
+	int bufflen = args[2];
 	return fileWrite(name, buff, bufflen);
 }
 
-<<<<<<< HEAD
-DATINT Mstrlen(int nargs,DATINT *argsv) {
-=======
 DATINT Mstrlen(int nargs,DATINT *args) {
->>>>>>> newbase
 	if(nargs<1){ eset(ARGSERR); return -1; }
-	char* s=(char*)argsv[0];
+	char* s=(char*)args[0];
 	return strlen(s);
 }
 
-<<<<<<< HEAD
-DATINT Mstrcat(int nargs, DATINT *argsv) {
-	if(nargs<2){ eset(ARGSERR); return -1; }
-	char* a=(char*)argsv[0];
-	char* b=(char*)argsv[1];
-	return (DATINT)strcat(a,b);
-}
-
-DATINT Mstrcpy(int nargs, DATINT *argsv) {
-	if(nargs<2){ eset(ARGSERR); return -1; }
-	char* a=(char*)argsv[0];
-	char* b=(char*)argsv[1];
-=======
 DATINT Mstrcat(int nargs, DATINT *args) {
 	if(nargs<2){ eset(ARGSERR); return -1; }
 	char* a=(char*)args[0];
@@ -279,7 +241,6 @@ DATINT Mstrcpy(int nargs, DATINT *args) {
 	if(nargs<2){ eset(ARGSERR); return -1; }
 	char* a=(char*)args[0];
 	char* b=(char*)args[1];
->>>>>>> newbase
 	DATINT x = (DATINT)strcpy(a,b);
 	return x;
 }
@@ -309,7 +270,7 @@ DATINT Mfputs(int nargs, DATINT *args) {
 DATINT Mfputc(int nargs, DATINT *args) {
 	if(nargs<2){ eset(ARGSERR); return -1; }
 	char c = (char)args[0];
-	int unit = args[1];
+	int unit = (int)args[1];
 	return tcFputc(c,unit);
 }
 
@@ -340,13 +301,9 @@ DATINT Mgetprop(int nargs, DATINT *args) {
 }
 
 // load current date and time into supplied buff
-<<<<<<< HEAD
-DATINT Mcdate(int nargs, DATINT *argsv) {
-=======
 DATINT Mcdate(int nargs, DATINT *args) {
->>>>>>> newbase
 	if(nargs<1){ eset(ARGSERR); return -1; }
-	char *buff = (char*)argsv[0];
+	char *buff = (char*)args[0];
 	time_t rawtime;
 	struct tm *info;
 	time( &rawtime );
@@ -359,24 +316,16 @@ DATINT Mcdate(int nargs, DATINT *args) {
 }
 
 // execute another process, hangs until process ends
-<<<<<<< HEAD
-DATINT Msystem(int nargs, DATINT *argsv) {
-=======
 DATINT Msystem(int nargs, DATINT *args) {
->>>>>>> newbase
 	if(nargs<1){ eset(ARGSERR); return -1; }
-	char *cmd = (char*)argsv[0];
+	char *cmd = (char*)args[0];
 	return system(cmd);
 }
 // Put an integer to an open file, no leading space
-<<<<<<< HEAD
-DATINT Mfpn(int nargs, DATINT *argsv) {
-=======
 DATINT Mfpn(int nargs, DATINT *args) {
->>>>>>> newbase
 	if(nargs<2){ eset(ARGSERR); return -1; }
-	int x = argsv[0];
-	int unit = argsv[1];
+	int x = args[0];
+	int unit = args[1];
 	char buf[12];
 
 	if( (unit<0)||(unit>MAX_UNIT) )return -8;
@@ -389,24 +338,16 @@ DATINT Mfpn(int nargs, DATINT *args) {
  	return -2;
 }
 // Approximate square root
-<<<<<<< HEAD
-DATINT Msqrt(int nargs, DATINT *argsv) {
-=======
 DATINT Msqrt(int nargs, DATINT *args) {
->>>>>>> newbase
 	if(nargs<1){ eset(ARGSERR); return -1; }
-	double x = (double)argsv[0];
+	double x = (double)args[0];
 	if(x<0.0){ eset(ARGSERR); return -1; }
 	return (int)(sqrt(x)+0.5);
 }
 // Approximate arctan
-<<<<<<< HEAD
-DATINT Marctan(int nargs, DATINT *argsv) {
-=======
 DATINT Marctan(int nargs, DATINT *args) {
->>>>>>> newbase
 	if(nargs<1){ eset(ARGSERR); return -1; }
-	double x = (double)argsv[0];
+	double x = (double)args[0];
 	x = x/1000.0;
 //printf("\n %f %f %f", x, x/1000, atan(x)*180/3.14159);
 	return (int)(atan(x)*180/3.14159 + (x>0?0.5:-0.5) );
