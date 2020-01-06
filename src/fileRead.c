@@ -49,7 +49,6 @@ int fileWrite(char* name, char* buff, int bufflen){
 int tcFopen(char* name, char* mode){
 	if(nxtUnit>MAX_UNIT)return -9;
 	FILE* file = fopen(name,mode);
-//fprintf(stderr,"~91 %s %c %d",name,mode,file);
 	if(file==NULL)return -1;
 	fileUnit[nxtUnit] = file;
 	return nxtUnit++;
@@ -135,7 +134,6 @@ int sProperty(char* file, char* name, char* val, int vlen,
 	int lname = strlen(name);
 	strncpy(val,_default,vlen);
 	FILE* fp = fopen(file,"r");
-//fprintf(stderr,"\n~139FR %s %s %d %d",file,name,vlen,fp);
 	if(fp==NULL){
 		return -1;
 	}

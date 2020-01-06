@@ -2,14 +2,12 @@
 #include "toc.h"
 
 typedef DATINT (*McList)(int,DATINT*);
-//    type (*fun_ptr)(arg typ list) = &fun; 
-
 DATINT  (*piMC )(int,int,DATINT*) = NULL;
 
 /*		MC9 ;scan for nth occurance of CH in a block. Args are
-		  first,last,CH,cnt address. Return pointer to nth
-		  occurance,if it exists, otherwise to last. Also
-		  cnt is reduced by one for every CH found.
+ *		  first,last,CH,cnt address. Return pointer to nth
+ *		  occurance,if it exists, otherwise to last. Also
+ *		  cnt is reduced by one for every CH found.
  */
 DATINT scann( char *from, char *to, char c, int *n ) {
 	char *f = from;
@@ -58,7 +56,6 @@ void pFmt(char *fmt, DATINT *args) {
 	char pct[9], *nxtpct;
 	DATINT datum;
 	if(!(*fmt))return;
-//printf("\n~69 %s<<--\n",fmt);
 	if(*fmt=='%'){
 		datum = *(args++);
 		int i=0;
@@ -72,7 +69,6 @@ void pFmt(char *fmt, DATINT *args) {
 			}
 			else if(!isdigit(*fmt))break;
 		}
-//printf("\n  ~82 %s<<--\n",pct);
 		if(i>=5)printf("\nBAD FMT, max 3 digits, then one of dscx\n");
 		else printf(pct,datum);
 	}
@@ -91,10 +87,6 @@ void pFmt(char *fmt, DATINT *args) {
 /* new MC's with this implementation. A bit of modernization. */
 DATINT MprF(int nargs, DATINT *args)
 {
-/*
-printf("\n\n63: MprF: nargs %d args[0..3] %d %d %d %d",
-			nargs,args[0],args[1],args[2],args[3]);
-*/
 	pFmt((char*)*args,(args+1));  /* fmt, args */
 	return 0;
 }
@@ -133,8 +125,11 @@ DATINT Mgch(int nargs, DATINT *args)  // mod's lrb
  if (x == CTRLC) exit(0);
  return x;
 }
+
 #else
-/* MC1 (Mgch) has input an ESC key (via getch_), process that key */
+
+/* MC1 (Mgch) has input an ESC key (via getch_), process that key
+ */
 char escKey() {
 	if( kbhit()=='[' ){
 		getch_(0);   /* toss the [ */
@@ -158,7 +153,6 @@ DATINT Mgch(int nargs, DATINT *args)
 DATINT Mpft(int nargs, DATINT *args) {
 	char *from = (char*)*args;
 	char *to = (char*)*(args+1);
-/*printf("\nMC 109: from to %d %d\n", from-pr, to-pr );*/
 	for(;from<=to;++from) printf("%c",*from);
 		/*putchar(*from);*/
 	return 0;   // to avoid compile warning
@@ -171,7 +165,8 @@ DATINT naf(int nargs, DATINT *args)
     return 2;
 }
 
-/* args: a,b,dist. Block is [a..b] inclusive, distance is [+|-]dist */
+/* args: a,b,dist. Block is [a..b] inclusive, distance is [+|-]dist
+ */
 DATINT MmvBl(int nargs, DATINT *args)
 {
 	char *a, *b; int dist;
@@ -194,13 +189,15 @@ DATINT Mcountch(int nargs, DATINT *args) // lrb
 	return i;
 }
 
-/* test if keyboard char ready, return copy if so, else 0 */
+/* test if keyboard char ready, return copy if so, else 0
+ */
 DATINT Mchrdy()
 {
 	return kbhit();
 }
 
-/* sleep for N seconds */
+/* sleep for N seconds
+ */
 DATINT Msleep(int nargs, DATINT *args)
 {
 	int N = *args;
@@ -300,7 +297,8 @@ DATINT Mgetprop(int nargs, DATINT *args) {
 	return sProperty(file,name,buff,bufflen,defawlt);
 }
 
-// load current date and time into supplied buff
+/*	load current date and time into supplied buff
+ */
 DATINT Mcdate(int nargs, DATINT *args) {
 	if(nargs<1){ eset(ARGSERR); return -1; }
 	char *buff = (char*)args[0];
@@ -315,13 +313,15 @@ DATINT Mcdate(int nargs, DATINT *args) {
 	return (DATINT)buff;
 }
 
-// execute another process, hangs until process ends
+/*	execute another process, hangs until process ends
+ */
 DATINT Msystem(int nargs, DATINT *args) {
 	if(nargs<1){ eset(ARGSERR); return -1; }
 	char *cmd = (char*)args[0];
 	return system(cmd);
 }
-// Put an integer to an open file, no leading space
+/* Put an integer to an open file, no leading space
+ */
 DATINT Mfpn(int nargs, DATINT *args) {
 	if(nargs<2){ eset(ARGSERR); return -1; }
 	int x = args[0];
@@ -337,30 +337,31 @@ DATINT Mfpn(int nargs, DATINT *args) {
  	}
  	return -2;
 }
-// Approximate square root
+/*	Approximate square root
+ */
 DATINT Msqrt(int nargs, DATINT *args) {
 	if(nargs<1){ eset(ARGSERR); return -1; }
 	double x = (double)args[0];
 	if(x<0.0){ eset(ARGSERR); return -1; }
 	return (int)(sqrt(x)+0.5);
 }
-// Approximate arctan
+/*	Approximate arctan
+ */
 DATINT Marctan(int nargs, DATINT *args) {
 	if(nargs<1){ eset(ARGSERR); return -1; }
 	double x = (double)args[0];
 	x = x/1000.0;
-//printf("\n %f %f %f", x, x/1000, atan(x)*180/3.14159);
 	return (int)(atan(x)*180/3.14159 + (x>0?0.5:-0.5) );
 }
-
-/* first in this list is MC 1 */
+/* first in this list is MC 1
+ */
 McList origList[] =
 	{ &Mpc, &Mgch, &naf, &naf, &naf
 	, &naf, &MmvBl, &Mcountch, &Mscann, &naf // lrb
 	, &naf, &Mchrdy, &Mpft, &Mpn, &naf
 };
-
-/* first in this list is MC 101 */
+/* first in this list is MC 101
+ */
 McList newList[] =
 	{ &MprF, &Msleep, &Mfilrd, &Mstrlen, &Mstrcat
 	, &Mstrcpy, &Mfilwt, &Mexit, &Mexitq, &Mcdate
@@ -368,15 +369,16 @@ McList newList[] =
 	, &Mgetprop, &Msystem, &Mfpn, &Msqrt, &Marctan
 	, &naf, &naf, &naf, &naf, &naf
 };
-
-/* first in this list is MC 201 */
+/* first in this list is MC 201
+ */
 McList userList[] =
 	{ &naf, &naf, &naf, &naf, &naf  // lrb
 	, &naf, &naf, &naf, &naf, &naf
 };
 
-/*	code the MC above and register in McList array. Placement in the array
- *	determines the MC number starting with 1, 101, 201.
+/*	code the MC above and register in McList array. Placement
+ *	in the array determines the MC number starting with 1, 
+ *	101, 201.
  */
 
 void origMC(int mcno, int nargs, DATINT *args) {
@@ -410,7 +412,6 @@ void userMC(int mcno, int nargs, DATINT *args) { // lrb
 }
 
 DATINT plugInMC(int mcno, int nargs, DATINT *args) {
-//fprintf(stderr,"~355mc %d\n",piMC);
 	if(piMC==NULL) eset(ARGSERR);
 	else return (*piMC)(mcno, nargs, args);
 	return 0;   // to avoid compile warning

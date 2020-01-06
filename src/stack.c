@@ -11,8 +11,6 @@ void dumpVal_s(Type t, int class, union stuff *val, char lval){
   }
   else if(class==1 || lval=='L'){     // pointer
   	void *ptr=val->up;
-//fprintf(stderr,"\n           stack~13, %d %d",pr<=(char*)ptr, (char*)ptr<EPR);
-//fprintf(stderr,"\n           stack~14, %p %p %p",pr, (char*)ptr, EPR);
     if(pr<=(char*)ptr && (char*)ptr<EPR) {
       int p = (void*)pr-val->up;
       fprintf(stderr,"pr[%d]",p);
@@ -60,13 +58,11 @@ void dumpTop() {
 }
 
 void stuffCopy( union stuff *to, union stuff *from ) {
-//fprintf(stderr,"\n%d %d",to,from);
 	memcpy( to, from, sizeof(*to));
 }
 
 /* basic pusher */
 void pushst( int class, int lvalue, Type type, union stuff *value ) {
-//fprintf(stderr,"\npushst~40 class,lvalue,type,value %d %d %d %d",class,lvalue,type,value);
 	if( nxtstack > stacklen) { error = PUSHERR; return; }
 	stack[nxtstack].class = class;
 	stack[nxtstack].lvalue = lvalue;
@@ -107,7 +103,6 @@ DATINT toptoi() {
 		fprintf(stderr,"\ntoptoi pop: ");
 		dumpStackEntry(nxtstack-1);
 	}
-//fprintf(stderr,"\ntoptoi ~82");
 
 	struct stackentry *top = &stack[--nxtstack];
 	if( (*top).class==1 ) {
@@ -142,7 +137,6 @@ void pushk(DATINT datum) {
 	union stuff d;
 	d.ui = datum;
 	pushst( 0, 'A', Int, &d );
-//fprintf(stderr," -- pushk %d",datum);
 }
 
 /* push an int as a class 1 */

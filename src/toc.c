@@ -58,8 +58,6 @@ void _eq() {
 		union stuff *from =  &(val->value);
 		stuffCopy(to,from);
 		pushst(class, 'A', type, from);
-//fprintf(stderr,"toc~59: locals,vartab AFTER eq: %x",locals );
-//dumpVarTab(locals);
 		return;
 	}
 	else if(class==1 && (*val).class==1) {
@@ -131,9 +129,6 @@ void eset( int err ){
 	if(!error){
 		error=err;
 		errat=cursor;
-//fprintf(stderr,"\ntoc~131 cursor-apr %d\n",cursor-apr);
-//dumpft(fname,lname);
-//dumpBV(curobj);
 	}
 }
 
@@ -155,9 +150,7 @@ int lit(char *s){
  *	Returns # chars examined (delta) on OK, else -1.
  *  Does not change state, just examines.
  */
-//int skcnt=0;
 int skip_tool(char l, char r, char* from, char* to){
-//fprintf(stderr,"\ntoc~157 ");
   char *bf = from;
   int counter = 1;
   while( counter>0 && from<endapp ) {
@@ -166,7 +159,6 @@ int skip_tool(char l, char r, char* from, char* to){
     ++from;
   };
   int delta = from-bf;
-//fprintf(stderr,"toc~165 %d: counter %d delta %d",++skcnt,counter,delta);
   if( counter )return -1;   //bad
   return delta;
 }
@@ -181,20 +173,6 @@ int skip(char l, char r) {
   cursor += s;
   return 0;          //good
 }
-
-#if 0
-// old parse version. NOte reversed meaning of returned boolean.
-int skipchar l, char r) {
-	int counter = 1;
-	 while( counter>0 && cursor<endapp ) {
-		if(*cursor==l)++counter;
-		if(*cursor==r)--counter;
-		++cursor;
-	};
-	if( counter )return counter;
-	return 0;
-}
-#endif
 
 /* Parse a symbol defining fname, lname. ret: true if symbol.
  *	Advances the cursor to but not over the symbol,
@@ -472,11 +450,9 @@ void st() {
 				varalloc( 'o', isvar, NULL, locals );
 			} while( lit(xcomma) );
 		}
-//dumpVarTab(locals);
 	}
 	else if(lit(xdelete)){
 		if(symName()){
-//			char sym[VLEN+1];
 			struct var sym;
 			canon(&sym);
 			cursor = lname+1;
@@ -577,5 +553,3 @@ char get_char(char *where) {
 	memcpy( &datum, where, sizeof(datum));
 	return datum;
 }
-
-//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);

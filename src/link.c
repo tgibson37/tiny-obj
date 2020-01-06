@@ -5,15 +5,13 @@
 int newop;
 int xxpass=0;
 
-// pass 2 action for xclass, xabstract
+/*	pass 2 action for xclass, xabstract */
 void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, char* where){
-//dumpBlob(vh);
 	struct var *c = vh->nxtvar++;
 	strcpy(c->name,cname);
 	c->type = abst?'A':'C';
 	strncpy(c->vdcd.cd.parent,ename,VLEN);
 	c->vdcd.cd.where = where;
-//dumpVar(c);
 }
 
 /*	Pass one if varhdr is NULL computes the needed sizes. Pass two does
@@ -24,12 +22,9 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 	char* cptr;
 	char* savedEndapp=endapp;
 	char* savedCursor=cursor;
-//	struct var *vartab;
 	if(vh==NULL){
-//		vartab=NULL;   // pass 1 
 		xxpass=1;
 	} else {
-//		vartab=vh->vartab;
 		xxpass=2;
 		if(!newop)newfun(vh);
 	}
@@ -37,23 +32,11 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 	if(error){ whatHappened(); exit(1); }
 	cursor=from;
 	endapp=to;
-//fprintf(stderr,"\n~507 %d",xxpass);
 	while(cursor<endapp && !error){
-//fprintf(stderr,".");
 		char* lastcur = cursor;
 		rem();
 		if(lit(xlb)) skip('[',']');
 		else if( decl(vh) ) ;
-#if 0
-		else if(newop) {
-			struct var *isvar = _isClassName(NODOT);
-			if(isvar) {
-				do {
-					varalloc('o',isvar,0,vh);
-				} while( lit(xcomma) );
-			}
-		}
-#endif
 		else if( lit(xendlib) ){
 			if(vh != NULL){     //  <<==  PASS TWO endlibrary
 				if(curfun==fun) {   /* 1st endlib, assume app globals follow */
@@ -253,15 +236,7 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
  *	which are set by the loader. 
  */
 void toclink() {
-	struct varhdr *vh;
-	vh = lnlink(cursor,endapp,"__Globals__");
-#if 0
-fprintf(stderr,"\n--- %s %d --- dumps, then intentional exit\n",
-	__FILE__,__LINE__);
-dumpBlobTab();
-dumpVarTab(vh);
-exit(0);
-#endif
+	lnlink(cursor,endapp,"__Globals__");
 }
 
 /* links a class given its *var.
@@ -289,8 +264,7 @@ struct varhdr* classlink(struct var *isclvar){
 	return vh;
 }
 
-#if 0
-// useful code lines...
+#if 0        // useful code lines...
 dumpft(fname,lname);
 fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 dumpBlobTab();

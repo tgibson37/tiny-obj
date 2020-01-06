@@ -1,6 +1,6 @@
 #include "toc.h"
 
-//dialog words, phrases
+/*	dialog words, phrases */
 char *dchar = "char";
 char *dint  = "int";
 char *dNotType = "not a type";
@@ -11,7 +11,6 @@ char *dobj = "obj";
 char *dNotClass = "not a class";
 char *dlvalue = "lvalue";
 char *dactual = "actual";
-//char *d = "";
 
 int countch(char *f, char *t, char c){
 	int k=1;   /* start on line 1 */

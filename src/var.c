@@ -66,7 +66,6 @@ void newfun(struct varhdr *vh) {
 		curfun->fvar = curfun->evar = vh->nxtvar;
 		curfun->datused = vh->datused;
 	}
-//fprintf(stderr,"\nrep run %d %d  ",db_report_depth, db_rundepth);
 	if(verbose[VF] && db_report_depth <= db_rundepth){
 		fflush(stdout);
 		fprintf(stderr,"\n");
@@ -82,14 +81,6 @@ void fundone() {
 	locals->nxtvar=curfun->fvar;
 	locals->datused=curfun->datused;
 	--curfun;
-#if 0
-	if(verbose[VF] && db_report_depth < db_rundepth){
-		fflush(stdout);
-		fprintf(stderr,"\n");
-		dumpDots(fcnDepth());
-		fprintf(stderr,"fundone");
-	}
-#endif
 }
 
 /*********** var tools ****************/
@@ -119,11 +110,6 @@ int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
  */
 int _allocSpace(struct var *v, int amount, struct varhdr *vh){
 	if( vh->datused+amount > vh->endval ) {
-#if 0
-fprintf(stderr,"var~120: allocSpace, need %d avail %d vh %x\n"
-			,amount, vh->endval-vh->datused, vh
-		);
-#endif
 		eset(TMVLERR);
 		return TMVLERR;
 	}
@@ -167,18 +153,6 @@ void newvar( int class, Type type, int len, struct var *objclass,
 	if(verbose[VV])dumpVar(v);
 	return;
 }
-
-#if 0
-void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, char* where){
-//dumpBlob(vh);
-	struct var *c = vh->nxtvar++;
-	strcpy(c->name,cname);
-	c->type = abst?'A':'C';
-	strncpy(c->vdcd.cd.parent,ename,VLEN);
-	c->vdcd.cd.where = where;
-//dumpVar(c);
-}
-#endif
 
 /*  Refenence to an object: refname (fname,lname), type 'o', 
  *  details: class entry (cls), blob to referenced object's blob (NULL) 
@@ -272,8 +246,6 @@ struct var* addrval() {
 struct var* _isClassName(int nodot) {
 	if(!symName())return NULL;
 	if(nodot && (*(lname+1)=='.'))return NULL;
-//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
-//dumpft(fname,lname);
 	char buf[VLEN+1];
 	int len = canonIf(buf);
 	if(len){
@@ -289,30 +261,6 @@ struct var* _isClassName(int nodot) {
 	}
 	return NULL;
 }
-
-#if 0
-void dumpVal_s(Type t, int class, union stuff *val, char lval){
-//	fprintf(stderr," at pr[%d]",(int)((*val).up-(void*)pr));
-	if(class==1 && t==Char ){
-		char sval[30];
-		strncpy(sval, (char*)((*val).up), 30);
-		fprintf(stderr,"->%s<-", sval);
-	}
-	else if(class==0 && lval!='A'){ 
-		if(t==Char){
-			char x = *(char*)((*val).up);
-			if(x)fprintf(stderr,"->%c<-", x );
-			else fprintf(stderr,"->NULL<-");
-		}
-		else fprintf(stderr,"->%td<-", (*val).ui );
-//		else fprintf(stderr,"->%d<-", *(int*)((*val).up) );
-	}
-/*
-	else if(t==Char) fprintf(stderr,"%c",(*val).uc);
-	else fprintf(stderr,"%d",(*val).ui);
-*/
-}
-#endif
 
 void dumpFunEntry( int e ) {
 	fprintf(stderr,"\n fun entry at %d:  %p %p %p", e,
@@ -331,23 +279,6 @@ void dumpFun() {
 char* classToWord_v(struct var *v){
 	return classToWord((*v).vdcd.vd.class);
 }
-#if 0
-char *__typwrd_0__ = "Actual";
-char *__typwrd_1__ = "Pointer";
-char *__typwrd_o__ = "Object";
-char *__typwrd_E__ = "Function";
-char *__typwrd_Uk__ = "Unknown Type";
-
-char* classToWord(struct var *v){
-	switch((*v).vdcd.vd.class); {
-		case 0: return __typwrd_0__;
-		case 1: return __typwrd_1__;
-		case 0x6f: return __typwrd_o__;
-		case 0x45: return __typwrd_E__;
-		default: return __typwrd_Uk__;
-	}
-}
-#endif
 
 void dumpVar(struct var *v) {
 	if(v->type=='A' || v->type=='C') {
@@ -365,7 +296,6 @@ void dumpVar(struct var *v) {
 			, (*v).vdcd.vd.len, (*v).vdcd.vd.value.ui
 			, (*v).vdcd.vd.value.up );
 	}
-//	dumpVal_v(v);
 }
 
 void dumpVarTab(struct varhdr *vh) {
@@ -465,9 +395,7 @@ int checkBrackets(char *from, char *to) {
   return 0;   //good
 }
 
-
-#if 0
-// useful code lines...
+#if 0           // useful code lines...
 dumpft(fname,lname);
 fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 dumpBlobTab();

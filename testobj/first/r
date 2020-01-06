@@ -2,7 +2,6 @@
         This C version copyright 2017, T A Gibson
 Cannibal constructor: cannibal 1
 main program: 
- 
-app line 37 (cursor pr[6097])SYNXERR
-    can.printName
-      ^
+ cannibal 1
+ nurse 2
+done

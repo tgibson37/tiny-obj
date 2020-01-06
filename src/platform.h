@@ -22,8 +22,8 @@ char getch_(int echo);
 // (works on mint linux, a derivitave of ubuntu)
 #include <termios.h>
 /*************** data ***************/
-static struct termios old, new;
-//#define ECHO 1
+// kbhit needed this. Too delicate to remove yet.
+//static struct termios old, new;
 /************* functions ************/
 int kbhit(void);
 /*	Detect a key hit is waiting in its buffer, return the char,

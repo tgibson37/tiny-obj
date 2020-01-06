@@ -5,10 +5,8 @@
 #include <dlfcn.h>
 #include <getopt.h>
 
-#if 0
-#include <unistd.h>
+#if 0     // needed for dynamic MC load
 #include <dlfcn.h>
-#include "toc.h"
 #endif
 
 /*	main for the toc interpreter. 
@@ -20,6 +18,7 @@ extern char* optarg;
 //extern char* xendlib;
 extern int  (*piMC )(int,int,int*);
 int naf(int nargs, int *args);
+int dump_mallocs;
 
 char* startSeed="[main();]";
 char* ppsPath="./pps";
@@ -43,53 +42,6 @@ void tcUsage() {
 	printf("\nNo args prints this usage.");
 	printf("\n");
 }
-
-#if 0
-// Get the function pointer to the function
-void* getFcnPtr(void* lib, const char* fcnName) {
-    void* fptr = dlsym(lib, fcnName);
-    if (!fptr) {
-        fprintf(stderr, "Could not get function pointer for %s\n  error is: %s\n\n", fcnName, dlerror());
-        return NULL;
-    }
-    return fptr;
-}
-
-void loadMC(char* libName) {
-	char fileName[1000];
-
-// Open the dynamic library
-	strcpy(fileName,"./lib");
-	strcat(fileName,libName);
-	strcat(fileName,".so");
-    void* libMC = dlopen(fileName,  RTLD_LAZY | RTLD_GLOBAL);
-    if (!libMC) {
-        fprintf(stderr, "Could not open %s\n",fileName);
-        fprintf(stderr, "dlerror: %s\n", dlerror());
-        exit(1);
-    }
-// Set the plugInMC fcn pointer
-    piMC = getFcnPtr(libMC, "plugInMC");
-	if(!piMC) {
-        fprintf(stderr, 
-        	"Protocol: plug in MC %s needs plugInMC function\n"
-        	,libName);
-        exit(1);
-    }
-    if(loadMsg)printf("MC: %s loaded\n",fileName);
-// set callback to eset
-	void (*register_eset)(void(*)());   // Prototype of fcn in .so
-	register_eset = dlsym(libMC, "register_eset");
-	if(register_eset == NULL){
-		fprintf(stderr,
-			"Error: %s needs register_eset function\n"
-			,fileName);
-		exit(1);
-	}
-	(*register_eset)(&eset);   //calls to .so's reg_fcn
-    if(loadMsg)printf("callback function eset registered");
-}
-#endif
 
 int loadCode(char* file) {
 	int nread = fileRead(file, endapp, EPR-endapp);
@@ -124,7 +76,6 @@ void markEndlibrary() {
  *	the file. Return negative on error, else a count of loaded files.
  */
 int doIncludes(char* fname) {
-//fprintf(stderr,"tocMain~115 %s\n",fname);
 	int unit,len,lineno=0,libCount=0;
 	char buff[200];
 	unit = tcFopen(fname,"r");
@@ -146,12 +97,6 @@ int doIncludes(char* fname) {
 			loadCode(buff+9);  // exit(1) on failure
 			++libCount;
 		}
-#if 0
-               else if(!strncmp(buff,"#loadMC ",8)) {
-                       loadMC(buff+8);  // exit(1) on failure
-                       ++loadCount;
-               }
-#endif
 		else{
 			break;
 		}
@@ -232,8 +177,6 @@ void allocStuff() {
     vh->datused= (char*)(vh->vartab + LOCNUMVARS);   // also serves as end of vartab
     vh->val =    (char*)(vh->vartab + LOCNUMVARS);   // also serves as end of vartab
     vh->endval = (char*)locals + size;
-//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
-//dumpVarTab(locals);
 }
 
 int main(int argc, char *argv[]) {
@@ -262,14 +205,6 @@ int main(int argc, char *argv[]) {
         case 'r': 
         	rArg=optarg;
         	break;
-#if 0
-        	*pr = '[';
-        	strcpy(pr+1,optarg);
-        	lpr = endapp = prused = pr+strlen(optarg)+3;
-        	*(endapp-2) = ']';
-        	*(endapp-1)='\n';
-        	break;
-#endif
 	    case '?':
 	        if (optopt == 'r')
 	          fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -335,7 +270,7 @@ int main(int argc, char *argv[]) {
 void* mymalloc(char *name, int size){
 	void *m;
 	m=malloc(size);
-#if 0
+#if 0          // undocumented tc-dbg -m option
 	if(dump_mallocs)fprintf(stderr,
 			"\nMALLOC %s size %d at %td..%td (%p..%p)"
 			,name,size, (ptrdiff_t)m,(ptrdiff_t)m+size, m,m+size);

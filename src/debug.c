@@ -8,13 +8,6 @@
 int db_running = 0;
 int db_next = 0;
 int db_skiplib = 1;
-#if 0
-struct brk {
-	struct var* var;
-	int enabled;
-	int hits;
-} brktab[BTABSIZE];
-#endif
 int nxtbrk = 0;
 char buf[BUF_SIZE+1];
 int sizeof_line = BUF_SIZE;
