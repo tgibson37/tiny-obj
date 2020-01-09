@@ -18,7 +18,7 @@ class Line [
 	pr [ps label; pn fx; pn fy; ps", "; pn tx; pn ty ]
 ]
 
-register int bar[pl"In register "; pn bar]
+register int bar[pl"In register "; pn bar!=0]
 
 main [
 	start "firstLline",615,490
