@@ -14,6 +14,23 @@ void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, char* where){
 	c->vdcd.cd.where = where;
 }
 
+/*	add 'this' variable to an object's vartab */
+void newvar_this(struct varhdr *vh){
+ps("link~19, newvar_this ");pn(vh);pl("");
+//	union stuff stf;
+//	stf.up = vh;
+	struct var *v = vh->nxtvar;
+	struct var *evar = (struct var*)vh->val;
+	strcpy(v->name, "this" );
+	v->type = 'o';
+	v->vdcd.od.class =  0;
+	v->vdcd.od.len =  1;
+//	v->vdcd.od.ocl = ???;
+	v->vdcd.od.blob =  vh;
+	if( vh->nxtvar++ >= evar )eset(TMVRERR);
+	if(verbose[VV])dumpVar(v);
+}
+
 /*	Pass one if varhdr is NULL computes the needed sizes. Pass two does
  *	the actual link into varhdr, which also has room for all values.
  *	The logic here mimics classical void link().
@@ -190,7 +207,8 @@ void ascend(char *cname, char **from, char **to){
  *	Parse, var, and other services are supplied by whole unchanged tiny-c files.
  *	Uses lnpass12 as a service.
  */
-struct varhdr* lnlink(char *from, char *to, char *blobName){
+struct varhdr* lnlink(char *from, char *to, 
+                       char *blobName, struct var *isclvar){
         newop = strcmp(blobName,"__Globals__"); // true iff doing new operator
         int size;
         char* blob;
@@ -209,14 +227,20 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
 	        }
 	        else break;
         }
-        size = sizeof(struct varhdr) + lndata.nvars*sizeof(struct var) + lndata.valsize;
-        blob = mymalloc("blob", size+10);
+        if(newop){
+        	lndata.nvars++;   // for 'this'
+        	lndata.valsize += sizeof(void*);
+        }
+        size = sizeof(struct varhdr) 
+        		+ lndata.nvars*sizeof(struct var) + lndata.valsize;
+        blob = mymalloc(blobName, size+10);
         vh = (struct varhdr*)blob;
         _newblob(blobName,blob);
 		memset(vh, 0, size);
         vh->vartab = vh->nxtvar = vh->gltab = (struct var*)(vh+1);
         vh->val = vh->datused = (char*)(vh->vartab+lndata.nvars);
         vh->endval = blob + size;
+		if(newop)newvar_this(vh);
         f=from; t=to;
 		strncpy(par_buf,blobName,VLEN+1);
         while(f){
@@ -236,7 +260,7 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
  *	which are set by the loader. 
  */
 void toclink() {
-	lnlink(cursor,endapp,"__Globals__");
+	lnlink(cursor,endapp,"__Globals__",NULL);
 }
 
 /* links a class given its *var.
@@ -254,7 +278,7 @@ struct varhdr* classlink(struct var *isclvar){
 	char *save_fn = fname;  // need class name later
 	char *save_ln = lname;
 	struct varhdr *vh;
-	vh = lnlink(from, to, isclvar->name);
+	vh = lnlink(from, to, isclvar->name, isclvar);
 	if(error){
 		whatHappened();
 		exit(1);

@@ -257,7 +257,8 @@ int symName();
 int charIn(char c, char *choices );
 void pFmt(char *fmt, DATINT *args);
 int skip(char l, char r);
-struct varhdr* lnlink(char *from, char *to, char *blobName);
+struct varhdr* lnlink(char *from, char *to, 
+              char *blobName, struct var *isclvar);
 void* mymalloc(char *name, int size);
 //int dump_mallocs;
 void stuffCopy( union stuff *to, union stuff *from );

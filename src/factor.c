@@ -332,8 +332,15 @@ void factor() {
         else if( symName() ) {
                 cursor = lname+1;
                 if( symNameIs("MC") ) { 
-                        _enter(0); return;
+                    _enter(0); return;
                 } 
+#if 0
+                else if( symNameIs("this") && curobj) {
+					foo.up = curobj;
+                    pushst(0,'A','o',&foo);
+                    return;
+                } 
+#endif
                 else {
                         struct var *v;
                         if( *(lname+1)=='.' ) {  // obj qualifier
