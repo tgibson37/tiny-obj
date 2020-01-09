@@ -16,7 +16,7 @@ void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, char* where){
 
 /*	add 'this' variable to an object's vartab */
 void newvar_this(struct varhdr *vh){
-ps("link~19, newvar_this ");pn(vh);pl("");
+//ps("link~19, newvar_this ");pn(vh);pl("");
 //	union stuff stf;
 //	stf.up = vh;
 	struct var *v = vh->nxtvar;
