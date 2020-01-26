@@ -46,7 +46,13 @@ int nxtvar, vtablen;
 /************ functions ************/
 int checkBrackets(char *from, char *to);
 
-//void newfun();
+/*  getters */
+int getclass(struct var *v);
+int getlen(struct var *v);
+struct varhdr* getvarhdr(struct var *v);
+char* getvarwhere(struct var *v);
+
+
 void newfun(struct varhdr *vh);
 /*	opens a new vartab frame */
 void fundone();
@@ -69,6 +75,9 @@ struct var* addrval_all(char *sym);
 struct var* addrval();
 /* 	looks up a symbol pointed to by fname,lname: 
  *	locals, globals, library levels in that order. First hit wins. */
+int fcn(struct var *v);
+/*  return true if *v is a function
+ */
 void dumpVal(Type t, int class, union stuff *val, char lval);
 void dumpFunEntry( int e );
 void dumpFun();

@@ -29,10 +29,11 @@ void dumpStackEntry(int e){
 	fflush(stdout);
 	if( 0<=e && e<=nxtstack ) {
 		int rel = nxtstack-e-1;  // 0 is top
-		fprintf(stderr,"\n stack (0 is top) entry at %d: %s %s %s value ",
+		fprintf(stderr,
+			"\n stack (0 is top) entry at %d: %s %s %s value ",
 			rel, classToWord(stack[e].class), 
 			lvalToWord(stack[e].lvalue), typeToWord(stack[e].type) );
-			dumpVal_s(stack[e].type, stack[e].class, 
+		dumpVal_s(stack[e].type, stack[e].class, 
 				&stack[e].value,stack[e].lvalue);
 	}
 	else {
@@ -61,7 +62,9 @@ void stuffCopy( union stuff *to, union stuff *from ) {
 	memcpy( to, from, sizeof(*to));
 }
 
-/* basic pusher */
+/*	Basic pusher. Note that value content is copied so it
+ *	is ok to build a value as a local then pass its address.
+ */
 void pushst( int class, int lvalue, Type type, union stuff *value ) {
 	if( nxtstack > stacklen) { error = PUSHERR; return; }
 	stack[nxtstack].class = class;
@@ -97,10 +100,11 @@ DATINT topdiff() {
 /* pop the stack returning its int value, pointer 
 	resolved and cast to int if necessary. */
 DATINT toptoi() {
+//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 	int datum;
 	union stuff *ptr;
 	if(verbose[VS]){
-		fprintf(stderr,"\ntoptoi pop: ");
+		fprintf(stderr,"\ntoptoi pop: %d",nxtstack-1);
 		dumpStackEntry(nxtstack-1);
 	}
 

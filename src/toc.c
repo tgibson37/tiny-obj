@@ -20,9 +20,10 @@ struct varhdr *__temp_vh__;
 
 /* stored size of one datum */
 int typeToSize( int class, Type type ) {
-	if(type=='A')return 0;
-	if(type=='C')return 0;
-	if(type=='o')return 0;
+	if(class)return sizeof(void*);
+//	if(type=='A')return 0;
+//	if(type=='C')return 0;
+	if(type=='o')return sizeof(void*);
 	if(type==Char)return 1;
 	else if(type==Int)return sizeof(DATINT);
 	else eset(TYPEERR);

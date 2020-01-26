@@ -4,15 +4,52 @@
 
 int newop;
 
-/*  fetch a value and type given its var. On success return len
- *  (or 1 for obj-ref) else 0. Details...
- *    Full retrieval into struct *stuff s for char or int.
- *    Pointer into val space for char* or int*.
- *    Pointer to blob for object ref.
- *  Used only for data, not for type 'E'  
+/*	getters
+ */
+int getclass(struct var *v){
+	if(v->type=='o')return v->vdcd.od.class;
+	return v->vdcd.vd.class;
+}
+int getlen(struct var *v){
+	if(v->type=='o')return v->vdcd.od.len;
+	return v->vdcd.vd.len;
+}
+struct varhdr* getvarhdr(struct var *v){
+	if(v->type == 'o')return v->vdcd.od.blob;
+	else eset(TYPEERR);
+	return NULL;
+}
+char* getvarwhere(struct var *v){
+	char *w;
+//	union stuff foo;
+//	int class = getclass(v);
+//	if(class==1){
+		if(v->type=='o'){
+			struct varhdr *vh = getvarhdr(v);
+			w = (char*)(vh->vartab->vdcd.od.blob);
+		}
+		else w = (v->vdcd.vd.value.up);
+//	}
+//	else w=
+	return w;
+}
+
+int fcn(struct var *v) {
+	int class;
+	if(v->type=='o')class = v->vdcd.od.class;
+	else class = v->vdcd.vd.class;
+	return class=='E';
+}
+
+/*	fetch a value and type given its var. On success return len
+ *	(or 1 for obj-ref) else 0. Details...
+ *		Full retrieval into struct *stuff s for char or int.
+ *		Pointer into val space for char* or int*.
+ *		Pointer to blob for object ref.
+ *	Used only for data, not for type 'E'	
  */
 int fetchVal(struct var *v, union stuff *s){
-    void *where = v->vdcd.vd.value.up;
+	void *where = v->vdcd.vd.value.up;
 	if(v->type == 1){
 		s->uc = get_char(where);
 		return v->vdcd.vd.len;
@@ -53,8 +90,9 @@ void dumpVal_v(struct var *v){
 	else fprintf(stderr,"Unknown type");
 }
 
-/* SITUATION: Function call parsed PLUS two calls during linking.
-	Open new var and value frames for library, globals, and function locals.
+/*	SITUATION: Function call parsed PLUS two calls during linking.
+ *	Open new var and value frames for library, globals, and 
+ *	function locals.
  */
 void dumpDots(int n){while(n--)fprintf(stderr,".");}
 
@@ -88,7 +126,7 @@ void fundone() {
 /*	copy the argument value into the new local place.
  */
 int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
-	if(passed && class){   					/* passed pointer */
+	if(passed && class){	 					/* passed pointer */
 		(*v).vdcd.vd.value.up = (*passed).up;
 	} else if( passed && !class ) {			/* passed datum */
 		switch(type){
@@ -133,20 +171,20 @@ void newvar( int class, Type type, int len, struct var *objclass,
 	}
 	struct var *v = vh->nxtvar;
 	struct var *evar = (struct var*)vh->val;
-	canon(v);    /* sets the canon'd name into v */
+	canon(v);		/* sets the canon'd name into v */
 	(*v).type = type;
 	if(type=='o'){
 		v->vdcd.od.class = class;
 		v->vdcd.od.len = len;
 		v->vdcd.od.ocl = objclass;
-		v->vdcd.od.blob = NULL;  // filled in when known
+		v->vdcd.od.blob = NULL;	// filled in when known
 	}
 	else{
 		(*v).vdcd.vd.class = class;
 		(*v).vdcd.vd.len = len;
 		(*v).vdcd.vd.brkpt = 0;
 	}
-	if(_allocSpace(v,len*obsize,vh)) return;  /* eset done if true */
+	if(_allocSpace(v,len*obsize,vh)) return;	/* eset done if true */
 	if(passed) _copyArgValue( v, class, type, passed);
 	if(curfun>=fun) curfun->evar = vh->nxtvar;
 	if( vh->nxtvar++ >= evar )eset(TMVRERR);
@@ -154,21 +192,21 @@ void newvar( int class, Type type, int len, struct var *objclass,
 	return;
 }
 
-/*  Refenence to an object: refname (fname,lname), type 'o', 
- *  details: class entry (cls), blob to referenced object's blob (NULL) 
- *  to be filled in when known.
+/*	Refenence to an object: refname (fname,lname), type 'o', 
+ *	details: class entry (cls), blob to referenced object's blob (NULL) 
+ *	to be filled in when known.
  */
 void newref(struct var *ocls, struct varhdr *vh) {
-  struct var *r = vh->nxtvar;
-  canon(r);
-  r->type = 'o';
-  r->vdcd.od.ocl = ocls;
-  r->vdcd.od.blob=NULL;
-  vh->nxtvar++;
+	struct var *r = vh->nxtvar;
+	canon(r);
+	r->type = 'o';
+	r->vdcd.od.ocl = ocls;
+	r->vdcd.od.blob=NULL;
+	vh->nxtvar++;
 }
 
-/* Canonicalizes the name bracket by f,l inclusive into buff, and returns buff.
-	sizeOf buff must be at least VLEN+1.
+/*	Canonicalizes the name bracket by f,l inclusive into buff,
+ *	and returns buff. Size of buff must be at least VLEN+1.
  */
 char* _canon(char* first, char* l, char* buff) {
 	int i=0; 
@@ -192,7 +230,7 @@ void canon(struct var *v) {
 int canonIf(char* buff){
 	char *c = cursor;
 	while(isalnum(*c)||*c=='_')++c;
-	if(c==cursor)return 0;  // not a symbol
+	if(c==cursor)return 0;	// not a symbol
 	fname=cursor; lname=c-1;
 	_canon(cursor,c-1,buff);
 	return (c-cursor);
@@ -222,11 +260,11 @@ struct var* _addrval(char *sym, struct var *first, struct var *last) {
  */
 struct var* addrval_all(char *sym) {
 	struct var *v;
-	v = _addrval( sym, curfun->fvar, curfun->evar );  // locals
-	if(!v && curobj)                                  // instances
+	v = _addrval( sym, curfun->fvar, curfun->evar );	// locals
+	if(!v && curobj)																	// instances
 			v = _addrval( sym, curobj->vartab, curobj->nxtvar-1);
 	if(!v) v = _addrval( sym, curglbl->fvar, curglbl->evar ); //globals
-	if(!v) v = _addrval( sym, fun->fvar,fun->evar );  //libs
+	if(!v) v = _addrval( sym, fun->fvar,fun->evar );	//libs
 	if(v)return v;
 	return 0;	
 }
@@ -263,7 +301,7 @@ struct var* _isClassName(int nodot) {
 }
 
 void dumpFunEntry( int e ) {
-	fprintf(stderr,"\n fun entry at %d:  %p %p %p", e,
+	fprintf(stderr,"\n fun entry at %d:	%p %p %p", e,
 		fun[e].fvar, fun[e].evar, fun[e].datused );
 }
 
@@ -319,12 +357,12 @@ void dumpBlob(struct varhdr *vh){
 	fprintf(stderr,"\nBlob (aka varhdr) at %p \n",vh );
 	struct var *vt = vh->vartab;
 	char* dt = vh->val;
-	fprintf(stderr,"  vartab       nxtvar    gltab     evar(val)\n");
-	fprintf(stderr,"   %9p %9zd %9zd %9zd\n",vh->vartab
+	fprintf(stderr,"	vartab			 nxtvar		gltab		 evar(val)\n");
+	fprintf(stderr,"	 %9p %9zd %9zd %9zd\n",vh->vartab
 		,(ptrdiff_t)vh->nxtvar-(ptrdiff_t)vt,(ptrdiff_t)vh->gltab-(ptrdiff_t)vt
 		,(ptrdiff_t)vh->val-(ptrdiff_t)vt);
-	fprintf(stderr,"  val          used      endval\n");
-	fprintf(stderr,"   %9p %9zd %9zd\n",vh->val
+	fprintf(stderr,"	val					used			endval\n");
+	fprintf(stderr,"	 %9p %9zd %9zd\n",vh->val
 			,(ptrdiff_t)vh->datused-(ptrdiff_t)dt
 			,(ptrdiff_t)vh->endval-(ptrdiff_t)dt);
 	fprintf(stderr,"nxtvar,gltab are decimal sizes in vartab");
@@ -352,7 +390,7 @@ void dumpBV(struct varhdr *vh){
 void _newblob(char* name, void* blob){
 	if(nxtblob >= eblob){eset(TMBLOBERR);return;}
 	struct blob *b = nxtblob++;
-	strcpy(b->name,name);  //strlen(name) must be <= VLEN
+	strcpy(b->name,name);	//strlen(name) must be <= VLEN
 	b->varhdr = blob;
 }
 
@@ -360,11 +398,11 @@ void _newblob(char* name, void* blob){
 struct varhdr* _getblob(char* sym){
 	struct blob *b;
 	for(b=blobtab; b<nxtblob; ++b) {
-    	if( !strcmp(b->name, sym) ) {
-    		return b->varhdr;
-    	}
-  	}
-  	return NULL;
+			if( !strcmp(b->name, sym) ) {
+				return b->varhdr;
+			}
+		}
+		return NULL;
 }
 
 /*	A class blob is named the same as the class whose vars it defines.
@@ -372,9 +410,9 @@ struct varhdr* _getblob(char* sym){
  *	Assumes symName() has just parsed and defined fname,lname.
  */
 struct varhdr* getblob(){
-  struct var sym;
-  canon( &sym );
-  return _getblob(sym.name);
+	struct var sym;
+	canon( &sym );
+	return _getblob(sym.name);
 }
 
 void getBlobName(struct varhdr *vh){
@@ -384,18 +422,18 @@ void getBlobName(struct varhdr *vh){
 /*	Checks for balanced brackets, from *from to *to.
  */
 int checkBrackets(char *from, char *to) {
-  int s;
-  while(from<to) {
-    while(*(from++) != '[' && from<to) ;
-    if(from<to) {
-    	s=skip_tool('[',']',from,to);
-    	if(s<0)return s;   //bad
-    }
-  }
-  return 0;   //good
+	int s;
+	while(from<to) {
+		while(*(from++) != '[' && from<to) ;
+		if(from<to) {
+			s=skip_tool('[',']',from,to);
+			if(s<0)return s;	 //bad
+		}
+	}
+	return 0;	 //good
 }
 
-#if 0           // useful code lines...
+#if 0					 // useful code lines...
 dumpft(fname,lname);
 fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 dumpBlobTab();

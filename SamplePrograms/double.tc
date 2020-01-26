@@ -26,7 +26,7 @@ double char fi(0) [
  // worda holds the positions of the words in the file
  int i,j,k,n,count,verbose,sl,nwlines,worda(2000)
  // t holds the contents of the file 
- char t(12000)
+ char t(1200)
  char lfs(1),crlfs(2);lfs(0)=10;crlfs(0)=13;crlfs(1)=10
  k=readfile fi,t,12000-1
  printf "%cseconds to pause between words? ",10;sl=gn

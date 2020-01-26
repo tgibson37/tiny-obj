@@ -25,7 +25,6 @@ class Nurse extends Player [
         strcpy name, "nurse"
     ]
 ]
-
 main [
     Cannibal can
     can = new Cannibal 1
