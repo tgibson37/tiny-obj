@@ -75,7 +75,7 @@ struct var* addrval_all(char *sym);
 struct var* addrval();
 /* 	looks up a symbol pointed to by fname,lname: 
  *	locals, globals, library levels in that order. First hit wins. */
-int fcn(struct var *v);
+int isfcn(struct var *v);
 /*  return true if *v is a function
  */
 void dumpVal(Type t, int class, union stuff *val, char lval);

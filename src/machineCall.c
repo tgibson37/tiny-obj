@@ -422,7 +422,7 @@ DATINT plugInMC(int mcno, int nargs, DATINT *args) {
 	else return (*piMC)(mcno, nargs, args);
 	return 0;   // to avoid compile warning
 }
-
+void Mzero(){}   //bkpnt this for gdb debugging.
 void machinecall( int nargs ) {
 	int i;
 //	DATINT args[nargs-1];
@@ -433,6 +433,7 @@ void machinecall( int nargs ) {
 		int x=toptoi();
 		args[nargs-1-i]=x;
 	}
+	if(mcno==0){pushk(0);Mzero();return;}  // MC 0 for debugging
 	if(mcno<100)origMC(mcno, nargs, args);
 	else if(mcno<200) newMC(mcno-100, nargs, args);
 	else if(mcno<300) userMC(mcno-200, nargs, args);

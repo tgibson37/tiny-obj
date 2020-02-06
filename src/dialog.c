@@ -18,6 +18,7 @@ int countch(char *f, char *t, char c){
 	return k;
 }
 char* typeToWord(Type t){
+	if(t=='o')return dobj;
 	switch(t) {
 		case Char:     return dchar;
 		case Int:      return dint;

@@ -1,6 +1,0 @@
-***  TINY-C 8080 VERSION 1.0,  COPYRIGHT 1977, T A GIBSON  ***
-        This C version copyright 2017, T A Gibson
-: from 0 0,  to 80 0 : from 0 0,  to 0 80 
-render at:  10 10
-render at:  10 10
-done

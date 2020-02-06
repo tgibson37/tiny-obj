@@ -19,6 +19,8 @@ struct var* obsym(char* qual) {
 		return NULL;
 	}
 	canobj = qvh = (struct varhdr*)qvar->vdcd.od.blob;
+//fprintf(stderr,"\n--- %s %d vh %p---\n",__FILE__,__LINE__, qvh);
+//dumpVarTab(qvh);
 	if(symName()){
 		if(!qvh){
 			eset(SYMERR);
@@ -48,7 +50,7 @@ void _pushvar(struct var *v){
 	char* where = getvarwhere(v);
 	int len=getlen(v);
 	int obsize = typeToSize(class,type);
-	if( lit(xlpar) ) {			   /* is dimensioned */
+	if( lit(xlpar) ) {			   /* is dimensioned, bump where */
 		if( !class )eset(CLASERR);
 		obsize = typeToSize(--class,type);
 		asgn(); if( error )return;
@@ -57,7 +59,9 @@ void _pushvar(struct var *v){
 		if(len-1)if( subscript<0 || subscript>=len )eset(RANGERR); 
 		where += subscript * obsize;
 	}
-	else if(class==1)where = &((*v).vdcd.vd.value.up);
+	else if(class==1){          /* is a pointer */
+		where = (char*)(&((*v).vdcd.vd.value.up));
+	}
 	union stuff foo;
 	foo.up = where;
 	pushst( class, 'L', type, &foo);
@@ -323,7 +327,9 @@ void factor() {
 			}
 			union stuff value;
 			value.up = vh;
-			pushst(0,'L','o',&value);
+//fprintf(stderr,"\n--- %s %d ---xnew code about to push\n",__FILE__,__LINE__);
+//fprintf(stderr,"\n  &value, vh %p %p  =============\n",&value, vh);
+			pushst(0,'A','o',&value);
 		}
 		else eset(CLASSERR);
 	}
@@ -379,15 +385,15 @@ void factor() {
 				pushst(0,'L','o',&value);
 				return;
 			}
+#if 0
 			char* where = (*v).vdcd.vd.value.up;
-//			int class=(*v).vdcd.vd.class; 
-			if(fcn(v))_enter(where);  /* fcn call */
+#endif
+			char* where = getvarwhere(v);
+			if(isfcn(v))_enter(where);  /* fcn call */
 			else _pushvar(v);
 		}
 	}
-	else {
-	eset(SYNXERR);
-	}
+	else eset(SYNXERR);
 }
 
 //fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);

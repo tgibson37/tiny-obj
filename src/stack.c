@@ -15,7 +15,7 @@ void dumpVal_s(Type t, int class, union stuff *val, char lval){
       int p = (void*)pr-val->up;
       fprintf(stderr,"pr[%d]",p);
     }
-    else fprintf(stderr,"ptr");
+    else fprintf(stderr,"ptr %p",val->up);
   }
   else if(t==Char) fprintf(stderr,"%c",val->uc);   // actual datum
 #if defined(_WIN32)

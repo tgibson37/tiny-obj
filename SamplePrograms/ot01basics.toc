@@ -25,14 +25,16 @@ class Nurse extends Player [
         strcpy name, "nurse"
     ]
 ]
+int foo
 main [
     Cannibal can
+MC 0    
     can = new Cannibal 1
     Nurse nur
     nur = new Nurse 2
-
     pl"main program: "
-    pl" "
+    pl" ...(3 dots) "
+MC 0
     can.printName
     can.printNumber
     pl" "

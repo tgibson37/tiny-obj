@@ -24,17 +24,21 @@ char* getvarwhere(struct var *v){
 //	union stuff foo;
 //	int class = getclass(v);
 //	if(class==1){
+#if 0
 		if(v->type=='o'){
 			struct varhdr *vh = getvarhdr(v);
 			w = (char*)(vh->vartab->vdcd.od.blob);
 		}
 		else w = (v->vdcd.vd.value.up);
+#endif
+	w = (v->vdcd.vd.value.up);
+
 //	}
 //	else w=
 	return w;
 }
 
-int fcn(struct var *v) {
+int isfcn(struct var *v) {
 	int class;
 	if(v->type=='o')class = v->vdcd.od.class;
 	else class = v->vdcd.vd.class;
@@ -339,6 +343,8 @@ void dumpVar(struct var *v) {
 void dumpVarTab(struct varhdr *vh) {
 	if(!vh || !vh->vartab){
 		fprintf(stderr,"\nVar Table: not built yet");
+fprintf(stderr,"\n  vh %p", vh);
+if(vh)fprintf(stderr,"\n  vh->vartab %p  ", vh->vartab);
 		return;
 	}
 	int pos = 0;
