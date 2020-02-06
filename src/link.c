@@ -5,15 +5,30 @@
 int newop;
 int xxpass=0;
 
-// pass 2 action for xclass, xabstract
+/*	pass 2 action for xclass, xabstract */
 void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, char* where){
-//dumpBlob(vh);
 	struct var *c = vh->nxtvar++;
 	strcpy(c->name,cname);
 	c->type = abst?'A':'C';
 	strncpy(c->vdcd.cd.parent,ename,VLEN);
 	c->vdcd.cd.where = where;
-//dumpVar(c);
+}
+
+/*	add 'this' variable to an object's vartab */
+void newvar_this(struct varhdr *vh){
+//ps("link~19, newvar_this ");pn(vh);pl("");
+//	union stuff stf;
+//	stf.up = vh;
+	struct var *v = vh->nxtvar;
+	struct var *evar = (struct var*)vh->val;
+	strcpy(v->name, "this" );
+	v->type = 'o';
+	v->vdcd.od.class =  0;
+	v->vdcd.od.len =  1;
+//	v->vdcd.od.ocl = ???;
+	v->vdcd.od.blob =  vh;
+	if( vh->nxtvar++ >= evar )eset(TMVRERR);
+	if(verbose[VV])dumpVar(v);
 }
 
 /*	Pass one if varhdr is NULL computes the needed sizes. Pass two does
@@ -24,12 +39,9 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 	char* cptr;
 	char* savedEndapp=endapp;
 	char* savedCursor=cursor;
-//	struct var *vartab;
 	if(vh==NULL){
-//		vartab=NULL;   // pass 1 
 		xxpass=1;
 	} else {
-//		vartab=vh->vartab;
 		xxpass=2;
 		if(!newop)newfun(vh);
 	}
@@ -37,23 +49,11 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 	if(error){ whatHappened(); exit(1); }
 	cursor=from;
 	endapp=to;
-//fprintf(stderr,"\n~507 %d",xxpass);
 	while(cursor<endapp && !error){
-//fprintf(stderr,".");
 		char* lastcur = cursor;
 		rem();
 		if(lit(xlb)) skip('[',']');
 		else if( decl(vh) ) ;
-#if 0
-		else if(newop) {
-			struct var *isvar = _isClassName(NODOT);
-			if(isvar) {
-				do {
-					varalloc('o',isvar,0,vh);
-				} while( lit(xcomma) );
-			}
-		}
-#endif
 		else if( lit(xendlib) ){
 			if(vh != NULL){     //  <<==  PASS TWO endlibrary
 				if(curfun==fun) {   /* 1st endlib, assume app globals follow */
@@ -207,7 +207,8 @@ void ascend(char *cname, char **from, char **to){
  *	Parse, var, and other services are supplied by whole unchanged tiny-c files.
  *	Uses lnpass12 as a service.
  */
-struct varhdr* lnlink(char *from, char *to, char *blobName){
+struct varhdr* lnlink(char *from, char *to, 
+                       char *blobName, struct var *isclvar){
         newop = strcmp(blobName,"__Globals__"); // true iff doing new operator
         int size;
         char* blob;
@@ -226,14 +227,20 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
 	        }
 	        else break;
         }
-        size = sizeof(struct varhdr) + lndata.nvars*sizeof(struct var) + lndata.valsize;
-        blob = mymalloc("blob", size+10);
+        if(newop){
+        	lndata.nvars++;   // for 'this'
+        	lndata.valsize += sizeof(void*);
+        }
+        size = sizeof(struct varhdr) 
+        		+ lndata.nvars*sizeof(struct var) + lndata.valsize;
+        blob = mymalloc(blobName, size+10);
         vh = (struct varhdr*)blob;
         _newblob(blobName,blob);
 		memset(vh, 0, size);
         vh->vartab = vh->nxtvar = vh->gltab = (struct var*)(vh+1);
         vh->val = vh->datused = (char*)(vh->vartab+lndata.nvars);
         vh->endval = blob + size;
+		if(newop)newvar_this(vh);
         f=from; t=to;
 		strncpy(par_buf,blobName,VLEN+1);
         while(f){
@@ -253,15 +260,7 @@ struct varhdr* lnlink(char *from, char *to, char *blobName){
  *	which are set by the loader. 
  */
 void toclink() {
-	struct varhdr *vh;
-	vh = lnlink(cursor,endapp,"__Globals__");
-#if 0
-fprintf(stderr,"\n--- %s %d --- dumps, then intentional exit\n",
-	__FILE__,__LINE__);
-dumpBlobTab();
-dumpVarTab(vh);
-exit(0);
-#endif
+	lnlink(cursor,endapp,"__Globals__",NULL);
 }
 
 /* links a class given its *var.
@@ -279,7 +278,7 @@ struct varhdr* classlink(struct var *isclvar){
 	char *save_fn = fname;  // need class name later
 	char *save_ln = lname;
 	struct varhdr *vh;
-	vh = lnlink(from, to, isclvar->name);
+	vh = lnlink(from, to, isclvar->name, isclvar);
 	if(error){
 		whatHappened();
 		exit(1);
@@ -289,8 +288,7 @@ struct varhdr* classlink(struct var *isclvar){
 	return vh;
 }
 
-#if 0
-// useful code lines...
+#if 0        // useful code lines...
 dumpft(fname,lname);
 fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 dumpBlobTab();

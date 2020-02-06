@@ -18,15 +18,20 @@ struct var* obsym(char* qual) {
 		eset(SYMERR);
 		return NULL;
 	}
-//fprintf(stderr,"\ntoc~587 qvar: %x",qvar);
-//dumpVar(qvar);
 	canobj = qvh = (struct varhdr*)qvar->vdcd.od.blob;
-//fprintf(stderr,"\ntoc~590 qualifiers blob, %p",qvh);
-//dumpBV(qvh);
+//fprintf(stderr,"\n--- %s %d vh %p---\n",__FILE__,__LINE__, qvh);
+//dumpVarTab(qvh);
 	if(symName()){
+		if(!qvh){
+			eset(SYMERR);
+			return NULL;
+		}
 		ovar = addr_obj(qvh);
 		cursor = lname+1;
-		if(!ovar) eset(SYMERR);
+		if(!ovar){
+			eset(SYMERR);
+			return NULL;
+		}
 		return ovar;
 	}
 	else eset(SYNXERR);
@@ -40,38 +45,26 @@ struct var* obsym(char* qual) {
  *	a specific element. Push as an lvalue.
  */ 
 void _pushvar(struct var *v){
-	union stuff foo;
-	int class=v->vdcd.vd.class; 
+	int class=getclass(v); 
 	int type=v->type; 
+	char* where = getvarwhere(v);
+	int len=getlen(v);
 	int obsize = typeToSize(class,type);
-	char* where = v->vdcd.vd.value.up;
-	int len=v->vdcd.vd.len;
-	if( lit(xlpar) ) {		       /* is dimensioned */
-  		if( !class ) {   /* must be class>0 */
-			eset(CLASERR);
-  		} else {  /* dereference the lvalue */
-  			/* reduce the class and recompute obsize */
-				obsize = typeToSize(--class,type);
-  			/* increment where by subscript*obsize */
-    		asgn(); if( error )return;
-    		lit(xrpar);
-      		int subscript = toptoi();
-			if(len-1)if( subscript<0 || subscript>=len )eset(RANGERR); 
-			where += subscript * obsize;
-			foo.up = where;
-			pushst( class, 'L', type, &foo);
-			return;
-		}
-	} else {	
-	/* is simple. Must push as 'L', &storagePlace. */
-		if(class==1){
-			foo.up = &((*v).vdcd.vd.value.up);
-		}
-		else{
-			foo.up = where;
-		}
-  		pushst( class, 'L', type, &foo);
+	if( lit(xlpar) ) {			   /* is dimensioned, bump where */
+		if( !class )eset(CLASERR);
+		obsize = typeToSize(--class,type);
+		asgn(); if( error )return;
+		lit(xrpar);
+		int subscript = toptoi();
+		if(len-1)if( subscript<0 || subscript>=len )eset(RANGERR); 
+		where += subscript * obsize;
 	}
+	else if(class==1){          /* is a pointer */
+		where = (char*)(&((*v).vdcd.vd.value.up));
+	}
+	union stuff foo;
+	foo.up = where;
+	pushst( class, 'L', type, &foo);
 }
 
 /* Situation: parsing argument declarations, passed values are on the stack.
@@ -94,8 +87,6 @@ void _setArg( Type type, struct stackentry *arg ) {
 		else if( stacktype==Char) vpassed.ui = get_char(where);
 			/* ui to clear high order byte */
 	}
-//fprintf(stderr,"\n~295SA type %d passed %d", type, vpassed.ui);
-//	varAlloc( type, &vpassed);
 	varalloc( type, NULL, &vpassed, locals);
 }
 
@@ -109,11 +100,14 @@ void _setArg( Type type, struct stackentry *arg ) {
  */
 int varargs = 0;
 char* xvarargs = "...";
+
+int ecnt=0;
 void _enter( char* where) {
+//fprintf(stderr,"\n--- %s %d ---enter %d",__FILE__,__LINE__,ecnt++);
+//dumpft(where-9,where+9);
 	int arg=nxtstack;
 	int nargs=0;
 	if(varargs>0) nargs=varargs-1;
-//fprintf(stderr,"\n~311E ABOVE: va %d na %d",varargs,nargs);
 	if(where)fcn_enter();
 	lit(xlpar); /* optional (   */
 	int haveArgs = ! (  lit(xrpar)
@@ -138,13 +132,11 @@ void _enter( char* where) {
 		if(nxtstack) {
 			machinecall( nargs );
 			varargs=0;
-//fprintf(stderr,"\n~336E va %d na %d",varargs,nargs);
 		}
 		else eset(MCERR);
 		return;
 	}
 	else {   /* ABOVE parses the call args, BELOW parses the called's arg decls */
-//fprintf(stderr,"\n~342E BELOW: va %d na %d",varargs,nargs);
 		newfun(locals);
 		char *localstcurs=stcurs, *localcurs=cursor;
 		curfun->obj = curobj;
@@ -161,7 +153,6 @@ void _enter( char* where) {
 			} 
 			else if ( lit(xchar)) {
 				do {
-//fprintf(stderr," ~358CHAR ");
 					_setArg(Char, &stack[arg]);
 					arg++;
 				} while(lit(xcomma));
@@ -169,7 +160,6 @@ void _enter( char* where) {
 			}
 			else if ( lit(xvarargs) ){
 				varargs=nargs+1;
-//fprintf(stderr,"\n~362E va %d na %d ",varargs,nargs);
 				break;
 			}
 			else {
@@ -187,7 +177,7 @@ void _enter( char* where) {
 				--nargs;
 			}
 		}
-		if(!error)st();     /*  <<-- execute fcn's body */
+		if(!error)st();	 /*  <<-- execute fcn's body */
 		if(!leave)pushzero();
 		leave=0;
 		cursor=localcurs;
@@ -286,14 +276,12 @@ Type _konst() {
 }
 
 /* a FACTOR is a ( asgn ), or a constant, or a variable reference, or a function
-    reference. NOTE: factor must succeed or it esets SYNXERR. Callers test error
-    instead of a returned true/false. This varies from the rest of the expression 
-    stack.
+	reference. NOTE: factor must succeed or it esets SYNXERR. Callers test error
+	instead of a returned true/false. This varies from the rest of the expression 
+	stack.
  */
-//int dmy=0;
-//int foobar(){return 0;}
 void factor() {
-//if((++dmy)==73) dmy=foobar();
+	struct var *isvar;
 	union stuff foo;
 	Type type;
 	char* x;
@@ -318,68 +306,35 @@ void factor() {
 		case CharStar:		/* special type used ONLY here */
 			foo.up = fname;
 			pushst( 1, 'A', Char, &foo );
+//fprintf(stderr,"\n--- %s %d ---",__FILE__,__LINE__);
+//dumpStackEntry(nxtstack-1);
+//int foo2=1;
 		case Err:
 			return;
 		}
 	}
 	else if(lit(xnew)){
-//		_rem();
 		struct var *isclvar;
 		if((isclvar=_isClassName(NODOT))){
 			struct varhdr *vh;
 			vh = classlink(isclvar);
-//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
-//dumpVarTab(vh);
-
-// call constructor (enter) if exist
 			struct var *con = _addrval(isclvar->name,vh->vartab,(vh->nxtvar)-1);
 			if(con){
 				char *where = con->vdcd.vd.value.up;
 				canobj = vh;   // enable instance variable search
 				_enter(where);
-				popst();      // pop constructor returned value
+				popst();	  // pop constructor returned value
 			}
 			union stuff value;
 			value.up = vh;
+//fprintf(stderr,"\n--- %s %d ---xnew code about to push\n",__FILE__,__LINE__);
+//fprintf(stderr,"\n  &value, vh %p %p  =============\n",&value, vh);
 			pushst(0,'A','o',&value);
 		}
 		else eset(CLASSERR);
 	}
-        else if( symName() ) {
-                cursor = lname+1;
-                if( symNameIs("MC") ) { 
-                        _enter(0); return;
-                } 
-                else {
-                        struct var *v;
-                        if( *(lname+1)=='.' ) {  // obj qualifier
-                                struct var qual;
-                                canon(&qual);
-                                cursor = lname+2;
-                                v = obsym(qual.name);  /* looks up symbol */
-                        }
-                        else v = addrval();  /* looks up symbol */
-                        if( !v ){ eset(SYMERR); return; } /* no decl */
-                        if(v->type=='o'){  //object ref
-                                union stuff value;
-                                value.up = &(v->vdcd.od.blob);
-                                pushst(0,'L','o',&value);
-                                return;
-                        }
-                        char* where = (*v).vdcd.vd.value.up;
-                        int class=(*v).vdcd.vd.class; 
-                        if( class=='E' ) _enter(where);  /* fcn call */
-                        else _pushvar(v);
-                }
-        }
-	else {
-		eset(SYNXERR);
-	}
-}
-
-#if 0
 	else if((isvar=_isClassName(MAYBEDOT))) {
-		if(*cursor=='.'){              // Game.play
+		if(*cursor=='.'){			  // Game.play
 			struct varhdr *vh;
 			if(isvar->vdcd.cd.blob==NULL){
 				isvar->vdcd.cd.blob = vh = classlink(isvar);
@@ -392,7 +347,7 @@ void factor() {
 				v = addr_obj(vh);
 				if(!v){eset(SYMERR);return;}
 				//enter or push the value
-			  	char* where = v->vdcd.vd.value.up;
+				char* where = v->vdcd.vd.value.up;
 				if(v->vdcd.vd.class=='E'){
 					_enter(where);
 				}
@@ -402,7 +357,7 @@ void factor() {
 			}
 			else eset(SYMERR);
 		}
-		else if(symName()) {           // decl of var of type 'o'
+		else if(symName()) {		   // decl of var of type 'o'
 			cursor = lname+1;
 			newref(isvar,locals);
 		}
@@ -411,46 +366,34 @@ void factor() {
 	else if( symName() ) {
 		cursor = lname+1;
 		if( symNameIs("MC") ) { 
-			_enter(NULL); return;
-		} else {
-			struct var *v = addrval();  /* looks up symbol */
-			if( !v ){ eset(SYMERR); return; } /* no decl */
-		  	char* where = (*v).vdcd.vd.value.up;
-//		  	int integer =  (*v).vdcd.vd.value.ui; 
-//		  	int character = (*v).vdcd.vd.value.uc;
-		  	int class=(*v).vdcd.vd.class; 
-	  		int type=(*v).type; 
-	  		int obsize = typeToSize(class,type);
-	  		int len=(*v).vdcd.vd.len;
-		  	if( class=='E' ) _enter(where);  /* fcn call */
-			else {   /* is var name */
-				if( lit(xlpar) ) {		       /* is dimensioned */
-			  		if( !class ) {   /* must be class>0 */
-						eset(CLASERR);
-			  		} else {  /* dereference the lvalue */
-			  			/* reduce the class and recompute obsize */
-	  					obsize = typeToSize(--class,type);
-			  			/* increment where by subscript*obsize */
-		        		asgn(); if( error )return;
-		        		lit(xrpar);
-			      		int subscript = toptoi();
-						if(len-1)if( subscript<0 || subscript>=len )eset(RANGERR); 
-						where += subscript * obsize;
-						foo.up = where;
-						pushst( class, 'L', type, &foo);
-						return;
-					}
-				} else {	
-				/* is simple. Must push as 'L', &storagePlace. */
-					if(class==1){
-						foo.up = &((*v).vdcd.vd.value.up);
-					}
-					else{
-						foo.up = where;
-					}
-			  		pushst( class, 'L', type, &foo);
-				}
+			_enter(0); return;
+		} 
+		else {
+			struct var *v;
+			if( *(lname+1)=='.' ) {  // obj qualifier
+				struct var qual;
+				canon(&qual);
+				cursor = lname+2;
+				v = obsym(qual.name);  /* looks up symbol */
 			}
+			else v = addrval();  /* looks up symbol */
+
+			if( !v ){ eset(SYMERR); return; } /* no decl */
+			if(v->type=='o'){  //object ref
+				union stuff value;
+				value.up = &(v->vdcd.od.blob);
+				pushst(0,'L','o',&value);
+				return;
+			}
+#if 0
+			char* where = (*v).vdcd.vd.value.up;
+#endif
+			char* where = getvarwhere(v);
+			if(isfcn(v))_enter(where);  /* fcn call */
+			else _pushvar(v);
 		}
 	}
-#endif
+	else eset(SYNXERR);
+}
+
+//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);

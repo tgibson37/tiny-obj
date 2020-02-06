@@ -8,17 +8,17 @@
 /*	Length of a canon'd symbol. varEntry adds one more byte to 
  *	make it a string. Multiple of 8 minus 1 recommended.*/
 
-#if 0
+#if 0           // choose one
 #define DATINT int
 #define FMTINT "%d"
 #endif
 
-#if 0
+#if 0           // choose one
 #define DATINT long
 #define FMTINT "%ld"
 #endif
 
-#if 1
+#if 1           // choose one
 #define DATINT ptrdiff_t
 #define FMTINT "%td"
 #endif

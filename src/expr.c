@@ -6,127 +6,104 @@
 #include "toc.h"
 
 union stuff foo;
+int _reln();
+int _expr();
+int _term();
 
-#if 0
-//int varargs = 0;   //moved to factor.c
-/* Situation: parsing argument declarations, passed values are on the stack.
- * arg points into stack to an argument of type. 
- * Gets actual value of arg, calls valloc which parses and sets
- * up local with the passed value.
- */ 
-void _setArg( Type type, struct stackentry *arg, 
-				struct varhdr *locals ) {
-	union stuff vpassed  = (*arg).value;
-	char* where;
-	int class = (*arg).class;
-	int lvalue = (*arg).lvalue;
-	int stacktype = (*arg).type;
-	if( lvalue=='L') {
-		where = (char*)vpassed.up;
-		if( class==1 ) { 
-			vpassed.up = *((char**)(*arg).value.up);
-		}
-		else if( stacktype==Int ) vpassed.ui = get_int(where);
-		else if( stacktype==Char) vpassed.ui = get_char(where);
-			/* ui to clear high order byte */
-	}
-	varalloc( type, NULL, &vpassed, locals);
-}
-
-/*	SITUATION: Just parsed symbol with class 'E', or special symbol MC.
- *	Parses the args putting values on the stack, arg pointing to the first 
- *	of them.
- *	Sets the cursor to the called function's 'where'. Parses arg decl's
- *	giving them values from the stack. Executes the function body.
- *	Pops the locals (vars and values). Restores the caller's stcurs and 
- *	cursor.
+/* SITUATION: Parsed an assignment expression. Two stack entries, lvalue, datam.
+ *	Effects the assignment. 
  */
-void _enter( char* where) {
-	int arg=nxtstack;
-	int nargs=0;
-	if(varargs>0) nargs=varargs-1;
-	if(where)fcn_enter();
-	lit(xlpar); /* optional (   */
-	int haveArgs = ! (  lit(xrpar)
-					 || *cursor==*xlb
-					 || *cursor==*xrb
-					 || *cursor==*xsemi
-					 || *cursor==*xnl
-					 || *cursor==0x0d
-					 || *cursor==*xslash
-					);
-	if ( haveArgs ) {
-		do {
-			if(error)return;
-			if( _asgn()) ++nargs;
-			else break;  /* break on error */
-		} while( lit(xcomma) );
+void _eq() {
+	DATINT  iDatum;  /* memcpy into these from pr using val.stuff */
+	char cDatum;  /*  and val.size, giving needed cast */
+	void* pDatum;
+//	void* where;
+	struct stackentry *val = &stack[nxtstack-1]; /* value (on top) */
+	struct stackentry *lval = &stack[nxtstack-2]; /* where to put it */
+	if(verbose[VE]){
+		fprintf(stderr,"\neq: lval");
+		dumpStackEntry(nxtstack-2);
+		fprintf(stderr,"\neq: val");
+		dumpStackEntry(nxtstack-1);
 	}
-	if(error)return;
-	lit(xrpar);   /* optional )   */
-	_rem();
-	if(!where) {
-		if(nxtstack) {
-			machinecall( nargs );
-			varargs=0;
-		}
-		else eset(MCERR);
+	popst();popst();
+//	where = &((*lval).value.up);
+	int class = (*lval).class;
+	int type = (*lval).type;
+	if((*lval).lvalue != 'L') { 
+		eset(LVALERR); 
+		return; 
+	}
+	if(type=='o' && val->type=='o'){
+		union stuff *to   = lval->value.up;
+		union stuff *from =  &(val->value);
+		stuffCopy(to,from);
+		pushst(class, 'A', type, from);
 		return;
 	}
-/* ABOVE parses the call args, BELOW parses the called's arg decls.
- */
-	else {
-		newfun(locals);  
-		char *localstcurs=stcurs, *localcurs=cursor;
-		curfun->obj = curobj;
-		curobj = canobj;
-		cursor = where;
-		for(;;) {	  
-			_rem();
-			if(lit(xint)) { 
-				do {
-					_setArg(Int, &stack[arg],locals);
-					arg++;
-				} while(lit(xcomma));
-				lit(xsemi); /* optional */
-			} 
-			else if ( lit(xchar)) {
-				do {
-					_setArg(Char, &stack[arg],locals);
-					arg++;
-				} while(lit(xcomma));
-				lit(xsemi);
-			}
-			else if ( lit(xvarargs) ){
-				varargs=nargs+1;
-				break;
+	else if(class==1 && (*val).class==1) {
+		pDatum = (*val).value.up;
+		if( (*val).lvalue=='L' ){
+			pDatum = (char*)(*(DATINT*)pDatum);   /* now its 'A' */
+		}
+		char **where = (*lval).value.up;
+		*where = (char*)pDatum;
+		pushst(class, 'A', type, &(*val).value);
+	}
+	else if(class==1 && (*val).class==0) {  /* ptr = int */
+		if( (*val).type != Int ){
+			eset(EQERR);
+			return;
+		}
+		if( (*val).lvalue=='L' ) {
+			iDatum = get_int((*val).value.up);
+		}
+		else {
+			iDatum = (*val).value.ui;
+		}
+		pDatum = (void*)iDatum;
+		char **where = (*lval).value.up;
+		*where = (char*)pDatum;
+		pushst(class, 'A', type, &(*val).value);
+	}
+	else if(class==0 && (*val).class==1) {  /* int = ptr */
+		if(type!=Int){
+			eset(EQERR);
+			return;
+		}
+		pDatum = (*val).value.up;
+		if( (*val).lvalue=='L' ){
+			pDatum = (char*)(*(DATINT*)pDatum);   /* now its 'A' */
+		}
+		iDatum = (DATINT)pDatum;
+		put_int( (*lval).value.up, iDatum);
+		pushk(iDatum);
+	}
+	else if(class==0 && (*val).class==0) {
+		if(type==Int){
+			if( (*val).lvalue=='L' ) {
+				iDatum = get_int((*val).value.up);
 			}
 			else {
-				break;
+				iDatum = (*val).value.ui;
 			}
+			if((*val).type==Char) iDatum = iDatum&0xff;
+			put_int( (*lval).value.up, iDatum);
+			pushk(iDatum);
 		}
-		if(!varargs) {
-			if(arg != nxtstack) {
-				cursor=localcurs;
-				stcurs=localstcurs;
-				eset(ARGSERR);
+		else if(type==Char){
+			if( (*val).lvalue=='L' ) {
+				cDatum = get_char((*val).value.up);
 			}
-			while(nargs>0){
-				popst();
-				--nargs;
+			else {
+				cDatum = (*val).value.uc;
 			}
+			put_char( (*lval).value.up, cDatum );
+			pushk(cDatum);
 		}
-		if(!error)st();     /*  <<-- execute fcn's body */
-		if(!leave)pushzero();
-		leave=0;
-		cursor=localcurs;
-		stcurs=localstcurs;
-		curobj = curfun->obj;
-		fundone();
-		fcn_leave();
 	}
+	else eset(EQERR);
 }
-#endif
 
 /* An asgn is a reln or an lvalue = asgn. Note that
    reln can match an lvalue.

@@ -6,13 +6,6 @@
 /*	Length of a canon'd variable */
 //#define VLEN 8, moved to common.h to avoid circular def'n 
 
-#if 0
-/* a entry in fun table */
-struct funentry { 
-	int fvar,lvar;
-	char* prused;
-};
-#endif
 /* a fun entry */
 struct funentry {
 	struct var *fvar, *evar;
@@ -50,19 +43,16 @@ the first entry of the variable table. */
 struct var *vartab;
 int nxtvar, vtablen;
 
-#if 0
-/* blob header */
-struct varhdr {
-	char name[VLEN+1];
-	struct var *vartab; struct var *gltab; struct var *nxtvar; 
-	char *val; char *endval; char *datused; 
-};
-#endif
-
 /************ functions ************/
 int checkBrackets(char *from, char *to);
 
-//void newfun();
+/*  getters */
+int getclass(struct var *v);
+int getlen(struct var *v);
+struct varhdr* getvarhdr(struct var *v);
+char* getvarwhere(struct var *v);
+
+
 void newfun(struct varhdr *vh);
 /*	opens a new vartab frame */
 void fundone();
@@ -85,6 +75,9 @@ struct var* addrval_all(char *sym);
 struct var* addrval();
 /* 	looks up a symbol pointed to by fname,lname: 
  *	locals, globals, library levels in that order. First hit wins. */
+int isfcn(struct var *v);
+/*  return true if *v is a function
+ */
 void dumpVal(Type t, int class, union stuff *val, char lval);
 void dumpFunEntry( int e );
 void dumpFun();

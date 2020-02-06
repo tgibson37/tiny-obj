@@ -20,110 +20,14 @@ struct varhdr *__temp_vh__;
 
 /* stored size of one datum */
 int typeToSize( int class, Type type ) {
-	if(type=='A')return 0;
-	if(type=='C')return 0;
-	if(type=='o')return 0;
+	if(class)return sizeof(void*);
+//	if(type=='A')return 0;
+//	if(type=='C')return 0;
+	if(type=='o')return sizeof(void*);
 	if(type==Char)return 1;
 	else if(type==Int)return sizeof(DATINT);
 	else eset(TYPEERR);
 	return 0; /* has to be one of the above */
-}
-
-/* SITUATION: Parsed an assignment expression. Two stack entries, lvalue, datam.
- *	Effects the assignment. 
- */
-void _eq() {
-	DATINT  iDatum;  /* memcpy into these from pr using val.stuff */
-	char cDatum;  /*  and val.size, giving needed cast */
-	void* pDatum;
-//	void* where;
-	struct stackentry *val = &stack[nxtstack-1]; /* value (on top) */
-	struct stackentry *lval = &stack[nxtstack-2]; /* where to put it */
-	if(verbose[VE]){
-		fprintf(stderr,"\neq: lval");
-		dumpStackEntry(nxtstack-2);
-		fprintf(stderr,"\neq: val");
-		dumpStackEntry(nxtstack-1);
-	}
-	popst();popst();
-//	where = &((*lval).value.up);
-	int class = (*lval).class;
-	int type = (*lval).type;
-	if((*lval).lvalue != 'L') { 
-		eset(LVALERR); 
-		return; 
-	}
-	if(type=='o' && val->type=='o'){
-		union stuff *to   = lval->value.up;
-		union stuff *from =  &(val->value);
-		stuffCopy(to,from);
-		pushst(class, 'A', type, from);
-//fprintf(stderr,"toc~59: locals,vartab AFTER eq: %x",locals );
-//dumpVarTab(locals);
-		return;
-	}
-	else if(class==1 && (*val).class==1) {
-		pDatum = (*val).value.up;
-		if( (*val).lvalue=='L' ){
-			pDatum = (char*)(*(DATINT*)pDatum);   /* now its 'A' */
-		}
-		char **where = (*lval).value.up;
-		*where = (char*)pDatum;
-		pushst(class, 'A', type, &(*val).value);
-	}
-	else if(class==1 && (*val).class==0) {  /* ptr = int */
-		if( (*val).type != Int ){
-			eset(EQERR);
-			return;
-		}
-		if( (*val).lvalue=='L' ) {
-			iDatum = get_int((*val).value.up);
-		}
-		else {
-			iDatum = (*val).value.ui;
-		}
-		pDatum = (void*)iDatum;
-		char **where = (*lval).value.up;
-		*where = (char*)pDatum;
-		pushst(class, 'A', type, &(*val).value);
-	}
-	else if(class==0 && (*val).class==1) {  /* int = ptr */
-		if(type!=Int){
-			eset(EQERR);
-			return;
-		}
-		pDatum = (*val).value.up;
-		if( (*val).lvalue=='L' ){
-			pDatum = (char*)(*(DATINT*)pDatum);   /* now its 'A' */
-		}
-		iDatum = (DATINT)pDatum;
-		put_int( (*lval).value.up, iDatum);
-		pushk(iDatum);
-	}
-	else if(class==0 && (*val).class==0) {
-		if(type==Int){
-			if( (*val).lvalue=='L' ) {
-				iDatum = get_int((*val).value.up);
-			}
-			else {
-				iDatum = (*val).value.ui;
-			}
-			if((*val).type==Char) iDatum = iDatum&0xff;
-			put_int( (*lval).value.up, iDatum);
-			pushk(iDatum);
-		}
-		else if(type==Char){
-			if( (*val).lvalue=='L' ) {
-				cDatum = get_char((*val).value.up);
-			}
-			else {
-				cDatum = (*val).value.uc;
-			}
-			put_char( (*lval).value.up, cDatum );
-			pushk(cDatum);
-		}
-	}
-	else eset(EQERR);
 }
 
 /******* set error unless already set, capture cursor in errat *******/
@@ -131,9 +35,6 @@ void eset( int err ){
 	if(!error){
 		error=err;
 		errat=cursor;
-//fprintf(stderr,"\ntoc~131 cursor-apr %d\n",cursor-apr);
-//dumpft(fname,lname);
-//dumpBV(curobj);
 	}
 }
 
@@ -155,9 +56,7 @@ int lit(char *s){
  *	Returns # chars examined (delta) on OK, else -1.
  *  Does not change state, just examines.
  */
-//int skcnt=0;
 int skip_tool(char l, char r, char* from, char* to){
-//fprintf(stderr,"\ntoc~157 ");
   char *bf = from;
   int counter = 1;
   while( counter>0 && from<endapp ) {
@@ -166,7 +65,6 @@ int skip_tool(char l, char r, char* from, char* to){
     ++from;
   };
   int delta = from-bf;
-//fprintf(stderr,"toc~165 %d: counter %d delta %d",++skcnt,counter,delta);
   if( counter )return -1;   //bad
   return delta;
 }
@@ -181,20 +79,6 @@ int skip(char l, char r) {
   cursor += s;
   return 0;          //good
 }
-
-#if 0
-// old parse version. NOte reversed meaning of returned boolean.
-int skipchar l, char r) {
-	int counter = 1;
-	 while( counter>0 && cursor<endapp ) {
-		if(*cursor==l)++counter;
-		if(*cursor==r)--counter;
-		++cursor;
-	};
-	if( counter )return counter;
-	return 0;
-}
-#endif
 
 /* Parse a symbol defining fname, lname. ret: true if symbol.
  *	Advances the cursor to but not over the symbol,
@@ -472,11 +356,9 @@ void st() {
 				varalloc( 'o', isvar, NULL, locals );
 			} while( lit(xcomma) );
 		}
-//dumpVarTab(locals);
 	}
 	else if(lit(xdelete)){
 		if(symName()){
-//			char sym[VLEN+1];
 			struct var sym;
 			canon(&sym);
 			cursor = lname+1;
@@ -577,5 +459,3 @@ char get_char(char *where) {
 	memcpy( &datum, where, sizeof(datum));
 	return datum;
 }
-
-//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);

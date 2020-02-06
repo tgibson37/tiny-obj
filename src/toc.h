@@ -45,7 +45,6 @@
 #define xge ">="
 #define xle "<="
 #define xnl "\n"
-//#define xvarargs "..."
 #define xclass "class"
 #define xabstract "abstract"
 #define xextends "extends"
@@ -120,61 +119,10 @@ int quiet;
 #define EXIT         98
 #define KILL         99
 
-#if 0
-/*	All tc data are ints or chars. Pointers are an int index into pr. 
- *	stuff is the typless holder of any value.
- */
-union stuff { char uc; DATINT ui; void* up; };
-
-typedef enum type {Err,Char,Int,CharStar} Type;
-
-/* a stack entry */
-struct stackentry { 
-	int class; int lvalue; Type type; 
-	union stuff value; 
-};
-/* the stack */
-struct stackentry *stack;
-int nxtstack, stacklen;
-#endif
-
-#if 0
-/* a fun entry */
-struct funentry {
-	struct var *fvar, *evar;
-	char *datused;
-	struct varhdr *obj;
-};
-#endif
 /* fun table */
 struct funentry *fun;
 struct funentry *curglbl, *curfun, *efun;
 
-//struct var { 
-//	char name[VLEN+1]; int class; Type type; int len; int brkpt;
-//	union stuff value; 
-//};
-//  MUST add after -> or ). before value/class/etc    vdcd.vd.
-//  but NOT before name or type.
-#if 0
-struct cd {
-  char parent[VLEN+1]; int abst; char* where; struct varhdr *blob;
-};
-struct vd {
-  int class; int len; int brkpt; union stuff value;
-};
-struct od {
-  int class; int len; struct var *ocl; struct varhdr *blob;
-};
-union vdcd {
-  struct vd vd; struct cd cd; struct od od;
-};
-struct var{
-  char name[VLEN+1]; Type type; union vdcd vdcd; 
-};
-// struct var *vt = vh->vartab;			// vh == blob
-// vt->var.vdcd.od.blob  				// <<== typical
-#endif
 
 /* blob header */
 struct varhdr {
@@ -182,12 +130,11 @@ struct varhdr {
 	struct var *vartab; struct var *gltab; struct var *nxtvar; 
 	char *val; char *endval; char *datused; 
 };
+
 /*	locals, all of them, 
  *	candidate for current object, current object
  */
 struct varhdr *locals, *canobj, *curobj;
-/* sizes needed for each vartab, values area */
-//struct lndata { int nvars; int valsize; } lndata;
 
 /* blob table, f,t scope the text for enter to set curclass */
 struct blob {
@@ -223,7 +170,6 @@ int obsize, vclass, alen;
 int traceMode;
 extern char* ppsPath;
 
-//FILE* fileUnit[MAX_UNIT];
 int tcFopen(char* name, char* mode);
 int tcFputs(char* str, int unit);
 int tcFputc(char c, int unit);
@@ -236,7 +182,6 @@ char escKey();
 int iProperty(char* file, char* name, int *val, int _default);
 int sProperty(char* file, char* name, char* val, int vlen, char* _default);
 int typeToSize( int class, Type type );
-//DATINT topdiff();
 DATINT toptoi();
 struct stackentry* popst();
 void pushst( int class, int lvalue, Type type, union stuff *value );
@@ -250,10 +195,7 @@ void pl(char* s);
 int  pn(int n);
 void pc(char c);
 char* find( char *from, char *upto, char c);
-//void newfun(struct varhdr *vh);
 void fundone();
-//void newvar( int class, Type type, int len, struct var *objclass,
-//			union stuff *passed, struct varhdr *vh );
 struct var* addrval();
 void canon(struct var *v);
 int quit();
@@ -302,9 +244,6 @@ void pft(char *from, char *to );
 DATINT Mchrdy();
 DATINT Mgch(int,DATINT*);
 int asgn();
-int _reln();
-int _expr();
-int _term();
 void _factor();
 char* _canon(char* first, char* l, char* buff);
 void _errToWords();
@@ -318,9 +257,10 @@ int symName();
 int charIn(char c, char *choices );
 void pFmt(char *fmt, DATINT *args);
 int skip(char l, char r);
-struct varhdr* lnlink(char *from, char *to, char *blobName);
+struct varhdr* lnlink(char *from, char *to, 
+              char *blobName, struct var *isclvar);
 void* mymalloc(char *name, int size);
-int dump_mallocs;
+//int dump_mallocs;
 void stuffCopy( union stuff *to, union stuff *from );
 struct var* _isClassName(int nodot);
 void newref(struct var *cls, struct varhdr *vh);
@@ -331,8 +271,6 @@ int fcnDepth();
 int skip_tool(char l, char r, char* from, char* to);
 char* classToWord(int c);
 char* lvalToWord(char c);
-void _eq();
-//struct varhdr* classlink(struct var *isclvar);
-void _enter( char* where);
+//void _enter( char* where);
 
 #endif   // TOC_HDR
