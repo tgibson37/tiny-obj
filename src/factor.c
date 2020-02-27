@@ -5,23 +5,12 @@
 #include "link.h"
 #include "toc.h"
 
-/*	Situation: An object qualifier including its dot is parsed.
- *	Action: Parse the required symname. Return its struct var.
- *	Else appropriate error. Set curobj to qual's vh.
+/*	Situation: 'qual.ovar' is parsed, and qualifers varheader
+ *	qvh retrieved.  Action: return ovars var. 
  */
-struct var* obsym(char* qual) {
-	struct var *qvar;
-	struct varhdr *qvh;
-	struct var *ovar;
-	qvar = addrval_all(qual);
-	if(!qvar){
-		eset(SYMERR);
-		return NULL;
-	}
-	canobj = qvh = (struct varhdr*)qvar->vdcd.od.blob;
-//fprintf(stderr,"\n--- %s %d vh %p---\n",__FILE__,__LINE__, qvh);
-//dumpVarTab(qvh);
+struct var* _obsym(struct varhdr *qvh){
 	if(symName()){
+		struct var *ovar;
 		if(!qvh){
 			eset(SYMERR);
 			return NULL;
@@ -36,7 +25,22 @@ struct var* obsym(char* qual) {
 	}
 	else eset(SYNXERR);
 	return NULL;
-}   //was ~578
+}
+/*	Situation: An object qualifier including its dot is parsed.
+ *	Action: Parse the required symname. Return its struct var.
+ *	Else appropriate error. Set curobj to qual's vh.
+ */
+struct var* obsym(char* qual) {
+	struct var *qvar;
+	struct varhdr *qvh;
+	qvar = addrval_all(qual);
+	if(!qvar){
+		eset(SYMERR);
+		return NULL;
+	}
+	canobj = qvh = (struct varhdr*)qvar->vdcd.od.blob;
+	return _obsym(qvh);
+}
 
 
 /*	Situation: v describes a variable to be pushed as an 
