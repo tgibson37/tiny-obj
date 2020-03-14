@@ -6,7 +6,7 @@ int newop;
 
 /*	getters
  */
-int getclass(struct var *v){
+int getvarclass(struct var *v){
 	if(v->type=='o')return v->vdcd.od.class;
 	return v->vdcd.vd.class;
 }
@@ -20,22 +20,7 @@ struct varhdr* getvarhdr(struct var *v){
 	return NULL;
 }
 char* getvarwhere(struct var *v){
-	char *w;
-//	union stuff foo;
-//	int class = getclass(v);
-//	if(class==1){
-#if 0
-		if(v->type=='o'){
-			struct varhdr *vh = getvarhdr(v);
-			w = (char*)(vh->vartab->vdcd.od.blob);
-		}
-		else w = (v->vdcd.vd.value.up);
-#endif
-	w = (v->vdcd.vd.value.up);
-
-//	}
-//	else w=
-	return w;
+	return (v->vdcd.vd.value.up);
 }
 
 int isfcn(struct var *v) {
@@ -163,7 +148,6 @@ int _allocSpace(struct var *v, int amount, struct varhdr *vh){
 /* SITUATION: Declaration is parsed, and its descriptive data known.
  * 	Fill in the var with this data. Allocate value storage unless already
  *	allocated, i.e. pointer to passed data. Copy passed data into allocation.
- *	NOTE: signifantly refactored.
  */
 void newvar( int class, Type type, int len, struct var *objclass,
 			union stuff *passed, struct varhdr *vh ) {
@@ -187,8 +171,8 @@ void newvar( int class, Type type, int len, struct var *objclass,
 		(*v).vdcd.vd.class = class;
 		(*v).vdcd.vd.len = len;
 		(*v).vdcd.vd.brkpt = 0;
+		if(_allocSpace(v,len*obsize,vh)) return;	/* eset done if true */
 	}
-	if(_allocSpace(v,len*obsize,vh)) return;	/* eset done if true */
 	if(passed) _copyArgValue( v, class, type, passed);
 	if(curfun>=fun) curfun->evar = vh->nxtvar;
 	if( vh->nxtvar++ >= evar )eset(TMVRERR);
@@ -197,7 +181,7 @@ void newvar( int class, Type type, int len, struct var *objclass,
 }
 
 /*	Refenence to an object: refname (fname,lname), type 'o', 
- *	details: class entry (cls), blob to referenced object's blob (NULL) 
+ *	details: class entry (ocls), blob to referenced object's blob (NULL) 
  *	to be filled in when known.
  */
 void newref(struct var *ocls, struct varhdr *vh) {

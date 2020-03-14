@@ -28,6 +28,7 @@ class Nurse extends Player [
 int foo
 main [
     Cannibal can
+MC 0
     can = new Cannibal 1
     Nurse nur
     nur = new Nurse 2

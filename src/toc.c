@@ -136,7 +136,7 @@ void rem() {
 	}
 }
 
-/* 	SITUATION: int or char is parsed.
+/* 	SITUATION: int, char or class-name-no-dot is parsed.
  *	Parses one variable. Makes allocation and symbol entry.
  */
 void varalloc(Type type, struct var *varparent

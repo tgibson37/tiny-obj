@@ -3,10 +3,11 @@
 #include "stack.h"
 #include "var.h"
 #include "link.h"
+#include "facsym.h"
 #include "toc.h"
 
 /*	Situation: 'qual.ovar' is parsed, and qualifers varheader
- *	qvh retrieved.  Action: return ovars var. 
+ *	qvh retrieved.  Action: return objects var*. 
  */
 struct var* _obsym(struct varhdr *qvh){
 	if(symName()){
@@ -42,6 +43,26 @@ struct var* obsym(char* qual) {
 	return _obsym(qvh);
 }
 
+/*	Situation: v describes a variable. The name( is parsed
+ *	Action: check the class is >0 else CLASERR, return NULL. 
+ *	Parse the subscript, compute and return the bumped where.
+ *	USAGE: --class required post call. It is not done here.
+ */
+char* _getbumpedwhere(struct var *v) {
+	int class=getvarclass(v); 
+	int type=v->type; 
+	char* where = getvarwhere(v);
+	int len=getlen(v);
+	int obsize = typeToSize(class,type);
+	if( !class ){eset(CLASERR); return NULL;}
+	obsize = typeToSize(--class,type);
+	asgn(); if( error )return NULL;
+	lit(xrpar);
+	int subscript = toptoi();
+	if(len-1)if( subscript<0 || subscript>=len )eset(RANGERR); 
+	where += subscript * obsize;
+	return where;
+}
 
 /*	Situation: v describes a variable to be pushed as an 
  *	lvalue onto the stack. Only the name is parsed. 
@@ -49,7 +70,7 @@ struct var* obsym(char* qual) {
  *	a specific element. Push as an lvalue.
  */ 
 void _pushvar(struct var *v){
-	int class=getclass(v); 
+	int class=getvarclass(v); 
 	int type=v->type; 
 	char* where = getvarwhere(v);
 	int len=getlen(v);
@@ -296,9 +317,6 @@ void factor() {
 		}
 	} 
 	else if( (type=_konst()) ) {
-	/* Defines fname,lname. Returns Type. 
-	   void pushst( int class, int lvalue, Type type, void* stuff );
-	*/
 		switch(type){
 		case Int: 
 			pushk( _atoi() );  /* integer, use private _atoi */
@@ -310,9 +328,6 @@ void factor() {
 		case CharStar:		/* special type used ONLY here */
 			foo.up = fname;
 			pushst( 1, 'A', Char, &foo );
-//fprintf(stderr,"\n--- %s %d ---",__FILE__,__LINE__);
-//dumpStackEntry(nxtstack-1);
-//int foo2=1;
 		case Err:
 			return;
 		}
@@ -331,8 +346,6 @@ void factor() {
 			}
 			union stuff value;
 			value.up = vh;
-//fprintf(stderr,"\n--- %s %d ---xnew code about to push\n",__FILE__,__LINE__);
-//fprintf(stderr,"\n  &value, vh %p %p  =============\n",&value, vh);
 			pushst(0,'A','o',&value);
 		}
 		else eset(CLASSERR);
@@ -373,28 +386,7 @@ void factor() {
 			_enter(0); return;
 		} 
 		else {
-			struct var *v;
-			if( *(lname+1)=='.' ) {  // obj qualifier
-				struct var qual;
-				canon(&qual);
-				cursor = lname+2;
-				v = obsym(qual.name);  /* looks up symbol */
-			}
-			else v = addrval();  /* looks up symbol */
-
-			if( !v ){ eset(SYMERR); return; } /* no decl */
-			if(v->type=='o'){  //object ref
-				union stuff value;
-				value.up = &(v->vdcd.od.blob);
-				pushst(0,'L','o',&value);
-				return;
-			}
-#if 0
-			char* where = (*v).vdcd.vd.value.up;
-#endif
-			char* where = getvarwhere(v);
-			if(isfcn(v))_enter(where);  /* fcn call */
-			else _pushvar(v);
+			facsym();
 		}
 	}
 	else eset(SYNXERR);

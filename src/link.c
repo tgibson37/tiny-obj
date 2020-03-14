@@ -6,7 +6,8 @@ int newop;
 int xxpass=0;
 
 /*	pass 2 action for xclass, xabstract */
-void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, char* where){
+void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, 
+			char* where){
 	struct var *c = vh->nxtvar++;
 	strcpy(c->name,cname);
 	c->type = abst?'A':'C';

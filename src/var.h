@@ -47,10 +47,11 @@ int nxtvar, vtablen;
 int checkBrackets(char *from, char *to);
 
 /*  getters */
-int getclass(struct var *v);
 int getlen(struct var *v);
 struct varhdr* getvarhdr(struct var *v);
+//struct varhdr** getobjcell(struct var *v);
 char* getvarwhere(struct var *v);
+int getvarclass(struct var *v);
 
 
 void newfun(struct varhdr *vh);

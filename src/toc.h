@@ -271,6 +271,6 @@ int fcnDepth();
 int skip_tool(char l, char r, char* from, char* to);
 char* classToWord(int c);
 char* lvalToWord(char c);
-//void _enter( char* where);
+void _enter( char* where);
 
 #endif   // TOC_HDR
