@@ -135,15 +135,13 @@ int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
 
 /* allocates memory for value of v, return 0 on success, else !0
  */
-int _allocSpace(struct var *v, int amount, struct varhdr *vh){
-	if( vh->datused+amount > vh->endval ) {
-		eset(TMVLERR);
-		return TMVLERR;
-	}
-	v->vdcd.vd.value.up = vh->datused;
+void _allocSpace(struct var *v, int amount, struct varhdr *vh){
+	if( vh->datused+amount > vh->endval ){eset(TMVLERR);return;}
+	if(v->type=='o')v->vdcd.od.blob = vh->datused;
+	else v->vdcd.vd.value.up = vh->datused;
 	memset( vh->datused, 0, amount );
 	vh->datused += amount;
-	return 0;
+	return;
 }
 /* SITUATION: Declaration is parsed, and its descriptive data known.
  * 	Fill in the var with this data. Allocate value storage unless already
@@ -171,9 +169,10 @@ void newvar( int class, Type type, int len, struct var *objclass,
 		(*v).vdcd.vd.class = class;
 		(*v).vdcd.vd.len = len;
 		(*v).vdcd.vd.brkpt = 0;
-		if(_allocSpace(v,len*obsize,vh)) return;	/* eset done if true */
 	}
-	if(passed) _copyArgValue( v, class, type, passed);
+	_allocSpace(v,len*obsize,vh);
+	if(error)return;
+	if(passed)_copyArgValue( v, class, type, passed);
 	if(curfun>=fun) curfun->evar = vh->nxtvar;
 	if( vh->nxtvar++ >= evar )eset(TMVRERR);
 	if(verbose[VV])dumpVar(v);
@@ -225,11 +224,13 @@ int canonIf(char* buff){
 }
 /*	returns var* defining current sym
  */
+//STUDY
 struct var* addr_obj(struct varhdr *vh){
 	struct var sym;
 	canon(&sym);
 	return _addrval(sym.name,vh->vartab, vh->nxtvar-1);
 }
+//SKIP
 /* 	looks up a symbol at one level
  */
 struct var* _addrval(char *sym, struct var *first, struct var *last) {
@@ -312,9 +313,16 @@ void dumpVar(struct var *v) {
 		if(*(v->vdcd.cd.parent))fprintf(stderr,"extends %s ", v->vdcd.cd.parent);
 	}
 	else if(v->type=='o') {
-		fprintf(stderr,"\n oref: %s type %c classvar %p (%s) blob %p "
+		fprintf(stderr,"\n oref: %s type %c classvar %p (%s) blob %p"
 				,v->name, v->type,v->vdcd.od.ocl, v->vdcd.od.ocl->name
 				,v->vdcd.od.blob);
+#if 0
+DATINT *p = v->vdcd.od.blob;
+for(int i=0;i<9;++i){
+fprintf(stderr,"%p->%p, ",p,*p);
+++p;
+}
+#endif
 	}
 	else {
 		fprintf(stderr,"\n var %p: %s %s %s len %d %zd %p "

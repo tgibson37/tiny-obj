@@ -6,10 +6,9 @@
 #include "facsym.h"
 #include "toc.h"
 
-/*	Situation: 'qual.ovar' is parsed, and qualifers varheader
- *	qvh retrieved.  Action: return objects var*. 
- */
-struct var* _obsym(struct varhdr *qvh){
+/*	dot is parsed */
+struct var* obsym(struct varhdr *qvh){
+//fprintf(stderr,"\n--- %s %d obsym  %p---\n",__FILE__,__LINE__,qvh);
 	if(symName()){
 		struct var *ovar;
 		if(!qvh){
@@ -18,29 +17,11 @@ struct var* _obsym(struct varhdr *qvh){
 		}
 		ovar = addr_obj(qvh);
 		cursor = lname+1;
-		if(!ovar){
-			eset(SYMERR);
-			return NULL;
-		}
+		if(!ovar)eset(SYMERR);
 		return ovar;
 	}
 	else eset(SYNXERR);
 	return NULL;
-}
-/*	Situation: An object qualifier including its dot is parsed.
- *	Action: Parse the required symname. Return its struct var.
- *	Else appropriate error. Set curobj to qual's vh.
- */
-struct var* obsym(char* qual) {
-	struct var *qvar;
-	struct varhdr *qvh;
-	qvar = addrval_all(qual);
-	if(!qvar){
-		eset(SYMERR);
-		return NULL;
-	}
-	canobj = qvh = (struct varhdr*)qvar->vdcd.od.blob;
-	return _obsym(qvh);
 }
 
 /*	Situation: v describes a variable. The name( is parsed
@@ -374,7 +355,7 @@ void factor() {
 			}
 			else eset(SYMERR);
 		}
-		else if(symName()) {		   // decl of var of type 'o'
+		else if(symName()) {		// Game g;
 			cursor = lname+1;
 			newref(isvar,locals);
 		}

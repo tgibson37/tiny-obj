@@ -20,12 +20,14 @@ class Line [
 
 main [
 	Line lines(9)
-	lines(0) = new Line 0,0,80,0
+MC 0
+	lines(3) = new Line 0,0,80,0
+MC 0
 	lines(1) = new Line 0,0,0,80
-	lines(0).print
+	lines(3).print
 	lines(1).print
 	start "firstLine",615,490
-	lines(0).render 10,10
+	lines(3).render 10,10
 	lines(1).render 10,10
 	show
 ]

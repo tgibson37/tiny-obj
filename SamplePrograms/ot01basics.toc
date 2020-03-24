@@ -28,10 +28,31 @@ class Nurse extends Player [
 int foo
 main [
     Cannibal can
-MC 0
     can = new Cannibal 1
     Nurse nur
     nur = new Nurse 2
+    pl"main program: "
+    pl" "
+    can.printName
+    can.printNumber
+    pl" "
+    nur.printName
+    nur.printNumber
+    delete can
+    delete nur
+]
+
+
+xxmain [
+    Cannibal can
+    can = new Cannibal 1
+MC "can", "new Can", 0
+    Nurse nur
+MC "nur", "Nurse nur", 0
+MC "can", 0
+    nur = new Nurse 2
+MC "nur", "new Nur", 0
+MC "can", 0
     pl"main program: "
     pl" "
     can.printName

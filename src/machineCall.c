@@ -422,7 +422,25 @@ DATINT plugInMC(int mcno, int nargs, DATINT *args) {
 	else return (*piMC)(mcno, nargs, args);
 	return 0;   // to avoid compile warning
 }
-void Mzero(){}   //bkpnt this for gdb debugging.
+
+/*	Usage: put MC 0 in your tc code. Then either:
+ *	bkpnt Mzero for debugging, or string arg to dumpVar, or both.
+ */
+void Mzero(){}
+void _mzero(int nargs, DATINT *args){
+	if(nargs){
+		char* sym = (char*)args[0];
+		char *label;
+		if(nargs>1)label = (char*)args[1];
+		else label = sym;
+		fprintf(stderr,"\n%s:  ",label);
+		struct var* v = addrval_all(sym);
+		if(v)dumpVar(v);
+		else fprintf(stderr,"%s, no such symbol\n",sym);
+	}
+	Mzero();
+}
+
 void machinecall( int nargs ) {
 	int i;
 //	DATINT args[nargs-1];
@@ -433,10 +451,14 @@ void machinecall( int nargs ) {
 		int x=toptoi();
 		args[nargs-1-i]=x;
 	}
-	if(mcno==0){pushk(0);Mzero();return;}  // MC 0 for debugging
+	if(mcno==0){  // MC 0 for debugging
+		pushk(0);
+		_mzero(nargs, args);
+		return;
+	}
 	if(mcno<100)origMC(mcno, nargs, args);
-	else if(mcno<200) newMC(mcno-100, nargs, args);
-	else if(mcno<300) userMC(mcno-200, nargs, args);
+	else if(mcno<200)newMC(mcno-100, nargs, args);
+	else if(mcno<300)userMC(mcno-200, nargs, args);
 	else {
 		int rval;
 		rval = plugInMC(mcno-1000, nargs, args);

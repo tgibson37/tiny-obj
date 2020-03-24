@@ -162,7 +162,6 @@ void varalloc(Type type, struct var *varparent
 	newvar(vclass, type, alen, varparent, vpassed, vh);
 }
 
-
 /********** expression parser *****************/
 
 /************ scan tools ******************/
