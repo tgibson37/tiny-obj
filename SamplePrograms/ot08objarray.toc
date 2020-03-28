@@ -20,10 +20,9 @@ class Line [
 
 main [
 	Line lines(9)
-MC 0
 	lines(3) = new Line 0,0,80,0
-MC 0
 	lines(1) = new Line 0,0,0,80
+MC "lines", 0
 	lines(3).print
 	lines(1).print
 	start "firstLine",615,490

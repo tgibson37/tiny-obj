@@ -30,7 +30,7 @@ struct vd {
   int class; int len; int brkpt; union stuff value;
 };
 struct od {
-  int class; int len; struct var *ocl; void *blob;
+  int class; int len; struct var *ocl; struct varhdr *blob;
 };
 union vdcd {
   struct vd vd; struct cd cd; struct od od;

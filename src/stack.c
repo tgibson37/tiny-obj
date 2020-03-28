@@ -59,6 +59,7 @@ void dumpTop() {
 }
 
 void stuffCopy( union stuff *to, union stuff *from ) {
+//fprintf(stderr,"\n--- %s %d stuffCopy %p %p %i ---\n",__FILE__,__LINE__,to, from, sizeof(*to));
 	memcpy( to, from, sizeof(*to));
 }
 

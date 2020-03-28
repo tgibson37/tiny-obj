@@ -224,13 +224,11 @@ int canonIf(char* buff){
 }
 /*	returns var* defining current sym
  */
-//STUDY
 struct var* addr_obj(struct varhdr *vh){
 	struct var sym;
 	canon(&sym);
 	return _addrval(sym.name,vh->vartab, vh->nxtvar-1);
 }
-//SKIP
 /* 	looks up a symbol at one level
  */
 struct var* _addrval(char *sym, struct var *first, struct var *last) {
