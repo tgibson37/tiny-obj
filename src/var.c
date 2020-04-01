@@ -14,11 +14,13 @@ int getlen(struct var *v){
 	if(v->type=='o')return v->vdcd.od.len;
 	return v->vdcd.vd.len;
 }
+#if 0
 struct varhdr* getvarhdr(struct var *v){
 	if(v->type == 'o')return v->vdcd.od.blob;
 	else eset(TYPEERR);
 	return NULL;
 }
+#endif
 char* getvarwhere(struct var *v){
 	return (v->vdcd.vd.value.up);
 }
@@ -84,7 +86,6 @@ void dumpVal_v(struct var *v){
  *	function locals.
  */
 void dumpDots(int n){while(n--)fprintf(stderr,".");}
-
 void newfun(struct varhdr *vh) {
 	if(++curfun>efun){
 		eset(TMFUERR);
@@ -137,7 +138,7 @@ int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
  */
 void _allocSpace(struct var *v, int amount, struct varhdr *vh){
 	if( vh->datused+amount > vh->endval ){eset(TMVLERR);return;}
-	if(v->type=='o')v->vdcd.od.blob = vh->datused;
+	if(v->type=='o')v->vdcd.od.blob = (struct varhdr **)vh->datused;
 	else v->vdcd.vd.value.up = vh->datused;
 	memset( vh->datused, 0, amount );
 	vh->datused += amount;
@@ -163,7 +164,6 @@ void newvar( int class, Type type, int len, struct var *objclass,
 		v->vdcd.od.class = class;
 		v->vdcd.od.len = len;
 		v->vdcd.od.ocl = objclass;
-		v->vdcd.od.blob = NULL;	// filled in when known
 	}
 	else{
 		(*v).vdcd.vd.class = class;
@@ -174,11 +174,11 @@ void newvar( int class, Type type, int len, struct var *objclass,
 	if(error)return;
 	if(passed)_copyArgValue( v, class, type, passed);
 	if(curfun>=fun) curfun->evar = vh->nxtvar;
-	if( vh->nxtvar++ >= evar )eset(TMVRERR);
+	if(vh->nxtvar++ >= evar)eset(TMVRERR);
 	if(verbose[VV])dumpVar(v);
 	return;
 }
-
+#if 0
 /*	Refenence to an object: refname (fname,lname), type 'o', 
  *	details: class entry (ocls), blob to referenced object's blob (NULL) 
  *	to be filled in when known.
@@ -188,9 +188,11 @@ void newref(struct var *ocls, struct varhdr *vh) {
 	canon(r);
 	r->type = 'o';
 	r->vdcd.od.ocl = ocls;
-	r->vdcd.od.blob=NULL;
+//	r->vdcd.od.blob=vh->datused+1;    usue allocSpace, NEED
+//	datused += sizeof(void*);     << ???
 	vh->nxtvar++;
 }
+#endif
 
 /*	Canonicalizes the name bracket by f,l inclusive into buff,
  *	and returns buff. Size of buff must be at least VLEN+1.

@@ -51,8 +51,7 @@
 #define xnew "new"
 #define xdelete "delete"
 #define xthis "this"
-
-
+#define xdot "."
 
 #define ECHO 1
 #define ESCAPE 27 // lrb

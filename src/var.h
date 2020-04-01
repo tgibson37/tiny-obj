@@ -29,8 +29,9 @@ struct cd {
 struct vd {
   int class; int len; int brkpt; union stuff value;
 };
+/*  **blob because it must support an array of *blob */
 struct od {
-  int class; int len; struct var *ocl; struct varhdr *blob;
+  int class; int len; struct var *ocl; struct varhdr **blob;
 };
 union vdcd {
   struct vd vd; struct cd cd; struct od od;
@@ -48,7 +49,7 @@ int checkBrackets(char *from, char *to);
 
 /*  getters */
 int getlen(struct var *v);
-struct varhdr* getvarhdr(struct var *v);
+//struct varhdr* getvarhdr(struct var *v);
 //struct varhdr** getobjcell(struct var *v);
 char* getvarwhere(struct var *v);
 int getvarclass(struct var *v);

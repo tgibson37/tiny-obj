@@ -141,10 +141,7 @@ void rem() {
  */
 void varalloc(Type type, struct var *varparent
 		, union stuff *vpassed, struct varhdr *vh) {
-	if( !symName() ) {		/*defines fname,lname. True is match.*/
-		eset(SYMERR);
-		return;
-	}
+	if(!symName()){eset(SYMERR);return;}
 	cursor=lname+1;
 	if( lit("(") ){
 		vclass = 1;		/* array or pointer */
@@ -363,7 +360,7 @@ void st() {
 			cursor = lname+1;
 			struct var *v = addrval_all(sym.name);
 			if(!v){eset(SYMERR); return;}
-			void *vh = v->vdcd.od.blob;
+			void *vh = *v->vdcd.od.blob;
 			if(vh)free(vh);
 			else eset(SYNXERR);
 		}

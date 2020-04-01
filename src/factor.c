@@ -52,7 +52,14 @@ char* _getbumpedwhere(struct var *v) {
  */ 
 void _pushvar(struct var *v){
 	int class=getvarclass(v); 
-	int type=v->type; 
+	int type=v->type;
+	if(type=='o'){
+		struct varhdr *vh = getbumpedobj(v);
+		union stuff value;
+		value.up = vh;
+		pushst(0,'L','o',&value);
+		return;
+	}
 	char* where = getvarwhere(v);
 	int len=getlen(v);
 	int obsize = typeToSize(class,type);
@@ -357,7 +364,7 @@ void factor() {
 		}
 		else if(symName()) {		// Game g;
 			cursor = lname+1;
-			newref(isvar,locals);
+//			newref(isvar,locals);
 		}
 		else eset(SYMERR);
 	}
