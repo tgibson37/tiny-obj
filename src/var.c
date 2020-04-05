@@ -317,10 +317,11 @@ void dumpVar(struct var *v) {
 				,v->name, v->type,v->vdcd.od.ocl, v->vdcd.od.ocl->name
 				,v->vdcd.od.blob);
 #if 0
-DATINT *p = v->vdcd.od.blob;
+// cannot get this to work...
+struct varhdr **vh = *v->vdcd.od.blob;
 for(int i=0;i<9;++i){
-fprintf(stderr,"%p->%p, ",p,*p);
-++p;
+	fprintf(stderr,"\n%p->%p",vh,*vh);
+++vh;
 }
 #endif
 	}

@@ -54,7 +54,8 @@ void _pushvar(struct var *v){
 	int class=getvarclass(v); 
 	int type=v->type;
 	if(type=='o'){
-		struct varhdr *vh = getbumpedobj(v);
+		struct varhdr **cell = getvhcell(v);
+		struct varhdr *vh = *cell;
 		union stuff value;
 		value.up = vh;
 		pushst(0,'L','o',&value);
