@@ -36,7 +36,8 @@ void newvar_this(struct varhdr *vh){
  *	the actual link into varhdr, which also has room for all values.
  *	The logic here mimics classical void link().
  */
-void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
+void lnpass12(char *from, char *to, 
+			struct varhdr *vh, int newop, char *conName) {
 	char* cptr;
 	char* savedEndapp=endapp;
 	char* savedCursor=cursor;
@@ -104,6 +105,49 @@ void lnpass12(char *from, char *to, struct varhdr *vh, int newop) {
 				cls_dcl(abst,cname.name,ename.name,vh,where);
 			}
 		}
+#if 0
+		if(newop) {
+			if(_isClassName(NODOT)){  // obj ref or constructor
+//				char *conname, *symname;
+//#if 0
+fprintf(stderr,"~114 <<<<<<<===================conName=%s==\n",conName);
+pft(cursor,cursor+20);
+fprintf(stderr,"~118 <<<<<<<===================conName=%s==isRef=%d\n"
+	,sym.name,isRef);
+}
+//#endif
+				struct var sym;
+				canon(&sym);
+				int isRef = strcmp(conName,sym.name);   //Not the constructor
+				if(isRef){
+					if(xxpass==1){
+						lndata.nvars += 1;
+						lndata.valsize += sizeof(void*);   // ISSUE: array???
+					}
+					else if(xxpass==2){ // ISSUE: use varalloc, toc~142 ???
+						if(symName()) {		// Game g;
+							cursor = lname+1;
+							struct var *v = vh->nxtvar;
+							v->type = 'o';
+							v->vdcd.od.class = 0;
+							v->vdcd.od.len = 1;
+							allocSpace(v, sizeof(void*), vh);
+						}
+					}
+				}
+				else {
+//fprintf(stderr,"NEED skip code link~138\n");
+//exit(1);
+					if((cptr=_mustFind(cursor,endapp,'[',LBRCERR))) {
+						cursor=cptr+1;
+						skip('[',']');
+++cursor;
+					}
+				}
+			}
+			else eset(SYMERR);
+		}
+#endif
 		else if(symName()) {     /* fctn decl */
 			union stuff kursor;
 			cursor = lname+1;
@@ -205,11 +249,13 @@ void ascend(char *cname, char **from, char **to){
  *	Links source text area from *from to *to in two passes. In pass one 
  *	vartab is NULL and computes the size of memory needed for both the 
  *	vartab and the value space. In pass two it builds the table. 
- *	Parse, var, and other services are supplied by whole unchanged tiny-c files.
+ *	Parse, var, and other services are supplied by whole unchanged 
+ *	tiny-c files.
  *	Uses lnpass12 as a service.
  */
 struct varhdr* lnlink(char *from, char *to, 
                        char *blobName, struct var *isclvar){
+//fprintf(stderr,"\n~240: blobname=%s",blobName);
         newop = strcmp(blobName,"__Globals__"); // true iff doing new operator
         int size;
         char* blob;
@@ -222,7 +268,7 @@ struct varhdr* lnlink(char *from, char *to,
         f=from; t=to;
 		strncpy(par_buf,blobName,VLEN+1);
         while(f){
-	        lnpass12(f,t,NULL,newop);    // PASS one
+	        lnpass12(f,t,NULL,newop,blobName);    // PASS one
 	        if(newop){
 	        	ascend(par_buf,&f,&t);
 	        }
@@ -245,7 +291,7 @@ struct varhdr* lnlink(char *from, char *to,
         f=from; t=to;
 		strncpy(par_buf,blobName,VLEN+1);
         while(f){
-	        lnpass12(f,t,vh,newop);    // PASS two
+	        lnpass12(f,t,vh,newop,blobName);    // PASS two
 	        if(newop){
 	        	ascend(par_buf,&f,&t);
 	        }
@@ -280,6 +326,8 @@ struct varhdr* classlink(struct var *isclvar){
 	char *save_ln = lname;
 	struct varhdr *vh;
 	vh = lnlink(from, to, isclvar->name, isclvar);
+//dumpVarTab(vh);
+//fprintf(stderr,"\n~319 error=%d",error);
 	if(error){
 		whatHappened();
 		exit(1);

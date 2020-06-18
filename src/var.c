@@ -136,7 +136,7 @@ int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
 
 /* allocates memory for value of v, return 0 on success, else !0
  */
-void _allocSpace(struct var *v, int amount, struct varhdr *vh){
+void allocSpace(struct var *v, int amount, struct varhdr *vh){
 	if( vh->datused+amount > vh->endval ){eset(TMVLERR);return;}
 	if(v->type=='o')v->vdcd.od.blob = (struct varhdr **)vh->datused;
 	else v->vdcd.vd.value.up = vh->datused;
@@ -170,7 +170,7 @@ void newvar( int class, Type type, int len, struct var *objclass,
 		(*v).vdcd.vd.len = len;
 		(*v).vdcd.vd.brkpt = 0;
 	}
-	_allocSpace(v,len*obsize,vh);
+	allocSpace(v,len*obsize,vh);
 	if(error)return;
 	if(passed)_copyArgValue( v, class, type, passed);
 	if(curfun>=fun) curfun->evar = vh->nxtvar;

@@ -1,7 +1,7 @@
 #include pps/pyGraphicsLib.tc
 #include pps/library.tc
 
-// Draw tools, just draw a few things
+// Draw the intersection from the puzzle 4way,
 
 class Line [
 	int fx,fy,tx,ty;

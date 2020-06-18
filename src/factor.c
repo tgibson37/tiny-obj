@@ -366,6 +366,7 @@ void factor() {
 		else if(symName()) {		// Game g;
 			cursor = lname+1;
 //			newref(isvar,locals);
+fprintf(stderr,"\n--- %s %d ---DEAD CODE TEST\n",__FILE__,__LINE__);
 		}
 		else eset(SYMERR);
 	}

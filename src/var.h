@@ -53,33 +53,16 @@ int getlen(struct var *v);
 //struct varhdr** getobjcell(struct var *v);
 char* getvarwhere(struct var *v);
 int getvarclass(struct var *v);
-
-
 void newfun(struct varhdr *vh);
-/*	opens a new vartab frame */
 void fundone();
-/*	pops a vartab frame */
 void newvar( int class, Type type, int len, struct var *objclass,
       union stuff *passed, struct varhdr *vh );
-/* SITUATION: Declaration is parsed, and its descriptive data known.
- * 	Fill in the var with this data. Allocate value storage unless already
- *	allocated, i.e. pointer to passed data. Copy passed data into allocation.
- *	NOTE: signifantly refactored. */
 char* canon_buff(char* first, char* l, char* buff);
-/* Canonicalizes the name bracket by f,l inclusive into buff, and returns buff.
-	sizeOf buff must be at least VLEN+1. */
 void canon(struct var *v);
-/* 	fname..lname is full name. Puts canonicalized name into v. If short
- *	enough same as name. If longer first VLEN-1 characters + last character.
- *	The last char has more info than middle chars. */
 struct var* addrval_all(char *sym);
-/* 	looks up a symbol at one level */
 struct var* addrval();
-/* 	looks up a symbol pointed to by fname,lname: 
- *	locals, globals, library levels in that order. First hit wins. */
 int isfcn(struct var *v);
-/*  return true if *v is a function
- */
+void allocSpace(struct var *v, int amount, struct varhdr *vh);
 void dumpVal(Type t, int class, union stuff *val, char lval);
 void dumpFunEntry( int e );
 void dumpFun();

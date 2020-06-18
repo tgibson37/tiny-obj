@@ -4,6 +4,12 @@
 typedef DATINT (*McList)(int,DATINT*);
 DATINT  (*piMC )(int,int,DATINT*) = NULL;
 
+/*	debugging aid */
+void dumpArgs(int nargs, DATINT *args, int lineno){
+	fprintf(stderr,"\nmachineCall dumpArgs, Msetdata~%i\n",lineno);
+	for(int i=0;i<nargs;++i)fprintf(stderr,"\n  %i %p",*(args+i),*(args+i));
+}
+
 /*		MC9 ;scan for nth occurance of CH in a block. Args are
  *		  first,last,CH,cnt address. Return pointer to nth
  *		  occurance,if it exists, otherwise to last. Also
@@ -20,6 +26,16 @@ DATINT scann( char *from, char *to, char c, int *n ) {
 	return f-from;
 }
 
+DATINT Msetdata(int nargs, DATINT *args) {
+	--nargs;
+	DATINT *to   = *(args);
+	while((nargs--)>0){
+		DATINT datum = *(++args);
+		*to = datum;
+		++to;
+	}
+	return 0;
+}
 DATINT Mscann(int nargs, DATINT *args) {
 	char *from = (char*)args[0];
 	char *to   = (char*)args[1];
@@ -373,7 +389,7 @@ McList newList[] =
 	, &Mstrcpy, &Mfilwt, &Mexit, &Mexitq, &Mcdate
 	, &Mfopen, &Mfputs, &Mfputc, &Mfgets, &Mfclose
 	, &Mgetprop, &Msystem, &Mfpn, &Msqrt, &Marctan
-	, &naf, &naf, &naf, &naf, &naf
+	, &Msetdata, &naf, &naf, &naf, &naf
 };
 /* first in this list is MC 201
  */

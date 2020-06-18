@@ -7,6 +7,15 @@ getproperty char file(0), name(0), buff(0); int blen; char default(0) [
 	return MC file,name,buff,blen,default,116
 ]
 
+setdata int x(0); ... [
+	MC 121
+]
+dumpdata int x(0); int len [
+	int i
+	while(i<len)[pn x(i);i=i+1]
+	pl""
+]
+
 printf char fmt(0); ... [
 	MC 101
 ]
