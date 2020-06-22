@@ -105,49 +105,6 @@ void lnpass12(char *from, char *to,
 				cls_dcl(abst,cname.name,ename.name,vh,where);
 			}
 		}
-#if 0
-		if(newop) {
-			if(_isClassName(NODOT)){  // obj ref or constructor
-//				char *conname, *symname;
-//#if 0
-fprintf(stderr,"~114 <<<<<<<===================conName=%s==\n",conName);
-pft(cursor,cursor+20);
-fprintf(stderr,"~118 <<<<<<<===================conName=%s==isRef=%d\n"
-	,sym.name,isRef);
-}
-//#endif
-				struct var sym;
-				canon(&sym);
-				int isRef = strcmp(conName,sym.name);   //Not the constructor
-				if(isRef){
-					if(xxpass==1){
-						lndata.nvars += 1;
-						lndata.valsize += sizeof(void*);   // ISSUE: array???
-					}
-					else if(xxpass==2){ // ISSUE: use varalloc, toc~142 ???
-						if(symName()) {		// Game g;
-							cursor = lname+1;
-							struct var *v = vh->nxtvar;
-							v->type = 'o';
-							v->vdcd.od.class = 0;
-							v->vdcd.od.len = 1;
-							allocSpace(v, sizeof(void*), vh);
-						}
-					}
-				}
-				else {
-//fprintf(stderr,"NEED skip code link~138\n");
-//exit(1);
-					if((cptr=_mustFind(cursor,endapp,'[',LBRCERR))) {
-						cursor=cptr+1;
-						skip('[',']');
-++cursor;
-					}
-				}
-			}
-			else eset(SYMERR);
-		}
-#endif
 		else if(symName()) {     /* fctn decl */
 			union stuff kursor;
 			cursor = lname+1;
@@ -159,6 +116,62 @@ fprintf(stderr,"~118 <<<<<<<===================conName=%s==isRef=%d\n"
 				skip('[',']');
 			}
 		}
+#if 0
+fprintf(stderr,"\n\nlink~120 newop %d",newop);
+rem();
+pft(cursor,cursor+9);
+		if(newop && _isClassName(NODOT)) {
+fprintf(stderr,"\n\nlink~122");
+#if 0
+			if(1){  // obj ref or constructor
+fprintf(stderr,"\nlink~125");
+//fprintf(stderr,"~114 <<<<<<<===================conName=%s==\n",conName);
+pft(cursor,cursor+20);
+//fprintf(stderr,"~118 <<<<<<<===================conName=%s==isRef=%d\n"
+//	,sym.name,isRef);
+//}
+				struct var sym;
+				canon(&sym);
+				int isRef = strcmp(conName,sym.name);   //Not the constructor
+#if 0
+				if(isRef){
+fprintf(stderr,"\nREF code link~135");
+pft(cursor,cursor+20);
+#if 0
+					if(xxpass==1){
+						lndata.nvars += 1;
+						lndata.valsize += sizeof(void*);   // ISSUE: array???
+					}
+					else if(xxpass==2){ // ISSUE: use varalloc, toc~142 ???
+						if(symName()) {		// Game g;
+fprintf(stderr,"\nlink~126");
+							cursor = lname+1;
+							struct var *v = vh->nxtvar;
+							v->type = 'o';
+							v->vdcd.od.class = 0;
+							v->vdcd.od.len = 1;
+							allocSpace(v, sizeof(void*), vh);
+						}
+					}
+#endif
+				}
+				else {
+fprintf(stderr,"\nSKIP code link~154\n");
+pft(cursor,cursor+20);
+#if 0
+					if((cptr=_mustFind(cursor,endapp,'[',LBRCERR))) {
+						cursor=cptr+1;
+						skip('[',']');
+++cursor;
+					}
+#endif
+				}
+#endif
+			}
+			else eset(SYMERR);
+#endif
+		}
+#endif
 		else if(*cursor=='#'){
 			while(++cursor<endapp) {
 				if( (*cursor==0x0d)||(*cursor=='\n') )break;
@@ -170,7 +183,7 @@ fprintf(stderr,"~118 <<<<<<<===================conName=%s==isRef=%d\n"
 	}
 	cursor = savedCursor;
 	endapp = savedEndapp;
-	if(verbose[VL])dumpVarTab(vh);
+	if(verbose[VL]&&(xxpass==2))dumpVarTab(vh);
 }
 
 /*	tools for accessing specific data in a *var. A var can be
@@ -255,7 +268,7 @@ void ascend(char *cname, char **from, char **to){
  */
 struct varhdr* lnlink(char *from, char *to, 
                        char *blobName, struct var *isclvar){
-//fprintf(stderr,"\n~240: blobname=%s",blobName);
+		if(verbose[VL])fprintf(stderr,"\nlinking %s",blobName);
         newop = strcmp(blobName,"__Globals__"); // true iff doing new operator
         int size;
         char* blob;

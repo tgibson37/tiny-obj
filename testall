@@ -1,4 +1,4 @@
 #! /bin/sh
 bash ./test -s testGraphics
-bash ./test -s testobj
 bash ./test -s testtc
+bash ./test -s testobj

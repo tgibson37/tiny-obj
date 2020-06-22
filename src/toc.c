@@ -90,7 +90,8 @@ int symName() {
 	if( isalpha(*temp) || *temp=='_') {
 		fname = temp;
 	}
-	else return 0;  /* not a symbol */
+	else return 0;							/* not a symbol */
+//	if(_isClassName(MAYBEDOT)) return 0;	/* ditto */
 	while( isalnum(*temp) || *temp=='_'){
 		++temp; 
 	}
