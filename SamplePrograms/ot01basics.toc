@@ -26,7 +26,7 @@ class Nurse extends Player [
     ]
 ]
 int foo
-xxmain [
+main [
     Cannibal can
     can = new Cannibal 1
     Nurse nur
@@ -43,7 +43,7 @@ xxmain [
 ]
 
 
-main [
+xxmain [
 //MC 0
     Cannibal can
     can = new Cannibal 1

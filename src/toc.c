@@ -33,6 +33,7 @@ int typeToSize( int class, Type type ) {
 /******* set error unless already set, capture cursor in errat *******/
 void eset( int err ){
 	if(!error){
+		fflush(stdout);
 		error=err;
 		errat=cursor;
 	}

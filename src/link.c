@@ -47,11 +47,13 @@ void lnpass12(char *from, char *to,
 		xxpass=2;
 		if(!newop)newfun(vh);
 	}
+//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 	if(checkBrackets(from,to))eset(RBRCERR+1000);
 	if(error){ whatHappened(); exit(1); }
 	cursor=from;
 	endapp=to;
 	while(cursor<endapp && !error){
+//fprintf(stderr,"\n          --- %s %d ---\n",__FILE__,__LINE__);
 		char* lastcur = cursor;
 		rem();
 		if(lit(xlb)) skip('[',']');
@@ -80,8 +82,6 @@ void lnpass12(char *from, char *to,
 				else eset(SYNXERR);
 			}
 			if(symName()) {     /* class name */
-//				union stuff kursor;
-//				kursor.up = 
 				cursor = lname+1;
 				canon(&cname);
 				if(lit(xextends)){
@@ -105,6 +105,35 @@ void lnpass12(char *from, char *to,
 				cls_dcl(abst,cname.name,ename.name,vh,where);
 			}
 		}
+		char *c; c=cursor;
+		struct var* isvar;
+		if(newop && (isvar=_isClassName(NODOT))) {
+// obj ref or constructor
+//fprintf(stderr,"\n--- %s %d ---",__FILE__,__LINE__);
+//fprintf(stderr,"    pass %d",xxpass);
+//dumpft(cursor,cursor+20);
+			struct var sym;
+			canon(&sym);
+			int isRef = strcmp(conName,sym.name);   //Not the constructor
+			if(isRef){    // obj ref
+				if(symName()) {		// Game g;
+					do{
+						varalloc('o',isvar,NULL,vh);	
+					} while(lit(xcomma));
+				}
+			}
+			else {    // constructor
+				union stuff kursor;
+				cursor = lname+1;
+				rem();
+				kursor.up = cursor;
+				newvar('E',2,0,NULL,&kursor,vh);
+				if((cptr=_mustFind(cursor,endapp,'[',LBRCERR))) {
+					cursor=cptr+1;
+					skip('[',']');
+				}
+			}
+		}
 		else if(symName()) {     /* fctn decl */
 			union stuff kursor;
 			cursor = lname+1;
@@ -116,62 +145,6 @@ void lnpass12(char *from, char *to,
 				skip('[',']');
 			}
 		}
-#if 0
-fprintf(stderr,"\n\nlink~120 newop %d",newop);
-rem();
-pft(cursor,cursor+9);
-		if(newop && _isClassName(NODOT)) {
-fprintf(stderr,"\n\nlink~122");
-#if 0
-			if(1){  // obj ref or constructor
-fprintf(stderr,"\nlink~125");
-//fprintf(stderr,"~114 <<<<<<<===================conName=%s==\n",conName);
-pft(cursor,cursor+20);
-//fprintf(stderr,"~118 <<<<<<<===================conName=%s==isRef=%d\n"
-//	,sym.name,isRef);
-//}
-				struct var sym;
-				canon(&sym);
-				int isRef = strcmp(conName,sym.name);   //Not the constructor
-#if 0
-				if(isRef){
-fprintf(stderr,"\nREF code link~135");
-pft(cursor,cursor+20);
-#if 0
-					if(xxpass==1){
-						lndata.nvars += 1;
-						lndata.valsize += sizeof(void*);   // ISSUE: array???
-					}
-					else if(xxpass==2){ // ISSUE: use varalloc, toc~142 ???
-						if(symName()) {		// Game g;
-fprintf(stderr,"\nlink~126");
-							cursor = lname+1;
-							struct var *v = vh->nxtvar;
-							v->type = 'o';
-							v->vdcd.od.class = 0;
-							v->vdcd.od.len = 1;
-							allocSpace(v, sizeof(void*), vh);
-						}
-					}
-#endif
-				}
-				else {
-fprintf(stderr,"\nSKIP code link~154\n");
-pft(cursor,cursor+20);
-#if 0
-					if((cptr=_mustFind(cursor,endapp,'[',LBRCERR))) {
-						cursor=cptr+1;
-						skip('[',']');
-++cursor;
-					}
-#endif
-				}
-#endif
-			}
-			else eset(SYMERR);
-#endif
-		}
-#endif
 		else if(*cursor=='#'){
 			while(++cursor<endapp) {
 				if( (*cursor==0x0d)||(*cursor=='\n') )break;
@@ -290,6 +263,9 @@ struct varhdr* lnlink(char *from, char *to,
         if(newop){
         	lndata.nvars++;   // for 'this'
         	lndata.valsize += sizeof(void*);
+//fprintf(stderr,"\n--- %s %d ---linking Curbs, nvars valsize %d %d\n",__FILE__,__LINE__,
+//	lndata.nvars,lndata.valsize);
+
         }
         size = sizeof(struct varhdr) 
         		+ lndata.nvars*sizeof(struct var) + lndata.valsize;

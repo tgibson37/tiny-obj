@@ -2,6 +2,11 @@
 
 cmd="./bin/toc"
 
+showtds() {
+	cat $TDS_FILE
+	exit 1
+}
+
 usage() {
   cat << EOF >&2
 Usage: ./test [-kdltCI?] [testname testname ...]
@@ -15,6 +20,7 @@ Usage: ./test [-kdltCI?] [testname testname ...]
   -C (clean): remove latest results
   -I (instructions): how to set up test suites
   -s (suite): set suitename as default, then run
+  -S (show): show default suite
 EOF
   exit 1
 }
@@ -156,7 +162,7 @@ clean=NO
 list=NO
 tree=NO
 TDS_FILE="testDefaultSuite"
-while getopts kdltIs:C? o; do
+while getopts kdltISs:C? o; do
   case $o in
     k) kt=KEEP;;
     d) diff=YES;;
@@ -164,6 +170,7 @@ while getopts kdltIs:C? o; do
 	t) tree=YES;;
 	I) instructions;;
 	s) set_suite $2;;
+	S) showtds;;
 	C) clean=YES;;
     ?) usage;;
   esac
