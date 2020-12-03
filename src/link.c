@@ -27,7 +27,7 @@ void newvar_this(struct varhdr *vh){
 	v->vdcd.od.class =  0;
 	v->vdcd.od.len =  1;
 //	v->vdcd.od.ocl = ???;
-	v->vdcd.od.blob =  vh;
+	v->vdcd.od.blob = vh;
 	if( vh->nxtvar++ >= evar )eset(TMVRERR);
 	if(verbose[VV])dumpVar(v);
 }
@@ -44,10 +44,10 @@ void lnpass12(char *from, char *to,
 	if(vh==NULL){
 		xxpass=1;
 	} else {
+//fprintf(stderr,"\n--- %s %d --- conName %s %p",__FILE__,__LINE__,conName,vh);
 		xxpass=2;
 		if(!newop)newfun(vh);
 	}
-//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 	if(checkBrackets(from,to))eset(RBRCERR+1000);
 	if(error){ whatHappened(); exit(1); }
 	cursor=from;
@@ -105,7 +105,7 @@ void lnpass12(char *from, char *to,
 				cls_dcl(abst,cname.name,ename.name,vh,where);
 			}
 		}
-		char *c; c=cursor;
+//		char *c; c=cursor;
 		struct var* isvar;
 		if(newop && (isvar=_isClassName(NODOT))) {
 // obj ref or constructor

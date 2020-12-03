@@ -6,24 +6,6 @@
 #include "facsym.h"
 #include "toc.h"
 
-/*	dot is parsed */
-struct var* obsym(struct varhdr *qvh){
-//fprintf(stderr,"\n--- %s %d obsym  %p---\n",__FILE__,__LINE__,qvh);
-	if(symName()){
-		struct var *ovar;
-		if(!qvh){
-			eset(SYMERR);
-			return NULL;
-		}
-		ovar = addr_obj(qvh);
-		cursor = lname+1;
-		if(!ovar)eset(SYMERR);
-		return ovar;
-	}
-	else eset(SYNXERR);
-	return NULL;
-}
-
 /*	Situation: v describes a variable. The name( is parsed
  *	Action: check the class is >0 else CLASERR, return NULL. 
  *	Parse the subscript, compute and return the bumped where.
@@ -115,10 +97,12 @@ void _setArg( Type type, struct stackentry *arg ) {
 int varargs = 0;
 char* xvarargs = "...";
 
-int ecnt=0;
+int ecnt=50;
 void _enter( char* where) {
-//fprintf(stderr,"\n--- %s %d ---enter %d",__FILE__,__LINE__,ecnt++);
+//if(++ecnt>0 && cursor>apr){
+//fprintf(stderr,"\n--- %s %d ---enter %d cur %p can %p",__FILE__,__LINE__,ecnt,curobj,canobj);
 //dumpft(where-9,where+9);
+//}
 	int arg=nxtstack;
 	int nargs=0;
 	if(varargs>0) nargs=varargs-1;

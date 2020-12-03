@@ -244,17 +244,23 @@ struct var* _addrval(char *sym, struct var *first, struct var *last) {
 	return NULL;
 }
 
-/* 	looks up a symbol at three levels via function table. 
+/* 	looks up a symbol at three levels via function table, four if curobj is defined.
  *	sym must be canonical.
  */
 struct var* addrval_all(char *sym) {
 	struct var *v;
 	v = _addrval( sym, curfun->fvar, curfun->evar );	// locals
-	if(!v && curobj)																	// instances
-			v = _addrval( sym, curobj->vartab, curobj->nxtvar-1);
+	if(!v && curobj) {																// instances
+//if(Mzero_hits && cursor>apr)
+//fprintf(stderr,"\n--- %s %d --- %s %p\n",__FILE__,__LINE__,sym,curobj);
+		v = _addrval( sym, curobj->vartab, curobj->nxtvar-1);
+	}
 	if(!v) v = _addrval( sym, curglbl->fvar, curglbl->evar ); //globals
 	if(!v) v = _addrval( sym, fun->fvar,fun->evar );	//libs
-	if(v)return v;
+	if(v){
+//if(Mzero_hits && curobj && cursor>apr)dumpVar(v);
+		return v;
+	}
 	return 0;	
 }
 

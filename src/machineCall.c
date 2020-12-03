@@ -441,7 +441,14 @@ DATINT plugInMC(int mcno, int nargs, DATINT *args) {
 
 /*	Usage: put MC 0 in your tc code. Then either:
  *	bkpnt Mzero for debugging, or string arg to dumpVar, or both.
+ *	Examples: 
+ *		MC 0 in tc code, b Mzero in gdb 
+ *			=> gdb hits bkpt with cursor on next tc statement. Continue
+ *				in gdb with n (several times) or set another bkpt and c.
+ *		MC vvv,0 in tc code, vvv is a tc variable. => vvv's value is displayed.
+ *		MC vvv,string,0, => string is used to label the bkpt hit.
  */
+int Mzero_hits = 0;
 void Mzero(){}
 void _mzero(int nargs, DATINT *args){
 	if(nargs){
@@ -455,6 +462,7 @@ void _mzero(int nargs, DATINT *args){
 		else fprintf(stderr,"%s, no such symbol\n",sym);
 	}
 	Mzero();
+	++Mzero_hits;
 }
 
 void machinecall( int nargs ) {

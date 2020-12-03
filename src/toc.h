@@ -168,6 +168,7 @@ char* errat;
 int obsize, vclass, alen;
 int traceMode;
 extern char* ppsPath;
+extern int Mzero_hits;
 
 int tcFopen(char* name, char* mode);
 int tcFputs(char* str, int unit);

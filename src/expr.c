@@ -108,9 +108,11 @@ void _eq() {
 /* An asgn is a reln or an lvalue = asgn. Note that
    reln can match an lvalue.
  */
+char latestSym[VLEN];
 int asgn(){ 
 	if(_reln()){
 		if(lit(xeq)){
+
 			asgn();
 			if(!error)_eq();
 		}
