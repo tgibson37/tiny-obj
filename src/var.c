@@ -73,7 +73,7 @@ void dumpVal_v(struct var *v){
 		struct varhdr *vh = s.up;
 		struct blob *b;
 		for(b=blobtab; b<nxtblob; ++b) {
-			if(b->varhdr == vh->vartab->vdcd.od.blob) break;
+			if(b->varhdr == (struct varhdr*)(vh->vartab->vdcd.od.blob)) break;
 		}
 		if(b<nxtblob) fprintf(stderr,"%s",b->name);
 		else fprintf(stderr,"Object type");
@@ -296,17 +296,19 @@ struct var* _isClassName(int nodot) {
 }
 
 void dumpFunEntry( int e ) {
-	fprintf(stderr,"\n fun entry at %d:	%p %p %p", e,
+	fprintf(stderr,"\n fun entry at %d:	%d %p %p %p %p", e,
+		fun[e].obj, fun[e].obj ? fun[e].obj->sernum : -9,
 		fun[e].fvar, fun[e].evar, fun[e].datused );
 }
 
 void dumpFun() {
-	fprintf(stderr,"\nfun table: fvar, evar, prused");
+	fprintf(stderr,"\nfun table: sernum, obj, fvar, evar, prused");
 	int i;
 	int num = curfun-fun;
 	for(i=0;i<=num;++i) {
 		dumpFunEntry(i);
 	}
+	fprintf(stderr,"\n");
 }
 
 char* classToWord_v(struct var *v){

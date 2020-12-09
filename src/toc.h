@@ -125,7 +125,7 @@ struct funentry *curglbl, *curfun, *efun;
 
 /* blob header */
 struct varhdr {
-	char name[VLEN+1];
+	char name[VLEN+1]; int sernum;
 	struct var *vartab; struct var *gltab; struct var *nxtvar; 
 	char *val; char *endval; char *datused; 
 };

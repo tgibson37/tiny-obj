@@ -2,6 +2,7 @@
 #include "var.h"
 #include "toc.h"
 
+extern int dump_mallocs;
 int newop;
 int xxpass=0;
 
@@ -271,6 +272,8 @@ struct varhdr* lnlink(char *from, char *to,
         		+ lndata.nvars*sizeof(struct var) + lndata.valsize;
         blob = mymalloc(blobName, size+10);
         vh = (struct varhdr*)blob;
+        vh->sernum = nxtblob-blobtab;
+        if(dump_mallocs)fprintf(stderr," sernum %d",vh->sernum);
         _newblob(blobName,blob);
 		memset(vh, 0, size);
         vh->vartab = vh->nxtvar = vh->gltab = (struct var*)(vh+1);

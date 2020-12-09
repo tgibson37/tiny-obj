@@ -7,7 +7,7 @@ DATINT  (*piMC )(int,int,DATINT*) = NULL;
 /*	debugging aid */
 void dumpArgs(int nargs, DATINT *args, int lineno){
 	fprintf(stderr,"\nmachineCall dumpArgs, Msetdata~%i\n",lineno);
-	for(int i=0;i<nargs;++i)fprintf(stderr,"\n  %i %p",*(args+i),*(args+i));
+	for(int i=0;i<nargs;++i)fprintf(stderr,"\n  %ld %lx",*(args+i),*(args+i));
 }
 
 /*		MC9 ;scan for nth occurance of CH in a block. Args are
@@ -28,7 +28,7 @@ DATINT scann( char *from, char *to, char c, int *n ) {
 
 DATINT Msetdata(int nargs, DATINT *args) {
 	--nargs;
-	DATINT *to   = *(args);
+	DATINT *to   = (DATINT*)(*(args));
 	while((nargs--)>0){
 		DATINT datum = *(++args);
 		*to = datum;
