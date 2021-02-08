@@ -99,10 +99,12 @@ char* xvarargs = "...";
 
 int ecnt=50;
 void _enter( char* where) {
-//if(++ecnt>0 && cursor>apr){
-//fprintf(stderr,"\n--- %s %d ---enter %d cur %p can %p",__FILE__,__LINE__,ecnt,curobj,canobj);
-//dumpft(where-9,where+9);
-//}
+#if 0
+if(++ecnt>0 && cursor>apr){
+fprintf(stderr,"\n--- %s %d ---enter %d cur %p can %p",__FILE__,__LINE__,ecnt,curobj,canobj);
+dumpft(where-9,where+9);
+}
+#endif
 	int arg=nxtstack;
 	int nargs=0;
 	if(varargs>0) nargs=varargs-1;
@@ -135,9 +137,10 @@ void _enter( char* where) {
 		return;
 	}
 	else {   /* ABOVE parses the call args, BELOW parses the called's arg decls */
-		newfun(locals);
+		openVarFrame(locals);
 		char *localstcurs=stcurs, *localcurs=cursor;
-		curfun->obj = curobj;
+		curfun->uobj = curobj;
+		curfun->aobj = canobj;
 		curobj = canobj;
 		cursor = where;
 		for(;;) {	  
@@ -180,7 +183,8 @@ void _enter( char* where) {
 		leave=0;
 		cursor=localcurs;
 		stcurs=localstcurs;
-		curobj = curfun->obj;
+		curobj = curfun->uobj;
+		canobj = curfun->aobj;
 		fundone();
 		fcn_leave();
 	}
@@ -235,7 +239,7 @@ Type _konst() {
 			++cursor; c=*cursor;
 		} while(c>='0'&&c<='9');
 		lname=cursor-1;
-		if(verbose[VP]){
+		if(verbose[VP]&&(!verbose_silence)){
 			fprintf(stderr,"\nparsed ");
 			dumpft(fname,lname);
 		}
@@ -250,7 +254,7 @@ Type _konst() {
 			*x = 0;
 		}
 		else { eset(CURSERR); return Err; }
-		if(verbose[VP]){
+		if(verbose[VP]&&(!verbose_silence)){
 			fprintf(stderr,"\nparsed ");
 			dumpft(fname,lname);
 		}
@@ -264,7 +268,7 @@ Type _konst() {
 			cursor = x+1;
 		}
 		else { eset(CURSERR); return -1; }
-		if(verbose[VP]){
+		if(verbose[VP]&&(!verbose_silence)){
 			fprintf(stderr,"\nparsed ");
 			dumpft(fname,lname);
 		}
@@ -320,6 +324,7 @@ void factor() {
 			union stuff value;
 			value.up = vh;
 			pushst(0,'A','o',&value);
+//dumpVarTab(vh);
 		}
 		else eset(CLASSERR);
 	}

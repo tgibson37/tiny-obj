@@ -1,5 +1,7 @@
 #include "machineCall.h"
 #include "toc.h"
+#include "var.h"
+#include "xray.h"
 
 typedef DATINT (*McList)(int,DATINT*);
 DATINT  (*piMC )(int,int,DATINT*) = NULL;
@@ -375,6 +377,49 @@ DATINT Marctan(int nargs, DATINT *args) {
 	x = x/1000.0;
 	return (int)(atan(x)*180/3.14159 + (x>0?0.5:-0.5) );
 }
+
+/*	MC 130 which returns MC 0 hits. typical USAGE:
+ *			pl"-------------hits----------->"
+ *			pn(MC 130)
+ *	Also handy in an if...      if((MC 122)>N)...
+ */
+DATINT Mzerohits(int nargs, DATINT *args) {
+	return Mzero_hits;
+}
+
+/*	MC131, xray aids debugging the interpreter
+ *	Wrapper is pps/library.tc: _xray.
+ *	Example usage: _xray "x", "curobj".
+ *	See xray.c for more.
+ */
+DATINT Mxray(int nargs, DATINT *args) {
+	xray(nargs,args);
+	return 0;
+}
+/*	MC132 controls verbosity mode. One arg: a quoted character used
+ *	by debug.c verbose command. "e" turns on _eq dump of top 2 stack
+ *	entries: rvalue, then lvalue. "-" clears ALL verbosity. S and V set
+ *	and clear silence mode to eliminate unwanted dumps.
+ */
+int verbose_silence = 0;
+DATINT Mverbose(int nargs, DATINT *args) {
+	char *arg = (char*)*args;
+	char c = (char)*arg;
+//fprintf(stderr,"\nverbose %c ",c);
+	if(c=='S'){
+		verbose_silence = 1;
+		fprintf(stderr,"\nverbose SILENCE ");
+	}
+	else if(c=='V'){
+		fprintf(stderr,"\nverbose SKIPPED %d",verbose_silence);
+		verbose_silence = 0;
+	}
+	else {
+		db_verbose((char*)*args);
+	}
+	return 0;
+}
+//---------------------------------------------------------
 /* first in this list is MC 1
  */
 McList origList[] =
@@ -382,7 +427,9 @@ McList origList[] =
 	, &naf, &MmvBl, &Mcountch, &Mscann, &naf // lrb
 	, &naf, &Mchrdy, &Mpft, &Mpn, &naf
 };
-/* first in this list is MC 101
+/*	first in this list is MC 101. 130's reserved for debugging aids.
+ *	130 returns Mzero hits, 131 returns curobj, 
+ *	In pps/library: px int x() prints in hex
  */
 McList newList[] =
 	{ &MprF, &Msleep, &Mfilrd, &Mstrlen, &Mstrcat
@@ -390,6 +437,8 @@ McList newList[] =
 	, &Mfopen, &Mfputs, &Mfputc, &Mfgets, &Mfclose
 	, &Mgetprop, &Msystem, &Mfpn, &Msqrt, &Marctan
 	, &Msetdata, &naf, &naf, &naf, &naf
+	, &naf, &naf, &naf, &naf,             &Mzerohits
+	, &Mxray, &Mverbose, &naf, &naf, &naf
 };
 /* first in this list is MC 201
  */

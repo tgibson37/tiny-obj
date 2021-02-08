@@ -177,6 +177,7 @@ void allocStuff() {
     vh->datused= (char*)(vh->vartab + LOCNUMVARS);   // also serves as end of vartab
     vh->val =    (char*)(vh->vartab + LOCNUMVARS);   // also serves as end of vartab
     vh->endval = (char*)locals + size;
+    vh->sernum = 1;
 }
 
 int main(int argc, char *argv[]) {

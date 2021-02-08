@@ -2,9 +2,9 @@
 #include "factor.h"
 #include "stack.h"
 #include "var.h"
-//#include "platform.h"
 #include "toc.h"
 
+//extern int verbose_silence;
 union stuff foo;
 int _reln();
 int _expr();
@@ -20,10 +20,12 @@ void _eq() {
 //	void* where;
 	struct stackentry *val = &stack[nxtstack-1]; /* value (on top) */
 	struct stackentry *lval = &stack[nxtstack-2]; /* where to put it */
-	if(verbose[VE]){
-		fprintf(stderr,"\neq: lval");
+	if(verbose_silence){
+		++verbose_silence;
+	}
+	if(verbose[VE] && !verbose_silence){
+		fprintf(stderr,"\nVE (eq): lval, val");
 		dumpStackEntry(nxtstack-2);
-		fprintf(stderr,"\neq: val");
 		dumpStackEntry(nxtstack-1);
 	}
 	popst();popst();

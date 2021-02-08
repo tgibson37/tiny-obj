@@ -45,8 +45,8 @@ void db_usage();
 void verbose_clear();
 /* v - */
 void db_verbose(char* param);
+void verbose_usage();
 /* v <param> */
-
 char *param();
 /*	command parser/dispatcher */
 void gdb_b();
@@ -69,7 +69,8 @@ void tcexit();
 void appstbegin();
 /* beginning of each app statement */
 void stbegin();
-/* beginning of each statement */
+void xray_stbegin();
+/* beginning of each statement. stbegin calls xray_stbegin */
 void br_hit(struct var *v);
 /* called from symbol lookup if breakpoint set */
 void fcn_enter();

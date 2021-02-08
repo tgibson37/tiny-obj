@@ -246,6 +246,7 @@ int decl(struct varhdr *vh) {
 
 /* st(): interprets a possibly compound statement */
 char *prevcur = NULL;
+char *appcur = NULL;
 void st() {
 	struct var *isvar;
 	char *objt, *agin ;
@@ -256,6 +257,7 @@ void st() {
 		exit(FREEZERR);
 	}
 	prevcur=cursor;
+	if(cursor>apr)appcur=cursor;
 	if(quit())return;
 	rem();
 	stbegin();

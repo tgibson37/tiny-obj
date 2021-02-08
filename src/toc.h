@@ -118,11 +118,6 @@ int quiet;
 #define EXIT         98
 #define KILL         99
 
-/* fun table */
-struct funentry *fun;
-struct funentry *curglbl, *curfun, *efun;
-
-
 /* blob header */
 struct varhdr {
 	char name[VLEN+1]; int sernum;
@@ -164,6 +159,7 @@ char* fname;
 char* lname;
 char* cursor;
 char* stcurs;
+char* appcur;
 char* errat;
 int obsize, vclass, alen;
 int traceMode;
@@ -203,7 +199,7 @@ void st();
 void machinecall();
 char* typeToWord(Type t);
 void dumpVal_s(Type t, int class, union stuff *val, char lval);
-void dumpFun();
+//void dumpFun();
 void dumpLine();
 void dumpStuff(int v, int class, Type type);
 void dumpStackEntry(int e);
@@ -211,7 +207,7 @@ void dumpStack();
 void dumpPopTop();
 void dumpTop();
 void dumpVar(struct var *v);
-void dumpVarTab(struct varhdr *vh);
+//void dumpVarTab(struct varhdr *vh);
 void dumpHex( void* where, int len );
 void dumpState();
 void dumpName();

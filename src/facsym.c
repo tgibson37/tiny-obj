@@ -46,6 +46,7 @@ struct varhdr **getvhcell(struct var *v){
  *  Action: parse the whole factor gathering information,
  *  and if fcn _enter else push onto stack.
  */
+union stuff facsym_value;
 void facsym() {
 	struct var *v = addrval();
 	if (!v) {eset(SYMERR);return;}
@@ -58,9 +59,8 @@ void facsym() {
 			v = obsym(vh);
 			canobj = vh;
 		} else { 				// obj ref
-            union stuff value;
-            value.up = cell;
-            pushst(0,'L','o',&value);
+            facsym_value.up = cell;
+            pushst(0,'L','o',&facsym_value);
             return;
 		}
 	}

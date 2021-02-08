@@ -10,7 +10,8 @@
 struct funentry {
 	struct var *fvar, *evar;
 	char *datused;
-	struct varhdr *obj;
+	struct varhdr *uobj;
+  struct varhdr *aobj;
 };
 
 /*	fun table, malloc'd in tcMain. This table devides the vartab
@@ -53,7 +54,7 @@ int getlen(struct var *v);
 //struct varhdr** getobjcell(struct var *v);
 char* getvarwhere(struct var *v);
 int getvarclass(struct var *v);
-void newfun(struct varhdr *vh);
+void openVarFrame(struct varhdr *vh);
 void fundone();
 void newvar( int class, Type type, int len, struct var *objclass,
       union stuff *passed, struct varhdr *vh );
@@ -62,10 +63,12 @@ void canon(struct var *v);
 struct var* addrval_all(char *sym);
 struct var* addrval();
 int isfcn(struct var *v);
+int inBlob(void* p);
+void dumpBlobTab();
 void allocSpace(struct var *v, int amount, struct varhdr *vh);
 void dumpVal(Type t, int class, union stuff *val, char lval);
 void dumpFunEntry( int e );
-void dumpFun();
+void dumpFunTab();
 void dumpVar(struct var *v);
-void dumpVarTab();
+void dumpVarTab(struct varhdr *vh);
 #endif    /* VARHDR */

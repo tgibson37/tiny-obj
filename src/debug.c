@@ -1,5 +1,6 @@
 #include "debug.h"
 #include "toc.h"
+#include "var.h"
 
 #define BTABSIZE 10
 #define BUF_SIZE 80
@@ -126,12 +127,12 @@ void db_brkset(char *sym) {
 void db_dump(char* param) {
 	int kase=*param;
 	switch(kase){
-	case 'f': dumpFun(); printf("\n"); 
+	case 'f': dumpFunTab(); printf("\n"); 
 		break;
 	case 'v': //dumpVarTab(vartab); printf("\n"); 
 		break;
 	default: printf("d needs f (fcn table) or v (var table) parameter");
-	break;
+		break;
 	}
 }
 
@@ -179,6 +180,14 @@ void db_type(char* param) {
 	}
 }
 
+void verbose_usage(){
+	printf("	v [e|p|s|f|v|l]     toggle verbose mode for one of:\n");
+	printf("	                e assignment, p parsed symbol,\n");
+	printf("	                s stack push/pops, v variables\n");
+	printf("	                f function calls\n");
+	printf("	                l link\n");
+}
+
 /* <default> e.g. ? */
 void db_usage() {
 	printf("	b <symbol>    set breakpoint\n");
@@ -189,10 +198,7 @@ void db_usage() {
 	printf("	p <symbol>    print the value of symbol\n");
 	printf("	t <symbol>    print the type of symbol\n");
 	printf("	g             enter your C debugger (see setup notes)\n");
-	printf("	v [e|p|s|f|v]     toggle verbose mode for one of:\n");
-	printf("	                e assignment, p parsed symbol,\n");
-	printf("	                s stack push/pops, v variables\n");
-	printf("	                f function calls\n");
+	verbose_usage();
 	printf("	d [f|v]       dump function or variable table\n");
 	printf("	default       print this usage\n");
 	printf("	x,q           exit tiny-C\n");
@@ -358,6 +364,7 @@ void appstbegin(){
 
 /* beginning of each statement */
 void stbegin() {
+	xray_stbegin();
 	if(!debug)return;
 	if(db_skiplib && cursor<apr)return;
 	if(cursor<lpr)return;

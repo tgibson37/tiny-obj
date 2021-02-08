@@ -127,6 +127,7 @@ pn int n [
 	MC ' ',1
 	MC n,14
 ]
+px int x [printf(" 0x%x",x)]
 
 /* get a number from the terminal. Insist on it!
 gn [
@@ -313,3 +314,7 @@ _MAIN [
 	pl "----tc system level, back from main"
 ]
 
+// xray facility
+_xray char code(0); ...[
+	return MC(131)
+]

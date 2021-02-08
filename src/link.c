@@ -1,5 +1,6 @@
 #include "link.h"
 #include "var.h"
+#include "expr.h"
 #include "toc.h"
 
 extern int dump_mallocs;
@@ -28,9 +29,9 @@ void newvar_this(struct varhdr *vh){
 	v->vdcd.od.class =  0;
 	v->vdcd.od.len =  1;
 //	v->vdcd.od.ocl = ???;
-	v->vdcd.od.blob = vh;
+	v->vdcd.od.blob = (struct varhdr**)vh;
 	if( vh->nxtvar++ >= evar )eset(TMVRERR);
-	if(verbose[VV])dumpVar(v);
+	if((verbose[VV])&&(!verbose_silence))dumpVar(v);
 }
 
 /*	Pass one if varhdr is NULL computes the needed sizes. Pass two does
@@ -47,7 +48,7 @@ void lnpass12(char *from, char *to,
 	} else {
 //fprintf(stderr,"\n--- %s %d --- conName %s %p",__FILE__,__LINE__,conName,vh);
 		xxpass=2;
-		if(!newop)newfun(vh);
+		if(!newop)openVarFrame(vh);    //open var frame in vh
 	}
 	if(checkBrackets(from,to))eset(RBRCERR+1000);
 	if(error){ whatHappened(); exit(1); }
@@ -63,7 +64,7 @@ void lnpass12(char *from, char *to,
 			if(vh != NULL){     //  <<==  PASS TWO endlibrary
 				if(curfun==fun) {   /* 1st endlib, assume app globals follow */
 					if(!newop){
-						newfun(vh);
+						openVarFrame(vh);
 						curglbl=curfun;
 					}
 				}
@@ -106,13 +107,8 @@ void lnpass12(char *from, char *to,
 				cls_dcl(abst,cname.name,ename.name,vh,where);
 			}
 		}
-//		char *c; c=cursor;
 		struct var* isvar;
 		if(newop && (isvar=_isClassName(NODOT))) {
-// obj ref or constructor
-//fprintf(stderr,"\n--- %s %d ---",__FILE__,__LINE__);
-//fprintf(stderr,"    pass %d",xxpass);
-//dumpft(cursor,cursor+20);
 			struct var sym;
 			canon(&sym);
 			int isRef = strcmp(conName,sym.name);   //Not the constructor
@@ -157,14 +153,14 @@ void lnpass12(char *from, char *to,
 	}
 	cursor = savedCursor;
 	endapp = savedEndapp;
-	if(verbose[VL]&&(xxpass==2))dumpVarTab(vh);
+	if(verbose[VL]&&(xxpass==2)&&(!verbose_silence))dumpVarTab(vh);
 }
 
 /*	tools for accessing specific data in a *var. A var can be
  *	id'd two ways: ptr to the var entry (struct var *v), and
  *	symbol name used to install that entry. These use the former.
  *	The latter requires	a search, and that search needs to know 
- *	what vartab to search. cname_to_var() searches globals for class name.
+ *	what vartab to search. visclass(..) searches globals for class name.
  */
 
 /*	Return var if name is a class, else NULL
@@ -242,7 +238,7 @@ void ascend(char *cname, char **from, char **to){
  */
 struct varhdr* lnlink(char *from, char *to, 
                        char *blobName, struct var *isclvar){
-		if(verbose[VL])fprintf(stderr,"\nlinking %s",blobName);
+		if((verbose[VL])&&(!verbose_silence))fprintf(stderr,"\nlinking %s",blobName);
         newop = strcmp(blobName,"__Globals__"); // true iff doing new operator
         int size;
         char* blob;
@@ -272,7 +268,7 @@ struct varhdr* lnlink(char *from, char *to,
         		+ lndata.nvars*sizeof(struct var) + lndata.valsize;
         blob = mymalloc(blobName, size+10);
         vh = (struct varhdr*)blob;
-        vh->sernum = nxtblob-blobtab;
+        vh->sernum = nxtblob-blobtab+1;
         if(dump_mallocs)fprintf(stderr," sernum %d",vh->sernum);
         _newblob(blobName,blob);
 		memset(vh, 0, size);
@@ -299,7 +295,10 @@ struct varhdr* lnlink(char *from, char *to,
  *	which are set by the loader. 
  */
 void toclink() {
+//	struct varhdr *glbls;
+//	glbls = 
 	lnlink(cursor,endapp,"__Globals__",NULL);
+//dumpVarTab(glbls);
 }
 
 /* links a class given its *var.

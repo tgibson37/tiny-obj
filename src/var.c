@@ -1,5 +1,7 @@
 #include "var.h"
 #include "link.h"
+#include "expr.h"
+#include "machineCall.h"
 #include "toc.h"
 
 int newop;
@@ -81,12 +83,13 @@ void dumpVal_v(struct var *v){
 	else fprintf(stderr,"Unknown type");
 }
 
+void dumpDots(int n){while(n--)fprintf(stderr,".");}
+
 /*	SITUATION: Function call parsed PLUS two calls during linking.
  *	Open new var and value frames for library, globals, and 
- *	function locals.
+ *	function locals. Should be called openVarFrame.
  */
-void dumpDots(int n){while(n--)fprintf(stderr,".");}
-void newfun(struct varhdr *vh) {
+void openVarFrame(struct varhdr *vh) {
 	if(++curfun>efun){
 		eset(TMFUERR);
 	} 
@@ -94,7 +97,7 @@ void newfun(struct varhdr *vh) {
 		curfun->fvar = curfun->evar = vh->nxtvar;
 		curfun->datused = vh->datused;
 	}
-	if(verbose[VF] && db_report_depth <= db_rundepth){
+	if(verbose[VF]&&db_report_depth<=db_rundepth&&(!verbose_silence)){
 		fflush(stdout);
 		fprintf(stderr,"\n");
 		dumpDots(fcnDepth());
@@ -103,7 +106,7 @@ void newfun(struct varhdr *vh) {
 }
 
 /* SITUATION: function is completed. 
- *	Close its var and value frames.
+ *	Close its var and value frames. Should be called closeVarFrame.
  */
 void fundone() {
 	locals->nxtvar=curfun->fvar;
@@ -173,9 +176,25 @@ void newvar( int class, Type type, int len, struct var *objclass,
 	allocSpace(v,len*obsize,vh);
 	if(error)return;
 	if(passed)_copyArgValue( v, class, type, passed);
-	if(curfun>=fun) curfun->evar = vh->nxtvar;
+	if(curfun>=fun)curfun->evar = vh->nxtvar;   // ???
+#if 0
+	if(curfun>=fun) {
+		int islocal = inBlob(curfun->fvar)==1;
+		if(islocal) ++(curfun->evar);
+		else curfun->evar = vh->nxtvar;
+	}
+#endif
+
+#if 0
+if((curfun->evar-curfun->fvar)>20){
+if(cursor>apr){
+fprintf(stderr,"\n==>> AT VAR~179 <<== delta %ld",curfun->evar-curfun->fvar);
+Mzero();
+}}
+#endif
+
 	if(vh->nxtvar++ >= evar)eset(TMVRERR);
-	if(verbose[VV])dumpVar(v);
+	if((verbose[VV])&&(!verbose_silence))dumpVar(v);
 	return;
 }
 #if 0
@@ -235,6 +254,17 @@ struct var* addr_obj(struct varhdr *vh){
  */
 struct var* _addrval(char *sym, struct var *first, struct var *last) {
 	struct var *pvar;
+int isl1=!strcmp(sym,"l1");
+int isl2=!strcmp(sym,"l2");
+if(isl1||isl2){
+	if(last-first>20){
+fprintf(stderr,
+"\n==>> var~260 sym %s <<==  first %p last %p delta 0x%lx %ld"
+,sym,first,last,last-first,last-first);
+		Mzero();
+//		return 0;
+	}
+}
 	for(pvar=first; pvar<=last; ++pvar) {
 		if( !strcmp(pvar->name, sym) ) {
 			if( debug && (pvar->vdcd.vd.brkpt==1) )br_hit(pvar);
@@ -295,14 +325,36 @@ struct var* _isClassName(int nodot) {
 	return NULL;
 }
 
-void dumpFunEntry( int e ) {
-	fprintf(stderr,"\n fun entry at %d:	%d %p %p %p %p", e,
-		fun[e].obj, fun[e].obj ? fun[e].obj->sernum : -9,
-		fun[e].fvar, fun[e].evar, fun[e].datused );
+/*	returns sernum of blob containing p, else 0.
+ */
+int inBlob(void *p){
+//fprintf(stderr,"\n    IN   inBlob   <<=====\n");
+	struct blob *b;
+	for(b=blobtab; b<nxtblob; ++b) {
+		void *begin = b->varhdr;
+		void *end = b->varhdr->endval;
+//fprintf(stderr,"\nb %p",begin);
+//fprintf(stderr,"   p %p",p);
+//fprintf(stderr,"   e %p",end);
+		if(begin<=p && p<end) {
+//fprintf(stderr,"   returning %d",b->varhdr->sernum);
+			return b->varhdr->sernum;
+		}
+	}
+	return 0;
 }
 
-void dumpFun() {
-	fprintf(stderr,"\nfun table: sernum, obj, fvar, evar, prused");
+void dumpFunEntry( int e ) {
+	fprintf(stderr,"\n fun entry at %d sernum %d: %p %p(%d) %p(%d) %p(%d)",
+		e, fun[e].uobj ? fun[e].uobj->sernum : 0, fun[e].uobj, 
+		fun[e].fvar, inBlob(fun[e].fvar),
+		fun[e].evar, inBlob(fun[e].evar), 
+		fun[e].datused, inBlob(fun[e].datused)
+	);
+}
+
+void dumpFunTab() {
+	fprintf(stderr,"\nfun table: sernum, obj, fvar, evar, datused");
 	int i;
 	int num = curfun-fun;
 	for(i=0;i<=num;++i) {
@@ -321,9 +373,10 @@ void dumpVar(struct var *v) {
 		if(*(v->vdcd.cd.parent))fprintf(stderr,"extends %s ", v->vdcd.cd.parent);
 	}
 	else if(v->type=='o') {
-		fprintf(stderr,"\n oref: %s type %c classvar %p (%s) blob %p"
+//fprintf(stderr,"\nvar~365, v=%p",v);
+		fprintf(stderr,"\n oref: %s type %c classvar %p (%s) blob %p -> %p"
 				,v->name, v->type,v->vdcd.od.ocl, v->vdcd.od.ocl->name
-				,v->vdcd.od.blob);
+				,v->vdcd.od.blob,*v->vdcd.od.blob);
 #if 0
 // cannot get this to work...
 struct varhdr **vh = *v->vdcd.od.blob;
@@ -344,7 +397,7 @@ for(int i=0;i<9;++i){
 void dumpVarTab(struct varhdr *vh) {
 	if(!vh || !vh->vartab){
 		fprintf(stderr,"\nVar Table: not built yet");
-fprintf(stderr,"\n  vh %p", vh);
+fprintf(stderr,"\nvar~349  vh %p", vh);
 if(vh)fprintf(stderr,"\n  vh->vartab %p  ", vh->vartab);
 		return;
 	}
@@ -447,4 +500,9 @@ dumpBlobTab();
 dumpBlob(blob);
 if(newop){
 }
+
+//	if(curfun>=fun) curfun->evar++;
+//	if(curfun>=fun && vh==locals) curfun->evar++;
+//	if(curfun>=fun && vh==locals) curfun->evar=locals->nxtvar;
+
 #endif

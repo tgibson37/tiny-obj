@@ -1,4 +1,5 @@
 #include "stack.h"
+#include "expr.h"
 #include "toc.h"
 
 /*	prints a value given its description taken from a struct stackEntry
@@ -73,7 +74,7 @@ void pushst( int class, int lvalue, Type type, union stuff *value ) {
 	stack[nxtstack].type = type;
 	stuffCopy( &stack[nxtstack].value, value);
 	++nxtstack;
-	if(verbose[VS]){
+	if(verbose[VS]&&(!verbose_silence)){
 		fprintf(stderr,"\nstack push: ");
 		dumpStackEntry(nxtstack-1);
 	}
@@ -82,7 +83,7 @@ void pushst( int class, int lvalue, Type type, union stuff *value ) {
 /* basic popper, entry stays accessible until pushed over */
 struct stackentry* popst() {
 	if( nxtstack-1 < 0 ) { eset(POPERR); return NULL; }
-	if(verbose[VS]){
+	if(verbose[VS]&&(!verbose_silence)){
 		fprintf(stderr,"\nstack pop: ");
 		dumpStackEntry(nxtstack-1);
 	}
@@ -104,7 +105,7 @@ DATINT toptoi() {
 //fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 	int datum;
 	union stuff *ptr;
-	if(verbose[VS]){
+	if(verbose[VS]&&(!verbose_silence)){
 		fprintf(stderr,"\ntoptoi pop: %d",nxtstack-1);
 		dumpStackEntry(nxtstack-1);
 	}
@@ -131,7 +132,7 @@ DATINT toptoi() {
 		else eset(TYPEERR);
 	}
 	else { eset(TYPEERR); }
-	if(verbose[VS]){
+	if(verbose[VS]&&(!verbose_silence)){
 		fprintf(stderr," -- toptoi %d", datum);
 	}
 	return datum;
