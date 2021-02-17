@@ -288,6 +288,7 @@ struct varhdr* lnlink(char *from, char *to,
 		strncpy(par_buf,blobName,VLEN+1);  // just in case
         cursor=savedcursor;
         endapp=savedendapp;
+        newop=0;
         return vh;
 }
 

@@ -4,7 +4,7 @@
 #include "machineCall.h"
 #include "toc.h"
 
-int newop;
+extern int newop;
 
 /*	getters
  */
@@ -176,7 +176,8 @@ void newvar( int class, Type type, int len, struct var *objclass,
 	allocSpace(v,len*obsize,vh);
 	if(error)return;
 	if(passed)_copyArgValue( v, class, type, passed);
-	if(curfun>=fun)curfun->evar = vh->nxtvar;   // ???
+	if(newop);
+	else if(curfun>=fun)curfun->evar = vh->nxtvar;   // ???
 #if 0
 	if(curfun>=fun) {
 		int islocal = inBlob(curfun->fvar)==1;
@@ -336,7 +337,7 @@ int inBlob(void *p){
 //fprintf(stderr,"\nb %p",begin);
 //fprintf(stderr,"   p %p",p);
 //fprintf(stderr,"   e %p",end);
-		if(begin<=p && p<end) {
+		if((begin<=p)&&(p<end)) {
 //fprintf(stderr,"   returning %d",b->varhdr->sernum);
 			return b->varhdr->sernum;
 		}

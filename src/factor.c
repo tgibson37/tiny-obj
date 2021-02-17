@@ -96,8 +96,7 @@ void _setArg( Type type, struct stackentry *arg ) {
  */
 int varargs = 0;
 char* xvarargs = "...";
-
-int ecnt=50;
+//int ecnt=50;
 void _enter( char* where) {
 #if 0
 if(++ecnt>0 && cursor>apr){

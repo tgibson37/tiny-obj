@@ -43,7 +43,8 @@ struct var{
 /* vartab is the variable table, malloc'd in tcMain. It points to
 the first entry of the variable table. */
 struct var *vartab;
-int nxtvar, vtablen;
+//int nxtvar;
+int vtablen;
 
 /************ functions ************/
 int checkBrackets(char *from, char *to);
