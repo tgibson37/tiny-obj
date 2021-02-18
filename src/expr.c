@@ -17,7 +17,6 @@ void _eq() {
 	DATINT  iDatum;  /* memcpy into these from pr using val.stuff */
 	char cDatum;  /*  and val.size, giving needed cast */
 	void* pDatum;
-//	void* where;
 	struct stackentry *val = &stack[nxtstack-1]; /* value (on top) */
 	struct stackentry *lval = &stack[nxtstack-2]; /* where to put it */
 	if(verbose_silence){
@@ -29,7 +28,6 @@ void _eq() {
 		dumpStackEntry(nxtstack-1);
 	}
 	popst();popst();
-//	where = &((*lval).value.up);
 	int class = (*lval).class;
 	int type = (*lval).type;
 	if((*lval).lvalue != 'L') { 

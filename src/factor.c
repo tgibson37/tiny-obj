@@ -96,14 +96,7 @@ void _setArg( Type type, struct stackentry *arg ) {
  */
 int varargs = 0;
 char* xvarargs = "...";
-//int ecnt=50;
 void _enter( char* where) {
-#if 0
-if(++ecnt>0 && cursor>apr){
-fprintf(stderr,"\n--- %s %d ---enter %d cur %p can %p",__FILE__,__LINE__,ecnt,curobj,canobj);
-dumpft(where-9,where+9);
-}
-#endif
 	int arg=nxtstack;
 	int nargs=0;
 	if(varargs>0) nargs=varargs-1;
@@ -323,7 +316,6 @@ void factor() {
 			union stuff value;
 			value.up = vh;
 			pushst(0,'A','o',&value);
-//dumpVarTab(vh);
 		}
 		else eset(CLASSERR);
 	}
@@ -353,8 +345,6 @@ void factor() {
 		}
 		else if(symName()) {		// Game g;
 			cursor = lname+1;
-//			newref(isvar,locals);
-fprintf(stderr,"\n--- %s %d ---DEAD CODE TEST\n",__FILE__,__LINE__);
 		}
 		else eset(SYMERR);
 	}

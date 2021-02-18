@@ -16,13 +16,6 @@ int getlen(struct var *v){
 	if(v->type=='o')return v->vdcd.od.len;
 	return v->vdcd.vd.len;
 }
-#if 0
-struct varhdr* getvarhdr(struct var *v){
-	if(v->type == 'o')return v->vdcd.od.blob;
-	else eset(TYPEERR);
-	return NULL;
-}
-#endif
 char* getvarwhere(struct var *v){
 	return (v->vdcd.vd.value.up);
 }
@@ -177,42 +170,11 @@ void newvar( int class, Type type, int len, struct var *objclass,
 	if(error)return;
 	if(passed)_copyArgValue( v, class, type, passed);
 	if(newop);
-	else if(curfun>=fun)curfun->evar = vh->nxtvar;   // ???
-#if 0
-	if(curfun>=fun) {
-		int islocal = inBlob(curfun->fvar)==1;
-		if(islocal) ++(curfun->evar);
-		else curfun->evar = vh->nxtvar;
-	}
-#endif
-
-#if 0
-if((curfun->evar-curfun->fvar)>20){
-if(cursor>apr){
-fprintf(stderr,"\n==>> AT VAR~179 <<== delta %ld",curfun->evar-curfun->fvar);
-Mzero();
-}}
-#endif
-
+	else if(curfun>=fun)curfun->evar = vh->nxtvar;
 	if(vh->nxtvar++ >= evar)eset(TMVRERR);
 	if((verbose[VV])&&(!verbose_silence))dumpVar(v);
 	return;
 }
-#if 0
-/*	Refenence to an object: refname (fname,lname), type 'o', 
- *	details: class entry (ocls), blob to referenced object's blob (NULL) 
- *	to be filled in when known.
- */
-void newref(struct var *ocls, struct varhdr *vh) {
-	struct var *r = vh->nxtvar;
-	canon(r);
-	r->type = 'o';
-	r->vdcd.od.ocl = ocls;
-//	r->vdcd.od.blob=vh->datused+1;    usue allocSpace, NEED
-//	datused += sizeof(void*);     << ???
-	vh->nxtvar++;
-}
-#endif
 
 /*	Canonicalizes the name bracket by f,l inclusive into buff,
  *	and returns buff. Size of buff must be at least VLEN+1.
@@ -233,8 +195,9 @@ char* _canon(char* first, char* l, char* buff) {
 void canon(struct var *v) {
 	_canon(fname,lname,(*v).name);
 }
+
 /*	if *cursor is alphanum find end of sym and canon into buff. 
- *	Set f/lname to matched symbol. 
+ *	Set f/lname to matched symbol. Return true/false on match.
  */
 int canonIf(char* buff){
 	char *c = cursor;
@@ -244,6 +207,7 @@ int canonIf(char* buff){
 	_canon(cursor,c-1,buff);
 	return (c-cursor);
 }
+
 /*	returns var* defining current sym
  */
 struct var* addr_obj(struct varhdr *vh){
@@ -251,21 +215,11 @@ struct var* addr_obj(struct varhdr *vh){
 	canon(&sym);
 	return _addrval(sym.name,vh->vartab, vh->nxtvar-1);
 }
+
 /* 	looks up a symbol at one level
  */
 struct var* _addrval(char *sym, struct var *first, struct var *last) {
 	struct var *pvar;
-int isl1=!strcmp(sym,"l1");
-int isl2=!strcmp(sym,"l2");
-if(isl1||isl2){
-	if(last-first>20){
-fprintf(stderr,
-"\n==>> var~260 sym %s <<==  first %p last %p delta 0x%lx %ld"
-,sym,first,last,last-first,last-first);
-		Mzero();
-//		return 0;
-	}
-}
 	for(pvar=first; pvar<=last; ++pvar) {
 		if( !strcmp(pvar->name, sym) ) {
 			if( debug && (pvar->vdcd.vd.brkpt==1) )br_hit(pvar);
@@ -282,14 +236,11 @@ struct var* addrval_all(char *sym) {
 	struct var *v;
 	v = _addrval( sym, curfun->fvar, curfun->evar );	// locals
 	if(!v && curobj) {																// instances
-//if(Mzero_hits && cursor>apr)
-//fprintf(stderr,"\n--- %s %d --- %s %p\n",__FILE__,__LINE__,sym,curobj);
 		v = _addrval( sym, curobj->vartab, curobj->nxtvar-1);
 	}
 	if(!v) v = _addrval( sym, curglbl->fvar, curglbl->evar ); //globals
 	if(!v) v = _addrval( sym, fun->fvar,fun->evar );	//libs
 	if(v){
-//if(Mzero_hits && curobj && cursor>apr)dumpVar(v);
 		return v;
 	}
 	return 0;	
@@ -329,16 +280,11 @@ struct var* _isClassName(int nodot) {
 /*	returns sernum of blob containing p, else 0.
  */
 int inBlob(void *p){
-//fprintf(stderr,"\n    IN   inBlob   <<=====\n");
 	struct blob *b;
 	for(b=blobtab; b<nxtblob; ++b) {
 		void *begin = b->varhdr;
 		void *end = b->varhdr->endval;
-//fprintf(stderr,"\nb %p",begin);
-//fprintf(stderr,"   p %p",p);
-//fprintf(stderr,"   e %p",end);
 		if((begin<=p)&&(p<end)) {
-//fprintf(stderr,"   returning %d",b->varhdr->sernum);
 			return b->varhdr->sernum;
 		}
 	}
@@ -374,18 +320,9 @@ void dumpVar(struct var *v) {
 		if(*(v->vdcd.cd.parent))fprintf(stderr,"extends %s ", v->vdcd.cd.parent);
 	}
 	else if(v->type=='o') {
-//fprintf(stderr,"\nvar~365, v=%p",v);
 		fprintf(stderr,"\n oref: %s type %c classvar %p (%s) blob %p -> %p"
 				,v->name, v->type,v->vdcd.od.ocl, v->vdcd.od.ocl->name
 				,v->vdcd.od.blob,*v->vdcd.od.blob);
-#if 0
-// cannot get this to work...
-struct varhdr **vh = *v->vdcd.od.blob;
-for(int i=0;i<9;++i){
-	fprintf(stderr,"\n%p->%p",vh,*vh);
-++vh;
-}
-#endif
 	}
 	else {
 		fprintf(stderr,"\n var %p: %s %s %s len %d %zd %p "
@@ -447,6 +384,7 @@ void dumpBV(struct varhdr *vh){
 
 /*	_newblob,newblob,_getblob,getblob build and search the blob table
  */
+
 // Enters blob into blobtab. 
 void _newblob(char* name, void* blob){
 	if(nxtblob >= eblob){eset(TMBLOBERR);return;}

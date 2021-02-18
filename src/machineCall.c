@@ -256,12 +256,6 @@ DATINT Mstrcpy(int nargs, DATINT *args) {
 	if(nargs<2){ eset(ARGSERR); return -1; }
 	char* a=(char*)args[0];
 	char* b=(char*)args[1];
-#if 0
-fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
-fprintf(stderr,"   a,b,cursor = %p %p %p\n",a,b,cursor);
-pft(a,a+99);pl("");
-exit(1);
-#endif
 	DATINT x = (DATINT)strcpy(a,b);
 	return x;
 }
@@ -405,7 +399,6 @@ int verbose_silence = 0;
 DATINT Mverbose(int nargs, DATINT *args) {
 	char *arg = (char*)*args;
 	char c = (char)*arg;
-//fprintf(stderr,"\nverbose %c ",c);
 	if(c=='S'){
 		verbose_silence = 1;
 		fprintf(stderr,"\nverbose SILENCE ");

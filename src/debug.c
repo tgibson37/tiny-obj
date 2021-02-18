@@ -345,7 +345,6 @@ void tcexit(){}
 /* breakpoint appstbegin to see JUST app statements. */
 int firstAppStmt = 1;
 void appstbegin(){
-//printf("\n~326 nx %d lev %d",db_next,db_rundepth);
 	if(firstAppStmt){
 		db_rundepth = 1;
 		db_report_depth = 99;
@@ -354,7 +353,6 @@ void appstbegin(){
 	}
 	if(db_next && (db_next >= db_rundepth) ){
 		int lineno = countch(apr,cursor,'\n');
-//		char* lc = lchar(cursor);
 		printf("line %d cursor(pr[%d])->%.30s\n"
 			, lineno,(int)(cursor-pr),cursor);
 		db_next=0;

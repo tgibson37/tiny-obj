@@ -1,0 +1,65 @@
+#include pps/pyGraphicsLib.tc
+#include pps/library.tc
+#include pps/lineLib.tc
+
+// Draw the intersection from the puzzle 4way
+int SIZE_INT
+
+scale int x [ return 20*x ]
+
+class Line [
+	int fx,fy,tx,ty;
+	char label(0)
+	Line int data(3) [
+		fx=data(0); fy=data(1); tx=data(2); ty=data(3);
+	]
+	render int dx,dy [
+		moveto scale(fx) + scale(dx), scale(fy) + scale(dy)
+		lineto scale(tx) + scale(dx), scale(ty) + scale(dy) 
+	]
+	setLabel char l(0) [label=l]
+	print [
+		ps label; 
+		ps": from"; pn fx; pn fy; ps", "; 
+		ps" to"; pn tx; pn ty; ps" "; 
+	]
+]
+
+/* Draw two curbs
+class Curbs [
+	Line l1    // <<== this is new, object within object
+	Line l2
+	Curbs int data(7) [
+		l1 = new Line data
+		l2 = new Line data+4*SIZE_INT
+	]
+	render int dx,dy [
+		l1.render(dx,dy)
+		l2.render(dx,dy)
+	]
+]
+
+	int Ndata(7),Wdata(7),Sdata(7),Edata(7)
+main [
+	SIZE_INT = 8
+	start "4way", scale(15),scale(15)
+	setdata Ndata,  5,  0,  5,  5,  7,  0,  7,  5
+	setdata Edata, 12,  5,  7,  5, 12,  7,  7,  7 
+	setdata Sdata,  7, 12,  7,  7,  5, 12,  5,  7  
+	setdata Wdata,  0,  7,  5,  7,  0,  5,  5,  5  
+	if(1)[
+		Curbs N
+		Curbs E
+		Curbs S
+		Curbs W
+		N = new Curbs Ndata   // sernum 2
+		E = new Curbs Edata   // sernum 5
+		S = new Curbs Sdata   // sernum 8
+		W = new Curbs Wdata   // sernum 11
+		N.render 1,1
+		E.render 1,1
+		S.render 1,1
+		W.render 1,1
+	]
+	show
+]

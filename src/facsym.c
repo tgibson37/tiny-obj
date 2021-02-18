@@ -5,7 +5,6 @@
 
 /*	dot is parsed */
 struct var* obsym(struct varhdr *qvh){
-//fprintf(stderr,"\n--- %s %d obsym  %p---\n",__FILE__,__LINE__,qvh);
 	if(symName()){
 		struct var *ovar;
 		if(!qvh){

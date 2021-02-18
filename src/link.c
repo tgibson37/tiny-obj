@@ -19,9 +19,6 @@ void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh,
 
 /*	add 'this' variable to an object's vartab */
 void newvar_this(struct varhdr *vh){
-//ps("link~19, newvar_this ");pn(vh);pl("");
-//	union stuff stf;
-//	stf.up = vh;
 	struct var *v = vh->nxtvar;
 	struct var *evar = (struct var*)vh->val;
 	strcpy(v->name, "this" );
@@ -46,7 +43,6 @@ void lnpass12(char *from, char *to,
 	if(vh==NULL){
 		xxpass=1;
 	} else {
-//fprintf(stderr,"\n--- %s %d --- conName %s %p",__FILE__,__LINE__,conName,vh);
 		xxpass=2;
 		if(!newop)openVarFrame(vh);    //open var frame in vh
 	}
@@ -55,7 +51,6 @@ void lnpass12(char *from, char *to,
 	cursor=from;
 	endapp=to;
 	while(cursor<endapp && !error){
-//fprintf(stderr,"\n          --- %s %d ---\n",__FILE__,__LINE__);
 		char* lastcur = cursor;
 		rem();
 		if(lit(xlb)) skip('[',']');
@@ -260,8 +255,6 @@ struct varhdr* lnlink(char *from, char *to,
         if(newop){
         	lndata.nvars++;   // for 'this'
         	lndata.valsize += sizeof(void*);
-//fprintf(stderr,"\n--- %s %d ---linking Curbs, nvars valsize %d %d\n",__FILE__,__LINE__,
-//	lndata.nvars,lndata.valsize);
 
         }
         size = sizeof(struct varhdr) 
@@ -318,8 +311,6 @@ struct varhdr* classlink(struct var *isclvar){
 	char *save_ln = lname;
 	struct varhdr *vh;
 	vh = lnlink(from, to, isclvar->name, isclvar);
-//dumpVarTab(vh);
-//fprintf(stderr,"\n~319 error=%d",error);
 	if(error){
 		whatHappened();
 		exit(1);
