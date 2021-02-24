@@ -69,6 +69,7 @@
 #define MAX_UNIT 10
 #define LOCNUMVARS 100
 #define LOCDATLEN 1000
+#define ISVAR 2
 #define NODOT 1
 #define MAYBEDOT 0
 

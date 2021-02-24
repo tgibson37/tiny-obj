@@ -42,10 +42,13 @@ void dumpStackEntry(int e){
 	}
 }
 void dumpStack(){
+	dumpStackTo(0);
+}
+void dumpStackTo(int to){
 	int e;
 	fflush(stdout);
 	fprintf(stderr,"\nStack (from top) class lvalue type stuff");
-	for( e=nxtstack-1; e>=0; --e) {
+	for( e=nxtstack-1; e>=nxtstack-to; --e) {
 		dumpStackEntry(e); 
 	}
 	fprintf(stderr,"\n");

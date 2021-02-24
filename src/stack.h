@@ -36,6 +36,7 @@ void pushzero();
 /*	push an actual 0 */
 void dumpStackEntry(int e);
 void dumpStack();
+void dumpStackTo(int to);
 void dumpPopTop();
 void dumpTop();
 

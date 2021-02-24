@@ -332,11 +332,21 @@ void dumpVar(struct var *v) {
 	}
 }
 
+void dumpVft(struct var *from,struct var *to){
+	while(from<to) dumpVar(from++);
+}
+void dumpFrame(int f){
+	dumpVft(fun[f].fvar,fun[f].evar);
+}
+void dumpLibs(){ dumpFrame(0); }
+void dumpGlobals(){ dumpFrame(1); }
+void dumpLocals(){ dumpVft(curfun->fvar,curfun->evar); }
+
 void dumpVarTab(struct varhdr *vh) {
 	if(!vh || !vh->vartab){
 		fprintf(stderr,"\nVar Table: not built yet");
-fprintf(stderr,"\nvar~349  vh %p", vh);
-if(vh)fprintf(stderr,"\n  vh->vartab %p  ", vh->vartab);
+//fprintf(stderr,"\nvar~349  vh %p", vh);
+//if(vh)fprintf(stderr,"\n  vh->vartab %p  ", vh->vartab);
 		return;
 	}
 	int pos = 0;

@@ -6,6 +6,10 @@
 #include "facsym.h"
 #include "toc.h"
 
+void _setObjArg(struct stackentry *se){
+fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
+}
+
 /*	Situation: v describes a variable. The name( is parsed
  *	Action: check the class is >0 else CLASERR, return NULL. 
  *	Parse the subscript, compute and return the bumped where.
@@ -135,7 +139,8 @@ void _enter( char* where) {
 		curfun->aobj = canobj;
 		curobj = canobj;
 		cursor = where;
-		for(;;) {	  
+		for(;;) {
+			struct var *isvar; 
 			rem();
 			if(lit(xint)) { 
 				do {
@@ -151,6 +156,13 @@ void _enter( char* where) {
 				} while(lit(xcomma));
 				lit(xsemi);
 			}
+			else if ( (isvar=_isClassName(NODOT)) ){
+				do {
+					_setObjArg(&stack[arg]);
+					arg++;
+				} while(lit(xcomma));
+				lit(xsemi);
+			}
 			else if ( lit(xvarargs) ){
 				varargs=nargs+1;
 				break;
@@ -158,6 +170,11 @@ void _enter( char* where) {
 			else {
 				break;
 			}
+		}
+		if(verbose[VF]&&(!verbose_silence)){
+			fprintf(stderr," %d args",nargs);
+			dumpStackTo(nargs);
+			verbose[VF]=0;
 		}
 		if(!varargs) {
 			if(arg != nxtstack) {

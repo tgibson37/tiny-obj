@@ -114,7 +114,7 @@ void lnpass12(char *from, char *to,
 					} while(lit(xcomma));
 				}
 			}
-			else {    // constructor
+			else {    // constructor. Its internal name is _init.
 				union stuff kursor;
 				cursor = lname+1;
 				rem();
