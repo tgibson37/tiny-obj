@@ -122,6 +122,10 @@ int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
 		case Char:
 			put_char( (*v).vdcd.vd.value.up, (*passed).uc );
 			break;
+		case 'o':
+//fprintf(stderr,"\n--- %s %d --- blob = %p\n"
+//,__FILE__,__LINE__,v->vdcd.od.blob);
+			break;
 		default:
 			eset(TYPEERR);
 			return TYPEERR;
@@ -133,7 +137,11 @@ int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
 /* allocates memory for value of v, return 0 on success, else !0
  */
 void allocSpace(struct var *v, int amount, struct varhdr *vh){
-	if( vh->datused+amount > vh->endval ){eset(TMVLERR);return;}
+	if( vh->datused+amount > vh->endval ){
+fprintf(stderr,"\n--- %s %d --- NEED %ld",__FILE__,__LINE__,vh->endval-vh->datused+amount);
+fprintf(stderr," amount %d sym ",amount);dumpSym();
+		eset(TMVLERR);return;
+	}
 	if(v->type=='o')v->vdcd.od.blob = (struct varhdr **)vh->datused;
 	else v->vdcd.vd.value.up = vh->datused;
 	memset( vh->datused, 0, amount );
@@ -220,6 +228,10 @@ struct var* addr_obj(struct varhdr *vh){
  */
 struct var* _addrval(char *sym, struct var *first, struct var *last) {
 	struct var *pvar;
+	if( !(first&&last)) {
+//if(cursor>apr){dumpft(fname,lname);ps(" ");}
+		return NULL;
+	}
 	for(pvar=first; pvar<=last; ++pvar) {
 		if( !strcmp(pvar->name, sym) ) {
 			if( debug && (pvar->vdcd.vd.brkpt==1) )br_hit(pvar);
@@ -263,7 +275,7 @@ struct var* _isClassName(int nodot) {
 	if(nodot && (*(lname+1)=='.'))return NULL;
 	char buf[VLEN+1];
 	int len = canonIf(buf);
-	if(len){
+	if(len && curglbl){
 		struct var *maybe = _addrval(buf,curglbl->fvar, curglbl->evar);
 		if(maybe){
 			int t = maybe->type;
@@ -333,14 +345,15 @@ void dumpVar(struct var *v) {
 }
 
 void dumpVft(struct var *from,struct var *to){
-	while(from<to) dumpVar(from++);
+	while(from<=to) dumpVar(from++);
 }
 void dumpFrame(int f){
+	fprintf(stderr,"\nvar frame = %d, %ld entries",f,fun[f].evar-fun[f].fvar+1);
 	dumpVft(fun[f].fvar,fun[f].evar);
 }
 void dumpLibs(){ dumpFrame(0); }
 void dumpGlobals(){ dumpFrame(1); }
-void dumpLocals(){ dumpVft(curfun->fvar,curfun->evar); }
+void dumpLocals(){ dumpFrame(curfun-fun-1); }  // -1: dump app not _xray locals
 
 void dumpVarTab(struct varhdr *vh) {
 	if(!vh || !vh->vartab){
@@ -365,11 +378,11 @@ void dumpBlob(struct varhdr *vh){
 	fprintf(stderr,"\nBlob (aka varhdr) at %p \n",vh );
 	struct var *vt = vh->vartab;
 	char* dt = vh->val;
-	fprintf(stderr,"	vartab			 nxtvar		gltab		 evar(val)\n");
+	fprintf(stderr,"	vartab       nxtvar       gltab     evar(val)\n");
 	fprintf(stderr,"	 %9p %9zd %9zd %9zd\n",vh->vartab
 		,(ptrdiff_t)vh->nxtvar-(ptrdiff_t)vt,(ptrdiff_t)vh->gltab-(ptrdiff_t)vt
 		,(ptrdiff_t)vh->val-(ptrdiff_t)vt);
-	fprintf(stderr,"	val					used			endval\n");
+	fprintf(stderr,"	val          used       endval\n");
 	fprintf(stderr,"	 %9p %9zd %9zd\n",vh->val
 			,(ptrdiff_t)vh->datused-(ptrdiff_t)dt
 			,(ptrdiff_t)vh->endval-(ptrdiff_t)dt);
@@ -378,7 +391,7 @@ void dumpBlob(struct varhdr *vh){
 }
 void dumpBlobTab() {
 	struct blob *b;
-	fprintf(stderr,"\nvvv blob table vvv\n");
+	fprintf(stderr,"\nvvv blob table vvv");
 	for(b=blobtab; b<nxtblob; ++b) {
 		fprintf(stderr,"\n%s: ",b->name);
 		dumpBlob(b->varhdr);

@@ -2,20 +2,18 @@
 #include "var.h"
 #include "expr.h"
 #include "toc.h"
+#include "factor.h"
 
 extern int dump_mallocs;
 int newop;
 int xxpass=0;
 
-/*	pass 2 action for xclass, xabstract */
-void cls_dcl(int abst,char *cname,char *ename,struct varhdr *vh, 
-			char* where){
-	struct var *c = vh->nxtvar++;
-	strcpy(c->name,cname);
-	c->type = abst?'A':'C';
-	strncpy(c->vdcd.cd.parent,ename,VLEN);
-	c->vdcd.cd.where = where;
-}
+/*	pass zero actually done during pass one to assure class names
+ *	are recognized. A simple substitute for _addrval(..). Dimension
+ *	is limit on number of class definitions.
+ */
+char *passZero[100];
+int nxtZero;
 
 /*	add 'this' variable to an object's vartab */
 void newvar_this(struct varhdr *vh){
@@ -31,17 +29,142 @@ void newvar_this(struct varhdr *vh){
 	if((verbose[VV])&&(!verbose_silence))dumpVar(v);
 }
 
+void cls_define(int abst,char *cname,char *ename,struct varhdr *vh, 
+			char* where){
+	struct var *c = vh->nxtvar++;
+	strcpy(c->name,cname);
+	c->type = abst?'A':'C';
+	strncpy(c->vdcd.cd.parent,ename,VLEN);
+	c->vdcd.cd.where = where;
+}
+
+// class or abstract parsed
+void cls_action(struct varhdr *vh){
+	struct var cname, ename;
+	int abst=0;
+	char *where;
+	if( *(cursor-1)=='t') {
+		abst=1;
+		if(lit(xclass)) ;
+		else eset(SYNXERR);
+	}
+	if(symName()) {     /* class name */
+		if(xxpass==1){
+			passZero[nxtZero++]=fname;
+			if(nxtZero>100)eset(TMCLASSERR);
+		}
+		cursor = lname+1;
+		canon(&cname);
+		if(lit(xextends)){
+			if(symName()){   // parent name
+				cursor=lname+1;
+				canon(&ename);
+			}
+			else eset(SYNXERR);
+		}
+		rem();
+		where = cursor;
+	}
+	else {
+		eset(SYNXERR);
+		return;
+	}
+	if(xxpass==1){
+		lndata.nvars += 1;
+	}
+	else if(xxpass==2){
+		cls_define(abst,cname.name,ename.name,vh,where);
+	}
+}
+
+int bar=0;
+// class name NODOT parsed, not constructor
+void objdecl_action(struct var *isvar, struct varhdr *vh){
+	if(symName()) {		// Game g;
+		do{
+			varalloc('o',isvar,NULL,vh);	
+		} while(lit(xcomma));
+	}
+}
+
+// class name NODOT parsed, IS constructor
+void constr_def(struct varhdr *vh){
+	char *cptr;
+	union stuff kursor;
+	cursor = lname+1;
+	rem();
+	kursor.up = cursor;
+	newvar('E',2,0,NULL,&kursor,vh);
+	if((cptr=_mustFind(cursor,endapp,'[',LBRCERR))) {
+		cursor=cptr+1;
+		skip('[',']');
+	}
+}
+
+// class name parsed, two cases: constructor and object declaration
+void class_name(struct var *isvar, struct varhdr *vh, char *conName){
+	struct var sym;
+	canon(&sym);
+	int isRef = strcmp(conName,sym.name);
+	if(isRef){
+		objdecl_action(isvar,vh);
+	}
+	else {
+		constr_def(vh);			
+	}
+}
+
+// decl of global var of type 'o'
+void global_object_decl(struct var *isvar, struct varhdr *vh){
+	do {
+		if(symName())varalloc( 'o', isvar, NULL, vh );
+		else eset(SYMERR);
+	} while( lit(xcomma) );
+}
+
+// obj dcl case: test and action, return TRUE if done.
+int isObjDcl(struct var *isvar, struct varhdr *vh){
+	for(int i=0;i<nxtZero;++i){
+		if(!strncmp(fname,passZero[i],lname-fname+1)){
+			objdecl_action(isvar,vh);
+			return 1;
+		}
+	}
+	return 0;
+}
+// symbol parsed, two cases: function definition, object decl
+void sym_action(struct var *isvar, struct varhdr *vh){
+	if(isObjDcl(isvar,vh))return;
+	union stuff kursor;
+	char *cptr;
+	cursor = lname+1;
+	rem();
+	kursor.up = cursor;
+	newvar('E',2,0,NULL,&kursor,vh);
+	if( (cptr=_mustFind(cursor, endapp, '[',LBRCERR)) ) {
+		cursor=cptr+1;
+		skip('[',']');
+		}
+}
+
+void hash_action(struct varhdr *vh){
+	while(++cursor<endapp) {
+		if( (*cursor==0x0d)||(*cursor=='\n') )break;
+	}
+}
+
 /*	Pass one if varhdr is NULL computes the needed sizes. Pass two does
  *	the actual link into varhdr, which also has room for all values.
  *	The logic here mimics classical void link().
  */
 void lnpass12(char *from, char *to, 
 			struct varhdr *vh, int newop, char *conName) {
-	char* cptr;
+	struct var* isvar;
 	char* savedEndapp=endapp;
 	char* savedCursor=cursor;
 	if(vh==NULL){
 		xxpass=1;
+		nxtZero=0;
 	} else {
 		xxpass=2;
 		if(!newop)openVarFrame(vh);    //open var frame in vh
@@ -70,77 +193,19 @@ void lnpass12(char *from, char *to,
 			}
 		}
 		else if(lit(xclass)||lit(xabstract)){
-			struct var cname, ename;
-			int abst=0;
-			char *where;
-			if( *(cursor-1)=='t') {
-				abst=1;
-				if(lit(xclass)) ;
-				else eset(SYNXERR);
-			}
-			if(symName()) {     /* class name */
-				cursor = lname+1;
-				canon(&cname);
-				if(lit(xextends)){
-					if(symName()){   // parent name
-						cursor=lname+1;
-						canon(&ename);
-					}
-					else eset(SYNXERR);
-				}
-				rem();
-				where = cursor;
-			}
-			else {
-				eset(SYNXERR);
-				return;
-			}
-			if(xxpass==1){
-				lndata.nvars += 1;
-			}
-			else if(xxpass==2){
-				cls_dcl(abst,cname.name,ename.name,vh,where);
-			}
+			cls_action(vh);
 		}
-		struct var* isvar;
-		if(newop && (isvar=_isClassName(NODOT))) {
-			struct var sym;
-			canon(&sym);
-			int isRef = strcmp(conName,sym.name);   //Not the constructor
-			if(isRef){    // obj ref
-				if(symName()) {		// Game g;
-					do{
-						varalloc('o',isvar,NULL,vh);	
-					} while(lit(xcomma));
-				}
-			}
-			else {    // constructor. Its internal name is _init.
-				union stuff kursor;
-				cursor = lname+1;
-				rem();
-				kursor.up = cursor;
-				newvar('E',2,0,NULL,&kursor,vh);
-				if((cptr=_mustFind(cursor,endapp,'[',LBRCERR))) {
-					cursor=cptr+1;
-					skip('[',']');
-				}
-			}
+		else if(newop && (isvar=_isClassName(NODOT))) {
+			class_name(isvar,vh,conName);
 		}
-		else if(symName()) {     /* fctn decl */
-			union stuff kursor;
-			cursor = lname+1;
-			rem();
-			kursor.up = cursor;
-			newvar('E',2,0,NULL,&kursor,vh);
-			if( (cptr=_mustFind(cursor, endapp, '[',LBRCERR)) ) {
-				cursor=cptr+1;
-				skip('[',']');
-			}
+		else if(!newop && (isvar=_isClassName(NODOT))) {
+			global_object_decl(isvar,vh);
+		}
+		else if(symName()) {     /* fctn or obj decl */
+			sym_action(NULL,vh);   //  <<==  need vhdr for pass 2
 		}
 		else if(*cursor=='#'){
-			while(++cursor<endapp) {
-				if( (*cursor==0x0d)||(*cursor=='\n') )break;
-			}
+			hash_action(vh);
 		}
 		if(cursor==lastcur){
 			eset(LINKERR);
@@ -233,7 +298,8 @@ void ascend(char *cname, char **from, char **to){
  */
 struct varhdr* lnlink(char *from, char *to, 
                        char *blobName, struct var *isclvar){
-		if((verbose[VL])&&(!verbose_silence))fprintf(stderr,"\nlinking %s",blobName);
+		if((verbose[VL])&&(!verbose_silence))
+			fprintf(stderr,"\nlinking %s",blobName);
         newop = strcmp(blobName,"__Globals__"); // true iff doing new operator
         int size;
         char* blob;

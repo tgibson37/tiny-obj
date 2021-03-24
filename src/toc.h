@@ -114,6 +114,7 @@ int quiet;
 #define TMBLOBERR    31
 #define CLASSERR	 32
 #define WHERERR      33
+#define TMCLASSERR   34
 #define FREEZERR     96
 #define LIMITERR     97
 #define EXIT         98
@@ -213,6 +214,7 @@ void dumpHex( void* where, int len );
 void dumpState();
 void dumpName();
 void dumpft(char*,char*);
+void dumpSym();
 void put_int(char *where, DATINT datum);
 DATINT  get_int(char *where);
 void put_char(char *where, char datum);

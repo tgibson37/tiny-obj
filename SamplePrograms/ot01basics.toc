@@ -32,10 +32,10 @@ main [
     Nurse nur
     nur = new Nurse 2
     pl"main program: "
-    pl" "
+    pl"C: "
     can.printName
     can.printNumber
-    pl" "
+    pl"N: "
     nur.printName
     nur.printNumber
     delete can

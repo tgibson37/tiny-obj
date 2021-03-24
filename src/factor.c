@@ -6,10 +6,6 @@
 #include "facsym.h"
 #include "toc.h"
 
-void _setObjArg(struct stackentry *se){
-fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
-}
-
 /*	Situation: v describes a variable. The name( is parsed
  *	Action: check the class is >0 else CLASERR, return NULL. 
  *	Parse the subscript, compute and return the bumped where.
@@ -90,6 +86,30 @@ void _setArg( Type type, struct stackentry *arg ) {
 	varalloc( type, NULL, &vpassed, locals);
 }
 
+//pushed as lvalue but is actual [fix later]
+//  mimics ~72 above
+void _setObjArg(struct var *objclass,struct stackentry *arg){
+
+fprintf(stderr,"\n--- %s %d --- _setObjArg, objclass=%p, arg=%p\n"
+,__FILE__,__LINE__,objclass,arg);
+
+	union stuff vpassed  = (*arg).value;
+	varalloc( 'o',objclass,&vpassed,locals);
+}
+
+#if 0
+/*  **blob because it must support an array of *blob */
+struct od {
+  int class; int len; struct var *ocl; struct varhdr **blob;
+};
+union vdcd {
+  struct vd vd; struct cd cd; struct od od;
+};
+struct var{
+  char name[VLEN+1]; Type type; union vdcd vdcd; 
+};
+#endif
+
 /*	SITUATION: Just parsed symbol with class 'E', or special symbol MC.
  *	Parses the args putting values are on the stack, arg pointing to the first 
  *	of them.
@@ -140,7 +160,7 @@ void _enter( char* where) {
 		curobj = canobj;
 		cursor = where;
 		for(;;) {
-			struct var *isvar; 
+			struct var *objclass; 
 			rem();
 			if(lit(xint)) { 
 				do {
@@ -156,9 +176,9 @@ void _enter( char* where) {
 				} while(lit(xcomma));
 				lit(xsemi);
 			}
-			else if ( (isvar=_isClassName(NODOT)) ){
+			else if ( (objclass=_isClassName(NODOT)) ){
 				do {
-					_setObjArg(&stack[arg]);
+					_setObjArg(objclass,&stack[arg]);
 					arg++;
 				} while(lit(xcomma));
 				lit(xsemi);

@@ -42,8 +42,9 @@ DATINT xray_mark(int nargs, DATINT *args){
 
 void x_usage(){
 	fprintf(stderr,"\n   x -- examine internal data\n");
-	fprintf(stderr,"     \"x\",[\"locals\"|\"globals\"|\"libs\"|\"curobj\"|\"fun\"[,int]]\n");
+	fprintf(stderr,"     \"x\",[\"locals[,int]\"|\"globals\"|\"libs\"|\"curobj\"|\"fun\"[,int]]\n");
 	fprintf(stderr,"         \"fun\"  prints the table, \"fun\",2  prints 2nd entry\n");
+	fprintf(stderr,"         \"locals\"  prints the current frame, \"locals\",4  prints frame 4\n");
 }
 
 DATINT xray_examine(int nargs, DATINT *args){
@@ -64,13 +65,23 @@ DATINT xray_examine(int nargs, DATINT *args){
 			}
 		}
 		else if(!strcmp((char*)args[1],"globals")){
-			dumpGlobals();    // new in var.c
+			dumpGlobals();
+		}
+		else if(!strncmp((char*)args[1],"blob",4)){
+			dumpBlobTab();
 		}
 		else if(!strcmp((char*)args[1],"libs")){
-			dumpLibs();    // new in var.c
+			dumpLibs();
 		}
 		else if(!strcmp((char*)args[1],"locals")){
-			dumpLocals();    // new in var.c
+			if(nargs>2){
+				int f = args[2];
+				fprintf(stderr,"var frame %d", f);
+				dumpFrame(f);
+			}
+			else{
+				dumpLocals();    // new in var.c
+			}
 		}
 		else if(!strcmp((char*)args[1],"?")){
 			x_usage();
