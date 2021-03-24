@@ -77,7 +77,6 @@ void cls_action(struct varhdr *vh){
 	}
 }
 
-int bar=0;
 // class name NODOT parsed, not constructor
 void objdecl_action(struct var *isvar, struct varhdr *vh){
 	if(symName()) {		// Game g;
