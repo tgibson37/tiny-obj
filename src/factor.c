@@ -89,10 +89,8 @@ void _setArg( Type type, struct stackentry *arg ) {
 //pushed as lvalue but is actual [fix later]
 //  mimics ~72 above
 void _setObjArg(struct var *objclass,struct stackentry *arg){
-
-fprintf(stderr,"\n--- %s %d --- _setObjArg, objclass=%p, arg=%p\n"
-,__FILE__,__LINE__,objclass,arg);
-
+//fprintf(stderr,"\n--- %s %d --- _setObjArg, objclass=%p, arg=%p\n"
+//,__FILE__,__LINE__,objclass,arg);
 	union stuff vpassed  = (*arg).value;
 	varalloc( 'o',objclass,&vpassed,locals);
 }

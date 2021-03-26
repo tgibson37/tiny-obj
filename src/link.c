@@ -77,13 +77,13 @@ void cls_action(struct varhdr *vh){
 	}
 }
 
-// class name NODOT parsed, not constructor
+// class name NODOT parsed, not constructor.
 void objdecl_action(struct var *isvar, struct varhdr *vh){
-	if(symName()) {		// Game g;
-		do{
-			varalloc('o',isvar,NULL,vh);	
-		} while(lit(xcomma));
-	}
+	cursor=lname+1;
+	do{
+		if(symName())varalloc('o',isvar,NULL,vh);
+		else eset(SYMERR);
+	} while(lit(xcomma));
 }
 
 // class name NODOT parsed, IS constructor
@@ -115,6 +115,8 @@ void class_name(struct var *isvar, struct varhdr *vh, char *conName){
 
 // decl of global var of type 'o'
 void global_object_decl(struct var *isvar, struct varhdr *vh){
+//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
+//dumpSym();
 	do {
 		if(symName())varalloc( 'o', isvar, NULL, vh );
 		else eset(SYMERR);
@@ -168,6 +170,7 @@ void lnpass12(char *from, char *to,
 		xxpass=2;
 		if(!newop)openVarFrame(vh);    //open var frame in vh
 	}
+//fprintf(stderr,"\n\n--- %s %d ---  pass %d",__FILE__,__LINE__,xxpass);
 	if(checkBrackets(from,to))eset(RBRCERR+1000);
 	if(error){ whatHappened(); exit(1); }
 	cursor=from;
