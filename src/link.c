@@ -41,6 +41,7 @@ void cls_define(int abst,char *cname,char *ename,struct varhdr *vh,
 // class or abstract parsed
 void cls_action(struct varhdr *vh){
 	struct var cname, ename;
+	ename.name[0]=0;
 	int abst=0;
 	char *where;
 	if( *(cursor-1)=='t') {
