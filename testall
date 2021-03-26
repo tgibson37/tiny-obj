@@ -1,4 +1,6 @@
 #! /bin/sh
 bash ./test -s testGraphics
+echo ""
 bash ./test -s testtc
+echo ""
 bash ./test -s testobj
