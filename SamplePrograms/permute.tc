@@ -1,0 +1,64 @@
+// generate all permutations of a vector of ints
+// Uses Heap's algorithm:
+//    https://en.wikipedia.org/wiki/Heap%27s_algorithm
+
+[   this is not tiny-c code. It is a comment in a block.
+    text from that article:
+procedure generate(k : integer, A : array of any):
+    if k = 1 then
+        output(A)
+    else
+        // Generate permutations with kth unaltered
+        // Initially k == length(A)
+        generate(k - 1, A)
+
+        // Generate permutations for kth swapped with each k-1 initial
+        for i := 0; i < k-1; i += 1 do
+            // Swap choice dependent on parity of k (even or odd)
+            if k is even then
+                swap(A[i], A[k-1]) // zero-indexed, the kth is at k-1
+            else
+                swap(A[0], A[k-1])
+            end if
+            generate(k - 1, A)
+
+        end for
+    end if
+/////////////////////////////////////////////////////////////
+
+// this is tiny-c code...
+permute int k, A(0) [
+	if(k==1)dumpdata A,t
+	else[
+		int i, temp
+		while(i<k)[
+			permute(k-1,A)
+			if(k%2 == 0)[
+pl"ik=";pn i;pn k;ps"   swapping";pn i;pn k-1;pl"    "
+				temp=A(k-1)
+				A(k-1)=A(i)
+				A(i)=temp
+			]
+			else[
+pl"ik=";pn i;pn k;ps"   swapping";pn i;pn 0;pl"    "
+				temp=A(0)
+				A(0)=A(i)
+				A(i)=temp
+			]
+			i=i+1
+dumpdata A, t
+		]
+	]
+]
+
+int t
+main [
+	int foo(5), n
+	t = 3
+	setdata foo, 1,2,3,4,5
+	ps"data="
+	dumpdata foo, 5
+	ps"t =";pn t;pl""
+
+	permute t,foo
+]

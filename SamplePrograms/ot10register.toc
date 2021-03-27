@@ -1,0 +1,40 @@
+#include pps/pyGraphicsLib.tc
+#include pps/library.tc
+#varincrement 1000
+
+class Line [
+	int fx,fy,tx,ty;
+	char name(16);
+	Line int x0, y0, x1, y1 [
+		int z1,z2
+		fx=x0;fy=y0;tx=x1;ty=y1;
+		register this
+	]
+	setName char n(0) [
+		strcpy name,n
+	]
+	plName [ pl name ]
+]
+
+//BoilerPlate
+Line reg(99)
+int nxtReg
+register Line d [
+	reg(nxtReg) = d
+	nxtReg = nxtReg+1
+]
+
+//Action starts here
+main [
+	int foo,bar
+	start "firstLine",615,490
+	Line line_01
+	line_01 = new Line 0,0,80,80
+	line_01.setName "Line One"
+	Line line_02
+	line_02 = new Line 0,80,80,0
+	line_02.setName "Line Two"
+
+	line_01.plName
+	line_02.plName
+]

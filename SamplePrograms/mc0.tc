@@ -1,0 +1,7 @@
+// test for MC 0
+main [
+	ps"Hello, "
+MC "foo", "Intentionally bad sym", 0
+	ps"World"
+	pl""
+]

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+clear
+grep $1 *.toc *.tc -n
