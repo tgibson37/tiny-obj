@@ -123,8 +123,7 @@ int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
 			put_char( (*v).vdcd.vd.value.up, (*passed).uc );
 			break;
 		case 'o':
-//fprintf(stderr,"\n--- %s %d --- blob = %p\n"
-//,__FILE__,__LINE__,v->vdcd.od.blob);
+			(*v).vdcd.od.blob = (*passed).up;
 			break;
 		default:
 			eset(TYPEERR);
@@ -134,7 +133,7 @@ int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
 	return 0;
 }
 
-/* allocates memory for value of v, return 0 on success, else !0
+/* allocates memory for value of v, else TMVLERR
  */
 void allocSpace(struct var *v, int amount, struct varhdr *vh){
 	if( vh->datused+amount > vh->endval ){
@@ -246,13 +245,23 @@ struct var* _addrval(char *sym, struct var *first, struct var *last) {
  */
 struct var* addrval_all(char *sym) {
 	struct var *v;
-	v = _addrval( sym, curfun->fvar, curfun->evar );	// locals
+	if(verbose[VFrame])fprintf(stderr,
+		"\nsearching for %s in locals frame %ld",sym,curfun-fun);
+	v = _addrval( sym, curfun->fvar, curfun->evar );
 	if(!v && curobj) {																// instances
+		if(verbose[VFrame])fprintf(stderr,"\nsearching curobj %p",curobj);
 		v = _addrval( sym, curobj->vartab, curobj->nxtvar-1);
 	}
-	if(!v) v = _addrval( sym, curglbl->fvar, curglbl->evar ); //globals
-	if(!v) v = _addrval( sym, fun->fvar,fun->evar );	//libs
+	if(!v) {
+		if(verbose[VFrame])fprintf(stderr,"\nsearching globals");
+		v = _addrval( sym, curglbl->fvar, curglbl->evar );
+	}
+	if(!v) {
+		if(verbose[VFrame])fprintf(stderr,"\nsearching libs");
+		v = _addrval( sym, fun->fvar,fun->evar );
+	}
 	if(v){
+		if(verbose[VFrame])fprintf(stderr," ==> hit\n");
 		return v;
 	}
 	return 0;	

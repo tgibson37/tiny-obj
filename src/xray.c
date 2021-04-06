@@ -50,7 +50,7 @@ void x_usage(){
 DATINT xray_examine(int nargs, DATINT *args){
 	if(nargs>1){
 		if(!strcmp((char*)args[1],"curobj")){
-			fprintf(stderr,"curobj = %p",curobj);
+			fprintf(stderr," curobj = %p",curobj);
 			return (DATINT)curobj;
 		}
 		else if(!strcmp((char*)args[1],"fun")){
@@ -98,13 +98,20 @@ DATINT xray_examine(int nargs, DATINT *args){
 
 void w_usage(){
 	fprintf(stderr,"   w -- watch, report changes to specific data\n");
-	fprintf(stderr,"     fun[2], // temp for now\n");
+	fprintf(stderr,"     \"w\", \"frames\"\n");
+	fprintf(stderr,"     \"w\" (default) fun[2], // temp for now\n");
 /* proposed: _xray "w","[stack|enter]]" 
 	enter sets bit VF
 */
 }
 
 DATINT xray_watch(int nargs, DATINT *args){
+	if(nargs>1){
+		if(!strcmp((char*)args[1],"frames")){
+			verbose[VFrame]=1-verbose[VFrame];
+			return 0;
+		}
+	}
 	watch_fe_on(2);    // temp for now
 	return 0;
 }

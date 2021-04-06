@@ -80,6 +80,7 @@
 #define VP 3
 #define VV 4
 #define VF 5
+#define VFrame 6  // sym lookup frames, used by xray
 char verbose[8];
 int db_rundepth;
 int db_report_depth;

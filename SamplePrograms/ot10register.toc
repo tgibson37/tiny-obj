@@ -37,4 +37,7 @@ main [
 
 	line_01.plName
 	line_02.plName
+	pl "Via the register"
+	reg(0).plName
+	reg(1).plName	
 ]

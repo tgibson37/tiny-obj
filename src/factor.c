@@ -89,24 +89,11 @@ void _setArg( Type type, struct stackentry *arg ) {
 //pushed as lvalue but is actual [fix later]
 //  mimics ~72 above
 void _setObjArg(struct var *objclass,struct stackentry *arg){
-//fprintf(stderr,"\n--- %s %d --- _setObjArg, objclass=%p, arg=%p\n"
-//,__FILE__,__LINE__,objclass,arg);
-	union stuff vpassed  = (*arg).value;
+	union stuff vpassed;
+	void *v  = (*arg).value.up;
+	vpassed.up = v;
 	varalloc( 'o',objclass,&vpassed,locals);
 }
-
-#if 0
-/*  **blob because it must support an array of *blob */
-struct od {
-  int class; int len; struct var *ocl; struct varhdr **blob;
-};
-union vdcd {
-  struct vd vd; struct cd cd; struct od od;
-};
-struct var{
-  char name[VLEN+1]; Type type; union vdcd vdcd; 
-};
-#endif
 
 /*	SITUATION: Just parsed symbol with class 'E', or special symbol MC.
  *	Parses the args putting values are on the stack, arg pointing to the first 
