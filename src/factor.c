@@ -365,7 +365,8 @@ void factor() {
 			}
 			else eset(SYMERR);
 		}
-		else if(symName()) {		// Game g;
+		else if(symName()) {		// Game g;   //NEVER USED ???
+fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 			cursor = lname+1;
 		}
 		else eset(SYMERR);

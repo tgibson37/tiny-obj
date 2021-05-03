@@ -362,6 +362,7 @@ void st() {
 	}
 #if 1
 	else if((isvar=_isClassName(NODOT))) {
+//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 		if(symName()) {   // decl of var of type 'o'
 			do {
 				varalloc( 'o', isvar, NULL, locals );

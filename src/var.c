@@ -286,6 +286,7 @@ struct var* _isClassName(int nodot) {
 	int len = canonIf(buf);
 	if(len && curglbl){
 		struct var *maybe = _addrval(buf,curglbl->fvar, curglbl->evar);
+		if(!maybe) maybe = _addrval( buf, fun->fvar,fun->evar );  //libs
 		if(maybe){
 			int t = maybe->type;
 			if(t=='C' || t=='A') {

@@ -1,0 +1,60 @@
+#include pps/pyGraphicsLib.tc
+#include pps/library.tc
+
+// Draw the intersection from the puzzle 4way
+
+scale int x [ return 40*x ]
+
+class Line [
+	int fx,fy,tx,ty;
+	char name(16);
+	Line int x0, y0, x1, y1 [
+		int z1,z2
+		fx=x0;fy=y0;tx=x1;ty=y1;
+		register this
+	]
+	render int dx,dy [
+		moveto scale(fx) + scale(dx), scale(fy) + scale(dy)
+		lineto scale(tx) + scale(dx), scale(ty) + scale(dy) 
+	]
+	setName char n(0) [
+		strcpy name,n
+	]
+	plName [ pl name ]
+]
+
+Line reg(99)
+int nxtReg
+register Line d [
+	reg(nxtReg) = d
+	nxtReg = nxtReg+1
+]
+renderall [    // <<== new stuff
+	int n
+	n=0
+	while(n<nxtReg)[
+		reg(n).render 2,2
+		n=n+1
+	]
+]
+
+//Action starts here
+main [
+	int foo,bar
+	start "firstLine",615,490
+	Line line_01
+	line_01 = new Line 0,0,8,8
+	line_01.setName "Line One"
+	Line line_02
+	line_02 = new Line 0,8,8,0
+	line_02.setName "Line Two"
+
+	line_01.plName
+	line_02.plName
+	pl "Via the register"
+	reg(0).plName
+	reg(1).plName
+
+	renderall    // <<== new
+	show
+]
