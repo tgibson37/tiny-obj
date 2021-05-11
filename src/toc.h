@@ -69,7 +69,6 @@
 #define MAX_UNIT 10
 #define LOCNUMVARS 100
 #define LOCDATLEN 1000
-#define ISVAR 2
 #define NODOT 1
 #define MAYBEDOT 0
 
@@ -80,7 +79,6 @@
 #define VP 3
 #define VV 4
 #define VF 5
-#define VFrame 6  // sym lookup frames, used by xray
 char verbose[8];
 int db_rundepth;
 int db_report_depth;
@@ -115,7 +113,6 @@ int quiet;
 #define TMBLOBERR    31
 #define CLASSERR	 32
 #define WHERERR      33
-#define TMCLASSERR   34
 #define FREEZERR     96
 #define LIMITERR     97
 #define EXIT         98
@@ -215,7 +212,6 @@ void dumpHex( void* where, int len );
 void dumpState();
 void dumpName();
 void dumpft(char*,char*);
-void dumpSym();
 void put_int(char *where, DATINT datum);
 DATINT  get_int(char *where);
 void put_char(char *where, char datum);

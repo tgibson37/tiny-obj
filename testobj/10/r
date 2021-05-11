@@ -1,9 +1,6 @@
 ***  TINY-C 8080 VERSION 1.0,  COPYRIGHT 1977, T A GIBSON  ***
         This C version copyright 2017, T A Gibson
 
-Line One
-Line Two
-Via the register
-Line One
-Line Two
-done
+app line 33 (cursor pr[9970])POPERR, nothing to pop
+	line_01.setName "Line One"
+	^

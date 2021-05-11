@@ -72,9 +72,4 @@ void dumpFunEntry( int e );
 void dumpFunTab();
 void dumpVar(struct var *v);
 void dumpVarTab(struct varhdr *vh);
-void dumpGlobals();
-void dumpLocals();
-void dumpFrame(int f);
-void dumpLibs();
-void dumpVft(struct var *from,struct var *to);
 #endif    /* VARHDR */

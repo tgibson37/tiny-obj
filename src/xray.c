@@ -41,16 +41,15 @@ DATINT xray_mark(int nargs, DATINT *args){
 }
 
 void x_usage(){
-	fprintf(stderr,"\n   x -- examine internal data\n");
-	fprintf(stderr,"     \"x\",[\"locals[,int]\"|\"globals\"|\"libs\"|\"curobj\"|\"fun\"[,int]]\n");
-	fprintf(stderr,"         \"fun\"  prints the table, \"fun\",2  prints 2nd entry\n");
-	fprintf(stderr,"         \"locals\"  prints the current frame, \"locals\",4  prints frame 4\n");
+	fprintf(stderr,"   x -- examine, print internal data\n");
+	fprintf(stderr,"     \"x\",[\"curobj\"|\"fun [int]\"]\n");
+	fprintf(stderr,"         \"fun\" prints the table, \"fun\" 2 prints 2nd entry\n");
 }
 
 DATINT xray_examine(int nargs, DATINT *args){
 	if(nargs>1){
 		if(!strcmp((char*)args[1],"curobj")){
-			fprintf(stderr," curobj = %p",curobj);
+			fprintf(stderr,"curobj = %p",curobj);
 			return (DATINT)curobj;
 		}
 		else if(!strcmp((char*)args[1],"fun")){
@@ -64,31 +63,10 @@ DATINT xray_examine(int nargs, DATINT *args){
 				dumpFunTab();
 			}
 		}
-		else if(!strcmp((char*)args[1],"globals")){
-			dumpGlobals();
-		}
-		else if(!strncmp((char*)args[1],"blob",4)){
-			dumpBlobTab();
-		}
-		else if(!strcmp((char*)args[1],"libs")){
-			dumpLibs();
-		}
-		else if(!strcmp((char*)args[1],"locals")){
-			if(nargs>2){
-				int f = args[2];
-				fprintf(stderr,"var frame %d", f);
-				dumpFrame(f);
-			}
-			else{
-				dumpLocals();    // new in var.c
-			}
-		}
-		else if(!strcmp((char*)args[1],"?")){
+		else if(!strcmp((char*)args[1],"?"))
 			x_usage();
-		}
-		else{
+		else
 			x_usage();
-		}
 	}
 	else {
 		fprintf(stderr,"\nxray code x requires arg");
@@ -96,22 +74,7 @@ DATINT xray_examine(int nargs, DATINT *args){
 	return 0;
 }
 
-void w_usage(){
-	fprintf(stderr,"   w -- watch, report changes to specific data\n");
-	fprintf(stderr,"     \"w\", \"frames\"\n");
-	fprintf(stderr,"     \"w\" (default) fun[2], // temp for now\n");
-/* proposed: _xray "w","[stack|enter]]" 
-	enter sets bit VF
-*/
-}
-
 DATINT xray_watch(int nargs, DATINT *args){
-	if(nargs>1){
-		if(!strcmp((char*)args[1],"frames")){
-			verbose[VFrame]=1-verbose[VFrame];
-			return 0;
-		}
-	}
 	watch_fe_on(2);    // temp for now
 	return 0;
 }
@@ -129,11 +92,9 @@ void xray_verbosity(int nargs, DATINT *args){
 }
 
 void xray_usage(){
-	fprintf(stderr," _xray \"m|x|w|v|?\"[,<args>]\n");
-	fprintf(stderr," args: (quotes required where shown)\n");
-	m_usage();
+	fprintf(stderr," _xray \"m|x|v|?\"[,<args>]\n args:\n");
 	x_usage();
-	w_usage();
+	m_usage();
 	v_usage();
 	fprintf(stderr,"   ?  -- usage, print this usage\n");
 }
@@ -145,10 +106,6 @@ void xray(int nargs, DATINT *args) {
 		int lineno = countch(apr,appcur,0x0a);
 		if(!lineno)lineno = countch(apr,appcur,0x0d);
 		fprintf(stderr,"\nxray \"%c\" at %d: ",code,lineno);
-		if(nargs>1){
-			char *a1 = (char*)*(args+1);
-			fprintf(stderr," %s",a1);
-		}
 		switch(code){
 			case 'm':      // mark
 				xray_mark(nargs,args);

@@ -86,15 +86,6 @@ void _setArg( Type type, struct stackentry *arg ) {
 	varalloc( type, NULL, &vpassed, locals);
 }
 
-//pushed as lvalue but is actual [fix later]
-//  mimics ~72 above
-void _setObjArg(struct var *objclass,struct stackentry *arg){
-	union stuff vpassed;
-	void *v  = (*arg).value.up;
-	vpassed.up = v;
-	varalloc( 'o',objclass,&vpassed,locals);
-}
-
 /*	SITUATION: Just parsed symbol with class 'E', or special symbol MC.
  *	Parses the args putting values are on the stack, arg pointing to the first 
  *	of them.
@@ -144,8 +135,7 @@ void _enter( char* where) {
 		curfun->aobj = canobj;
 		curobj = canobj;
 		cursor = where;
-		for(;;) {
-			struct var *objclass; 
+		for(;;) {	  
 			rem();
 			if(lit(xint)) { 
 				do {
@@ -161,13 +151,6 @@ void _enter( char* where) {
 				} while(lit(xcomma));
 				lit(xsemi);
 			}
-			else if ( (objclass=_isClassName(NODOT)) ){
-				do {
-					_setObjArg(objclass,&stack[arg]);
-					arg++;
-				} while(lit(xcomma));
-				lit(xsemi);
-			}
 			else if ( lit(xvarargs) ){
 				varargs=nargs+1;
 				break;
@@ -175,11 +158,6 @@ void _enter( char* where) {
 			else {
 				break;
 			}
-		}
-		if(verbose[VF]&&(!verbose_silence)){
-			fprintf(stderr," %d args",nargs);
-			dumpStackTo(nargs);
-			verbose[VF]=0;
 		}
 		if(!varargs) {
 			if(arg != nxtstack) {
@@ -365,8 +343,7 @@ void factor() {
 			}
 			else eset(SYMERR);
 		}
-		else if(symName()) {		// Game g;   //NEVER USED ???
-fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
+		else if(symName()) {		// Game g;
 			cursor = lname+1;
 		}
 		else eset(SYMERR);

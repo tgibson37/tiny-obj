@@ -227,7 +227,6 @@ int quit() {
  *  optional semi. 
  */
 int decl(struct varhdr *vh) {
-//	struct var *isvar;
 	if( lit(xchar) ) {
 		do {
 			varalloc( Char, NULL, NULL, vh );
@@ -237,16 +236,7 @@ int decl(struct varhdr *vh) {
 		do {
 			varalloc( Int, NULL, NULL, vh );
 		} while( lit(xcomma) );
-	}
-#if 0
-	else if((isvar=_isClassName(NODOT))) {
-		if(symName()) {   // decl of var of type 'o'
-			do {
-				varalloc( 'o', isvar, NULL, vh );
-			} while( lit(xcomma) );
-		}
-	}
-#endif
+	} 
 	else {
 		return 0;  /* not decl */
 	}
@@ -258,8 +248,8 @@ int decl(struct varhdr *vh) {
 char *prevcur = NULL;
 char *appcur = NULL;
 void st() {
-	char *objt, *agin ;
 	struct var *isvar;
+	char *objt, *agin ;
 	brake=0;
 	if(cursor==prevcur){
 		eset(FREEZERR);
@@ -360,16 +350,13 @@ void st() {
 		brake=1;
 		return;
 	}
-#if 1
 	else if((isvar=_isClassName(NODOT))) {
-//fprintf(stderr,"\n--- %s %d ---\n",__FILE__,__LINE__);
 		if(symName()) {   // decl of var of type 'o'
 			do {
 				varalloc( 'o', isvar, NULL, locals );
 			} while( lit(xcomma) );
 		}
 	}
-#endif
 	else if(lit(xdelete)){
 		if(symName()){
 			struct var sym;
@@ -406,10 +393,12 @@ void dumpft(char *from, char *to ) {
 	fflush(stdout);
 	while(from <= to) fprintf(stderr,"%c",*(from++));
 }
-void dumpSym(){
-	if(fname&&lname)dumpft(fname,lname);
-	else fprintf(stderr,"-NO Sym-");
+/* dump from..to inclusive  */
+void xdumpft(char *from, char *to ) {
+	fflush(stdout);
+	while(from <= to) fprintf(stderr,"%x ",*(from++));
 }
+
 /* dump the line cursor is in from cursor to nl */
 void dumpLine() {
 	fflush(stdout);

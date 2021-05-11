@@ -122,9 +122,6 @@ int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
 		case Char:
 			put_char( (*v).vdcd.vd.value.up, (*passed).uc );
 			break;
-		case 'o':
-			(*v).vdcd.od.blob = (*passed).up;
-			break;
 		default:
 			eset(TYPEERR);
 			return TYPEERR;
@@ -133,14 +130,10 @@ int _copyArgValue(struct var *v, int class, Type type, union stuff *passed ) {
 	return 0;
 }
 
-/* allocates memory for value of v, else TMVLERR
+/* allocates memory for value of v, return 0 on success, else !0
  */
 void allocSpace(struct var *v, int amount, struct varhdr *vh){
-	if( vh->datused+amount > vh->endval ){
-fprintf(stderr,"\n--- %s %d --- NEED %ld",__FILE__,__LINE__,vh->endval-vh->datused+amount);
-fprintf(stderr," amount %d sym ",amount);dumpSym();
-		eset(TMVLERR);return;
-	}
+	if( vh->datused+amount > vh->endval ){eset(TMVLERR);return;}
 	if(v->type=='o')v->vdcd.od.blob = (struct varhdr **)vh->datused;
 	else v->vdcd.vd.value.up = vh->datused;
 	memset( vh->datused, 0, amount );
@@ -227,10 +220,6 @@ struct var* addr_obj(struct varhdr *vh){
  */
 struct var* _addrval(char *sym, struct var *first, struct var *last) {
 	struct var *pvar;
-	if( !(first&&last)) {
-//if(cursor>apr){dumpft(fname,lname);ps(" ");}
-		return NULL;
-	}
 	for(pvar=first; pvar<=last; ++pvar) {
 		if( !strcmp(pvar->name, sym) ) {
 			if( debug && (pvar->vdcd.vd.brkpt==1) )br_hit(pvar);
@@ -245,23 +234,13 @@ struct var* _addrval(char *sym, struct var *first, struct var *last) {
  */
 struct var* addrval_all(char *sym) {
 	struct var *v;
-	if(verbose[VFrame])fprintf(stderr,
-		"\nsearching for %s in locals frame %ld",sym,curfun-fun);
-	v = _addrval( sym, curfun->fvar, curfun->evar );
+	v = _addrval( sym, curfun->fvar, curfun->evar );	// locals
 	if(!v && curobj) {																// instances
-		if(verbose[VFrame])fprintf(stderr,"\nsearching curobj %p",curobj);
 		v = _addrval( sym, curobj->vartab, curobj->nxtvar-1);
 	}
-	if(!v) {
-		if(verbose[VFrame])fprintf(stderr,"\nsearching globals");
-		v = _addrval( sym, curglbl->fvar, curglbl->evar );
-	}
-	if(!v) {
-		if(verbose[VFrame])fprintf(stderr,"\nsearching libs");
-		v = _addrval( sym, fun->fvar,fun->evar );
-	}
+	if(!v) v = _addrval( sym, curglbl->fvar, curglbl->evar ); //globals
+	if(!v) v = _addrval( sym, fun->fvar,fun->evar );	//libs
 	if(v){
-		if(verbose[VFrame])fprintf(stderr," ==> hit\n");
 		return v;
 	}
 	return 0;	
@@ -284,9 +263,8 @@ struct var* _isClassName(int nodot) {
 	if(nodot && (*(lname+1)=='.'))return NULL;
 	char buf[VLEN+1];
 	int len = canonIf(buf);
-	if(len && curglbl){
+	if(len){
 		struct var *maybe = _addrval(buf,curglbl->fvar, curglbl->evar);
-		if(!maybe) maybe = _addrval( buf, fun->fvar,fun->evar );  //libs
 		if(maybe){
 			int t = maybe->type;
 			if(t=='C' || t=='A') {
@@ -354,22 +332,11 @@ void dumpVar(struct var *v) {
 	}
 }
 
-void dumpVft(struct var *from,struct var *to){
-	while(from<=to) dumpVar(from++);
-}
-void dumpFrame(int f){
-	fprintf(stderr,"\nvar frame = %d, %ld entries",f,fun[f].evar-fun[f].fvar+1);
-	dumpVft(fun[f].fvar,fun[f].evar);
-}
-void dumpLibs(){ dumpFrame(0); }
-void dumpGlobals(){ dumpFrame(1); }
-void dumpLocals(){ dumpFrame(curfun-fun-1); }  // -1: dump app not _xray locals
-
 void dumpVarTab(struct varhdr *vh) {
 	if(!vh || !vh->vartab){
 		fprintf(stderr,"\nVar Table: not built yet");
-//fprintf(stderr,"\nvar~349  vh %p", vh);
-//if(vh)fprintf(stderr,"\n  vh->vartab %p  ", vh->vartab);
+fprintf(stderr,"\nvar~349  vh %p", vh);
+if(vh)fprintf(stderr,"\n  vh->vartab %p  ", vh->vartab);
 		return;
 	}
 	int pos = 0;
@@ -388,11 +355,11 @@ void dumpBlob(struct varhdr *vh){
 	fprintf(stderr,"\nBlob (aka varhdr) at %p \n",vh );
 	struct var *vt = vh->vartab;
 	char* dt = vh->val;
-	fprintf(stderr,"	vartab       nxtvar       gltab     evar(val)\n");
+	fprintf(stderr,"	vartab			 nxtvar		gltab		 evar(val)\n");
 	fprintf(stderr,"	 %9p %9zd %9zd %9zd\n",vh->vartab
 		,(ptrdiff_t)vh->nxtvar-(ptrdiff_t)vt,(ptrdiff_t)vh->gltab-(ptrdiff_t)vt
 		,(ptrdiff_t)vh->val-(ptrdiff_t)vt);
-	fprintf(stderr,"	val          used       endval\n");
+	fprintf(stderr,"	val					used			endval\n");
 	fprintf(stderr,"	 %9p %9zd %9zd\n",vh->val
 			,(ptrdiff_t)vh->datused-(ptrdiff_t)dt
 			,(ptrdiff_t)vh->endval-(ptrdiff_t)dt);
@@ -401,7 +368,7 @@ void dumpBlob(struct varhdr *vh){
 }
 void dumpBlobTab() {
 	struct blob *b;
-	fprintf(stderr,"\nvvv blob table vvv");
+	fprintf(stderr,"\nvvv blob table vvv\n");
 	for(b=blobtab; b<nxtblob; ++b) {
 		fprintf(stderr,"\n%s: ",b->name);
 		dumpBlob(b->varhdr);

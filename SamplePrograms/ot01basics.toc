@@ -14,7 +14,7 @@ abstract class Player [
 class Cannibal extends Player [
     Cannibal int n [ 
         number = n
-        strcpy name, "cannibal"
+		strcpy name, "cannibal"
         ps "Cannibal constructor: "
         ps name; pn number
     ]
@@ -27,15 +27,18 @@ class Nurse extends Player [
 ]
 int foo
 main [
+    pl"main program: "
+    pl" "
     Cannibal can
+MC 0
     can = new Cannibal 1
+can.printName
+can.printNumber
     Nurse nur
     nur = new Nurse 2
-    pl"main program: "
-    pl"C: "
     can.printName
     can.printNumber
-    pl"N: "
+    pl" "
     nur.printName
     nur.printNumber
     delete can
